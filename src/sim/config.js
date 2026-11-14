@@ -18,6 +18,13 @@ export const MISION = {
   repuestos: 2,
   botiquin: 1,
   metaCiencia: 40,            // puntos de ciencia para la 2ª estrella
+  // Plan del sol: objetivo OPCIONAL de recolección que envía Control de Misión.
+  // Cumplirlo da un bono; no cumplirlo no castiga (solo se pierde el bono).
+  // Si las comunicaciones están apagadas o hay conjunción solar, el plan no llega.
+  plan: {
+    cantidad: { regolito: 2, roca: 2, hielo: 2 },
+    bono: { ciencia: 5, salud: 5 },
+  },
   // Caminata espacial (EVA) controlada por el jugador: 1 por sol
   eva: {
     costoO2Base: 3,           // llenar el tanque del traje gasta oxígeno de la base

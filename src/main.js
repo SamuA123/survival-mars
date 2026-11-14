@@ -8,7 +8,7 @@ import { MISION } from './sim/config.js';
 import { mostrarHUDEVA, actualizarHUDEVA, avisoEVA, ocultarHUDEVA, tarjetaObjeto } from './ui/eva-hud.js';
 import { cargarClimaEspacial } from './data/donki.js';
 import { renderRecursos, renderEnergia, renderPanel, renderLog } from './ui/hud.js';
-import { pantallaInicio, mostrarEvento, mostrarResumen, mostrarResumenEVA, pantallaFinal, panelDatos } from './ui/modales.js';
+import { pantallaInicio, mostrarEvento, mostrarResumen, mostrarResumenEVA, pantallaFinal, panelDatos, panelInventario } from './ui/modales.js';
 import { beep, audio } from './ui/sonido.js';
 import { iniciarTutorial, tutorialVisto } from './ui/tutorial.js';
 
@@ -92,7 +92,7 @@ function salirAExplorar() {
   beep(600, 0.15, 'triangle');
   refrescar();
   const E = MISION.eva;
-  mostrarHUDEVA(mundo.eva);
+  mostrarHUDEVA(mundo.eva, S.plan);
   mundo.eva.iniciar({
     o2PorSeg: E.o2TrajePorSeg, radPorSeg: E.radPorSeg, multLlamarada: E.multLlamarada,
     riesgo: CLIMA.riesgo, eficienciaPaneles: S.eficiencia,
@@ -127,6 +127,7 @@ async function nuevaPartida() {
 
 $('#btnSol').onclick = terminarSol;
 $('#btnDatos').onclick = panelDatos;
+$('#btnInventario').onclick = () => { if (!S.enEVA) panelInventario(S); };
 $('#btnSonido').onclick = () => { audio.on = !audio.on; $('#btnSonido').textContent = audio.on ? '🔊' : '🔇'; };
 $('#btnAyudaTuto').onclick = () => { if (!ocupado && !tutorial?.activo()) tutorial = iniciarTutorial(() => ({ S, sel })); };
 $('#btnLog').onclick = () => $('#bitacoraBox').classList.toggle('abierta');

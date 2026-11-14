@@ -2,9 +2,12 @@
 import { TIPOS } from '../world3d/eva.js';
 import { beep } from './sonido.js';
 
-let raiz = null, avisoTimer = null, ultimoBeep = 0;
+let raiz = null, avisoTimer = null, ultimoBeep = 0, planEVA = null, planAvisado = false;
 
-export function mostrarHUDEVA(control) {
+// plan = { tipo, cantidad, cumplido } del Plan del sol (o null si no llegó)
+export function mostrarHUDEVA(control, plan = null) {
+  planEVA = plan && !plan.cumplido ? plan : null;
+  planAvisado = false;
   document.body.classList.add('modo-eva');
   raiz = document.createElement('div');
   raiz.id = 'evaHud';
@@ -15,7 +18,8 @@ export function mostrarHUDEVA(control) {
         <span>🫁 Oxígeno del traje</span><div class="barra"><div id="evaO2"></div></div><b id="evaO2n">100%</b></div>
       <div class="eva-barra rad" title="Radiación recibida en esta caminata">
         <span>☢️ Radiación</span><b id="evaRad">0 mSv</b></div>
-      <div class="eva-items">${Object.entries(TIPOS).map(([k, t]) => `<span class="eva-item" title="${t.uso}">${t.icono} ${t.nombre}: <b id="evaIt-${k}">0</b></span>`).join('')}</div>
+      <div class="eva-items">${Object.entries(TIPOS).map(([k, t]) => `<span class="eva-item ${planEVA?.tipo === k ? 'objetivo' : ''}" title="${t.uso}">${t.icono} ${t.nombre}: <b id="evaIt-${k}">0</b>${planEVA?.tipo === k ? `<small>/${planEVA.cantidad} 📋</small>` : ''}</span>`).join('')}</div>
+      ${planEVA ? `<div class="eva-plan" id="evaPlan">📋 Plan del sol: trae ${planEVA.cantidad} ${TIPOS[planEVA.tipo].icono} ${TIPOS[planEVA.tipo].nombre} <small>(opcional)</small></div>` : ''}
     </div>
     <div class="eva-aviso" id="evaAviso"></div>
     <div class="eva-tarjeta" id="evaTarjeta"></div>
@@ -41,7 +45,14 @@ export function actualizarHUDEVA(e) {
   q('#evaO2n').textContent = o2 + '%';
   q('#evaRad').textContent = (Math.round(e.rad * 10) / 10) + ' mSv' + (e.llamarada ? ' ⚠️' : '');
   q('.eva-barra.rad').classList.toggle('peligro', e.llamarada);
-  for (const k in e.items) q('#evaIt-' + k).textContent = e.items[k];
+  for (const k in e.items) { const el = q('#evaIt-' + k); if (el) el.textContent = e.items[k]; }
+  if (planEVA && !planAvisado && e.items[planEVA.tipo] >= planEVA.cantidad) {
+    planAvisado = true;
+    q('#evaPlan').innerHTML = '✅ ¡Plan del sol listo! Vuelve a la base para entregarlo 🏠';
+    q('#evaPlan').classList.add('listo');
+    avisoEVA('✅ ¡Plan del sol completo! Vuelve a la base para cobrar el bono', true);
+    beep(1320, 0.15, 'triangle');
+  }
   q('#evaDist').textContent = e.distBase;
   q('#evaFlecha').style.transform = `rotate(${e.angBase}rad)`;
   q('#evaBase').classList.toggle('urgente', o2 < 35 || e.llamarada);
@@ -53,10 +64,11 @@ export function actualizarHUDEVA(e) {
   if (o2 < 30 && o2 > 28) avisoEVA('⚠️ ¡Queda poco oxígeno en el traje! Vuelve a la base 🏠');
 }
 
-export function avisoEVA(txt) {
+export function avisoEVA(txt, bueno = false) {
   if (!raiz) return;
   const el = raiz.querySelector('#evaAviso');
   el.textContent = txt; el.classList.add('visible');
+  el.classList.toggle('bueno', bueno);
   clearTimeout(avisoTimer);
   avisoTimer = setTimeout(() => el.classList.remove('visible'), 3500);
 }

@@ -43,6 +43,30 @@ export function renderRecursos(S) {
   if (!S.paneles) tags.push('🔽 Paneles plegados');
   $('#tags').innerHTML = tags.map(t => `<span>${t}</span>`).join('');
   $('#clima').innerHTML = `${CLIMA.real ? '🛰️' : '📚'} ${CLIMA.resumen}`;
+  renderPlan(S);
+}
+
+// Tarjeta "Plan del sol": objetivo opcional de recolección con su progreso
+export function renderPlan(S) {
+  const el = $('#planSol');
+  if (!el) return;
+  const p = S.plan;
+  if (!p) {
+    const motivo = enTormenta(S) ? '🌪️ Hoy no hay caminata: tormenta de polvo.'
+      : enConjuncion(S) ? '🌞 Sin plan: no hay contacto con la Tierra.'
+      : S.niveles.radio === 0 ? '📡 Sin plan: las comunicaciones están apagadas.' : '';
+    el.innerHTML = motivo ? `<div class="plan-tit">📋 Plan del sol</div><small>${motivo}</small>` : '';
+    el.classList.toggle('vacio', !motivo);
+    return;
+  }
+  const O = MISION.eva.objetos[p.tipo], hecho = Math.min(S.inventario.hoy[p.tipo], p.cantidad);
+  el.classList.remove('vacio');
+  el.classList.toggle('cumplido', p.cumplido);
+  el.innerHTML = `<div class="plan-tit">📋 Plan del sol ${p.cumplido ? '✅' : '<small>(opcional)</small>'}</div>
+    <div class="plan-obj">Trae <b>${p.cantidad} ${O.icono} ${O.nombre}</b></div>
+    <div class="plan-prog">${Array.from({ length: p.cantidad }, (_, i) => `<i class="${i < hecho ? 'on' : ''}">${O.icono}</i>`).join('')}
+      <span>${hecho}/${p.cantidad}</span></div>
+    <small>${p.cumplido ? '¡Cumplido! Bono recibido.' : `Bono: +${MISION.plan.bono.ciencia} ciencia y +${MISION.plan.bono.salud} salud · ${p.motivo}`}</small>`;
 }
 
 export function renderEnergia(S) {

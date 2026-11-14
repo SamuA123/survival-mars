@@ -289,3 +289,35 @@ body.modo-eva .capa-etiquetas .etiqueta { display: none !important; }
 .tj-cab b { font-size: 20px; }
 .eva-tarjeta p { margin: 8px 0 0; font-size: 14px; }
 .tj-uso { font-weight: 700; color: #1f6b3a; }
+
+/* ---------- Plan del sol e inventario ---------- */
+.plan-sol { background: var(--vidrio); border: 2px solid #5cc8ff; border-radius: 14px; padding: 8px 12px; max-width: 290px; font-size: 13px; backdrop-filter: blur(6px); }
+.plan-sol.vacio { display: none; }
+.plan-sol.cumplido { border-color: var(--verde); }
+.plan-sol small { color: var(--suave); display: block; }
+.plan-tit { font-weight: 900; color: var(--azul); }
+.plan-sol.cumplido .plan-tit { color: var(--verde); }
+.plan-obj { font-size: 15px; margin: 2px 0; }
+.plan-prog { display: flex; gap: 4px; align-items: center; margin: 4px 0; }
+.plan-prog i { font-style: normal; font-size: 20px; opacity: .3; filter: grayscale(1); }
+.plan-prog i.on { opacity: 1; filter: none; }
+.plan-prog span { margin-left: 6px; font-weight: 900; }
+.eva-item.objetivo { border: 2px solid var(--azul); }
+.eva-item small { margin-left: 2px; color: var(--azul); }
+.eva-plan { grid-column: 1 / -1; font-size: 14px; color: #b7e6ff; }
+.eva-plan.listo { color: var(--verde); font-weight: 900; animation: latido 1s infinite; }
+.recolectado { margin: 10px 0; padding: 10px 12px; border-radius: 12px; background: rgba(255,179,71,.1); border: 1px solid rgba(255,179,71,.4); font-size: 14px; }
+.plan-res { margin-top: 6px; font-size: 14px; color: var(--suave); }
+.plan-res.ok { color: #a9f3c3; }
+.final-inv { margin: 8px 0; font-size: 14px; }
+.inv-lista { display: grid; gap: 8px; margin: 10px 0; }
+.inv-fila { display: grid; grid-template-columns: 48px 1fr 56px 56px; gap: 10px; align-items: center; background: var(--vidrio2); border-left: 6px solid var(--c); border-radius: 12px; padding: 10px; }
+.inv-ic { font-size: 34px; text-align: center; }
+.inv-txt small { display: block; color: var(--suave); font-size: 12px; margin-top: 2px; }
+.inv-txt .inv-uso { color: #a9f3c3; }
+.inv-num { text-align: center; }
+.inv-num b { display: block; font-size: 24px; }
+.inv-num small { color: var(--suave); font-size: 11px; }
+.inv-extra { font-size: 14px; margin: 6px 0; }
+@media (max-width: 760px) { .inv-fila { grid-template-columns: 40px 1fr 44px 44px; } .plan-sol { max-width: 220px; } }
+.eva-aviso.bueno { background: rgba(30,140,70,.92); }
