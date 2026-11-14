@@ -17,6 +17,7 @@ import './ui/dificultad-ui.js';   // selector Cadete / Comandante en la pantalla
 import './ui/voz.js';             // narrador por voz (botones 🔈 y 🗣️)
 import './ui/ubicacion.js';       // 📍 resumen del lugar de la base + mapas de NASA Mars Trek
 import './ui/alerta-solar.js';    // ☀️ estado del Sol y alerta solar en vivo (NASA DONKI)
+import './ui/construccion.js';    // 🧱 modo construcción del blindaje por secciones (tecla B)
 import { t, idioma, setIdioma, aplicarEstaticos, onIdioma } from './ui/i18n.js';
 import { esDemo, aplicarDemo } from './sim/demostracion.js';
 import { LLAMARADAS_RESPALDO } from './data/donki.js';

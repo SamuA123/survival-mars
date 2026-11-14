@@ -261,14 +261,28 @@ export class Mundo {
       baliza.position.y = 5.9;
       const luzAlarma = new THREE.PointLight(C.rojo, 0, 25);
       luzAlarma.position.y = 6.4;
-      // Blindaje de regolito
-      const blindaje = new THREE.Mesh(
-        new THREE.SphereGeometry(4.9, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2),
-        std(C.regolito, { flatShading: true, roughness: 1 }));
-      blindaje.position.y = 1.3; blindaje.scale.set(1, 0.001, 1); blindaje.visible = false;
-      const pg = blindaje.geometry.attributes.position;
-      for (let i = 0; i < pg.count; i++) { const k = 1 + (hash(i, 3) - 0.5) * 0.12; pg.setXYZ(i, pg.getX(i) * k, pg.getY(i) * k, pg.getZ(i) * k); }
-      blindaje.geometry.computeVertexNormals();
+      // Blindaje de regolito POR SECCIONES (modo construcción): cada pieza aparece al construirla.
+      // En SphereGeometry, phi=π/2 apunta a +z (sur, lado de la puerta) y phi=3π/2 a -z (norte).
+      const matRegolito = std(C.regolito, { flatShading: true, roughness: 1 });
+      const pieza = (phi0, phiLen, th0, thLen) => {
+        const geo = new THREE.SphereGeometry(4.9, 12, 6, phi0, phiLen, th0, thLen);
+        const pg = geo.attributes.position;
+        for (let i = 0; i < pg.count; i++) { const k = 1 + (hash(i, phi0 * 7) - 0.5) * 0.12; pg.setXYZ(i, pg.getX(i) * k, pg.getY(i) * k, pg.getZ(i) * k); }
+        geo.computeVertexNormals();
+        const m = new THREE.Mesh(geo, matRegolito);
+        m.scale.setScalar(0.001); m.visible = false;
+        return m;
+      };
+      const PI = Math.PI, pared = [PI / 4, PI / 4];   // banda baja del domo
+      const blindaje = new THREE.Group();
+      blindaje.position.y = 1.3;
+      blindaje.userData.piezas = {
+        sur: [pieza(PI / 4, PI / 2, ...pared)],
+        norte: [pieza(5 * PI / 4, PI / 2, ...pared)],
+        lados: [pieza(3 * PI / 4, PI / 2, ...pared), pieza(-PI / 4, PI / 2, ...pared)],
+        techo: [pieza(0, 2 * PI, 0, PI / 4)],
+      };
+      Object.values(blindaje.userData.piezas).flat().forEach(m => blindaje.add(m));
       g.add(base, domo, anillo, puerta, baliza, luzAlarma, blindaje);
       this._sombra(g);
       this.ed.habitat = { g, ventanas, baliza, luzAlarma, blindaje, domo };
@@ -686,9 +700,15 @@ export class Mundo {
     // Hábitat
     const H = this.ed.habitat;
     H.ventanas.forEach(v => { v.material.emissiveIntensity = hayEnergia && S.niveles.vital > 0 ? 0.6 + noche * 2.2 : 0; });
-    const objBl = S.blindaje / 3;
-    H.blindaje.visible = S.blindaje > 0;
-    H.blindaje.scale.y = lerp(H.blindaje.scale.y, Math.max(0.001, objBl), 2);
+    // Cada sección construida "crece" en su lugar (modo construcción)
+    for (const [id, piezas] of Object.entries(H.blindaje.userData.piezas)) {
+      const hecha = !!S.secciones?.[id];
+      for (const m of piezas) {
+        const s = lerp(m.scale.x, hecha ? 1 : 0.001, 3);
+        m.scale.setScalar(s);
+        m.visible = s > 0.01;
+      }
+    }
     const alarmaOn = this.alarma > 0;
     const parpadeo = alarmaOn ? (Math.sin(this.t * 12) > 0 ? 1 : 0) : 0;
     H.baliza.material.emissiveIntensity = parpadeo * 3;
@@ -762,7 +782,10 @@ export class Mundo {
     const pips = (n, max) => '●'.repeat(n) + '○'.repeat(max - n);
     const en = document.documentElement.lang === 'en';   // el botón ES/EN cambia el idioma del documento
     const extra = {
-      habitat: `🫁 ${pips(S.niveles.vital, 3)}${S.blindaje ? ` · 🧱${S.blindaje}/3` : ''}`,
+      habitat: (() => {   // blindaje por secciones (modo construcción)
+        const sec = Object.values(S.secciones || {}), hechas = sec.filter(Boolean).length;
+        return `🫁 ${pips(S.niveles.vital, 3)}${hechas ? ` · 🧱${hechas}/${sec.length}` : ''}`;
+      })(),
       invernadero: `${pips(S.niveles.invernadero, 3)}${S.invSalud < 1 ? ' ⚠️' : ''}`,
       lab: pips(S.niveles.lab, 2),
       antena: conj ? (en ? '🌞 no signal' : '🌞 sin señal') : pips(S.niveles.radio, 2),
