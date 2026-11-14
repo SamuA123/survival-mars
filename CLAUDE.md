@@ -1,37 +1,45 @@
 # Survival Mars — NASA Space Apps 2026 (Junior Astronaut Mission Trainer)
 
-Juego isométrico 3D en el navegador para niños de 7-12 años: dirigir una base en Marte
+Juego isométrico 3D en el navegador para niños de 7 a 12 años: dirigir una base en Marte (cráter Jezero)
 balanceando energía, soporte vital, comida, blindaje contra radiación y retraso de comunicaciones.
-**Entrega: 15/11/2026.** Prioridad: que funcione y enseñe trade-offs reales con datos NASA.
+**Entrega: 15/11/2026.** Prioridad: que funcione y enseñe trade-offs reales con datos de la NASA.
+
+**Antes de trabajar, lee:**
+- `docs/RETO.md`: qué pide el reto, criterios de los jueces y recursos NASA oficiales.
+- `docs/PLAN.md`: decisiones tomadas, ramas, quién hace qué y lista de tareas.
 
 ## Tecnología
 - Three.js por import map desde CDN (sin npm, sin build). ES modules nativos.
-- Servir localmente: `python -m http.server 5500 --bind 127.0.0.1` (el puerto 8000 está bloqueado en esta PC).
+- Servir localmente: `python -m http.server 5500 --bind 127.0.0.1`. En la PC de Samuel el puerto 8000 está bloqueado.
 - Todo el texto del juego en español, lenguaje simple para niños.
 
-## Estructura y dueños (trabajo en paralelo — NO editar carpetas de otra sesión)
-| Carpeta | Contenido | Dueño |
+## Estructura y dueños (trabajo en paralelo: NO editar carpetas del otro)
+| Carpeta | Contenido | Rama / dueño |
 |---|---|---|
-| `src/sim/` | Simulación pura (sin DOM ni Three.js): estado, reglas, eventos | Sesión A |
-| `src/world3d/` | Escena Three.js isométrica, modelos procedurales, animaciones | Sesión A |
-| `src/ui/` | HUD, modales, emergencias | Sesión A |
-| `src/main.js`, `index.html`, `styles.css` | Arranque | Sesión A |
-| `src/data/` | Datos NASA con fuentes (radiación, OSDR, sitio, datos curiosos, DONKI) | Sesión B |
-| `docs/` | Documentación para jueces (`DATOS_NASA.md`), guion del video | Sesión B |
+| `src/sim/` | Simulación pura (sin DOM ni Three.js): `config.js` (balance), `motor.js` (reglas, eventos, acciones) | `samuel` |
+| `src/world3d/` | Escena Three.js isométrica (`mundo.js`) | `samuel` |
+| `src/ui/` | HUD, modales, sonido | `samuel` |
+| `src/main.js`, `index.html`, `styles.css` | Arranque y estilos | `samuel` |
+| `src/data/` | Datos NASA con fuentes | `jorge` |
+| `docs/`, `README.md` | Documentación para jueces, pitch, feedback | `jorge` |
 
-## Contratos de `src/data/` (no cambiar nombres de exports ni campos existentes; se pueden AGREGAR)
+## Contratos de `src/data/` (no renombrar exports ni campos existentes; sí se pueden AGREGAR)
 - `fuentes.js` → `FUENTES[clave] = { nombre, url, uso }`
 - `radiacion.js` → `RADIACION.marteSuperficie.valor`, `.llamarada[X|M|C|B|A]`, `.atenuacionAtmosfera`, `.atenuacionBlindaje`, `.limiteMision`
 - `salud.js` → `HALLAZGOS = [{ id, tema, texto, fuente, estudio, url }]` (tema: radiacion|comida|oxigeno|ejercicio|sueno)
 - `sitio.js` → `SITIO = { nombre, texto, tempMediaC, luzSolarRelativa, retrasoMin, ... }`
-- `datos-curiosos.js` → `DATOS[clave] = { texto, fuente }` (claves usadas por la sim: sol, oxigeno, agua, polvo, remolino, llamarada, radiacion, regolito, retraso, conjuncion, invernadero, nuclear, solar, meteorito, bateria, hielo, eva)
-- `donki.js` → `cargarClimaEspacial(): Promise<{ real, tranquilo, flares:[{clase, fecha}], riesgo, resumen }>`
+- `datos-curiosos.js` → `DATOS[clave] = { texto, fuente }` (claves que usa la simulación: sol, oxigeno, agua, polvo, remolino, llamarada, radiacion, regolito, retraso, conjuncion, invernadero, nuclear, solar, meteorito, bateria, hielo, eva)
+- `donki.js` → `cargarClimaEspacial(): Promise<{ real, tranquilo, flares:[{clase, fecha}], riesgo, resumen }>`, `LLAMARADAS_RESPALDO`, `NASA_API_KEY`
 
 ## Reglas del reto a respetar
 - Ninguna decisión gratis: todo tiene costo.
 - Pocos recursos principales (⚡ energía, 🫁 oxígeno, 🥔 comida, ☢️ radiación).
-- Atribuir fuentes dentro del juego; datos guardados NUNCA se presentan como "en vivo".
+- Atribuir fuentes dentro del juego; los datos guardados NUNCA se presentan como "en vivo".
 - Explicar términos (sol, mSv, radiación) en el momento.
 
+## Git
+- `main` estable; se trabaja en `samuel` o `jorge` y se integra por Pull Request.
+- Hacer commit solo de las carpetas propias.
+
 ## Prototipo anterior
-`prototipo-v1/` = versión 2D funcional (referencia de balance y eventos). No editar.
+`prototipo-v1/` = versión 2D (referencia de balance y eventos). No editar.
