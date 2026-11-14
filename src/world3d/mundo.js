@@ -60,7 +60,8 @@ export class Mundo {
   // ------------------------------------------------------------------
   _initRender() {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    this.movil = matchMedia('(pointer: coarse)').matches;   // celular o tablet: menos carga gráfica
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio, this.movil ? 1.5 : 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -115,7 +116,7 @@ export class Mundo {
     this.scene.add(this.hemi);
     this.sol = new THREE.DirectionalLight(0xfff1dc, 2.4);
     this.sol.castShadow = true;
-    this.sol.shadow.mapSize.set(2048, 2048);
+    this.sol.shadow.mapSize.setScalar(this.movil ? 1024 : 2048);
     Object.assign(this.sol.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 200 });
     this.sol.shadow.bias = -0.0005;
     this.scene.add(this.sol, this.sol.target);

@@ -26,8 +26,8 @@ export function mostrarHUDEVA(control, plan = null) {
     <div class="eva-base" id="evaBase"><span class="eva-flecha" id="evaFlecha">➤</span> 🏠 <b id="evaDist">0</b> m</div>
     <div class="eva-ayuda">⌨️ <b>WASD</b> o <b>flechas</b> para caminar · Busca 🟫 regolito, 🪨 rocas marcianas y 🧊 hielo de agua · <b>E</b> para entrar</div>
     <div class="eva-botones">
-      <button id="evaLimpiar" class="eva-btn oculto">🧹 Limpiar paneles (E)</button>
-      <button id="evaEntrar" class="eva-btn oculto">🏠 Entrar a la base (E)</button>
+      <button id="evaLimpiar" class="eva-btn oculto">🧹 Limpiar paneles<span class="tecla"> (E)</span></button>
+      <button id="evaEntrar" class="eva-btn oculto">🏠 Entrar a la base<span class="tecla"> (E)</span></button>
     </div>
     <div class="joystick" id="joy"><div class="joy-palo" id="joyPalo"></div></div>`;
   document.body.appendChild(raiz);
@@ -99,7 +99,7 @@ function activarJoystick(control) {
   let id = null, cx = 0, cy = 0;
   const R = 45;
   joy.addEventListener('pointerdown', e => {
-    id = e.pointerId; joy.setPointerCapture(id);
+    id = e.pointerId; try { joy.setPointerCapture(id); } catch { /* algunos navegadores */ }
     const r = joy.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2;
     mover(e);
   });
