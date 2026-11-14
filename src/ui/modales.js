@@ -1,9 +1,10 @@
 // Modales: inicio, emergencias con cuenta regresiva, resumen del sol, final y fuentes NASA.
 import { MISION, RECURSOS } from '../sim/config.js';
-import { pedirAyuda, r1, CLIMA } from '../sim/motor.js';
+import { pedirAyuda, r1, CLIMA, enTormenta, enConjuncion } from '../sim/motor.js';
 import { DATOS } from '../data/datos-curiosos.js';
 import { FUENTES } from '../data/fuentes.js';
 import { SITIO } from '../data/sitio.js';
+import { RADIACION } from '../data/radiacion.js';
 import { beep } from './sonido.js';
 
 const $ = s => document.querySelector(s);
@@ -17,6 +18,12 @@ export function abrir(html, clase = '') {
 export const cerrar = () => $('#modal').classList.add('oculto');
 
 const fuenteChip = clave => FUENTES[clave] ? `<a class="fuente" href="${FUENTES[clave].url}" target="_blank" rel="noopener">Fuente: ${FUENTES[clave].nombre}</a>` : '';
+const estudioChip = h => h.url ? `<a class="fuente" href="${h.url}" target="_blank" rel="noopener">Estudio NASA ${h.estudio || 'OSDR'} ↗</a>` : fuenteChip(h.fuente);
+
+// El clima carga después de abrir la pantalla de inicio: main.js llama a esto cuando llega DONKI.
+const textoClima = () => `${CLIMA.real ? '🛰️' : '📚'} <b>Clima espacial:</b> ${CLIMA.resumen}<br>
+  <small>Datos de NASA DONKI. ¡La actividad real del Sol cambia qué tan arriesgada es tu misión!</small>`;
+export function refrescarClimaInicio() { const el = document.querySelector('#climaInicio'); if (el) el.innerHTML = textoClima(); }
 
 // ------------------------------------------------------------------
 export function pantallaInicio() {
@@ -35,8 +42,7 @@ export function pantallaInicio() {
           <div>⚖️<b>Nada es gratis</b><small>todo cuesta energía, oxígeno o radiación</small></div>
           <div>⏱️<b>10 segundos</b><small>para decidir en una emergencia</small></div>
         </div>
-        <div class="clima-box">${CLIMA.real ? '🛰️' : '📚'} <b>Clima espacial:</b> ${CLIMA.resumen}<br>
-          <small>Datos de NASA DONKI. ¡La actividad real del Sol cambia qué tan arriesgada es tu misión!</small></div>
+        <div class="clima-box" id="climaInicio">${textoClima()}</div>
         <button class="btn-grande" id="btnEmpezar">¡Comenzar misión! 🚀</button>
         <p class="controles">🖱️ Arrastra para moverte · Rueda para zoom · Clic derecho para girar</p>
       </div>`, 'ancho');
@@ -97,20 +103,25 @@ export function mostrarEvento(S, ev) {
 // ------------------------------------------------------------------
 export function mostrarResumen(S, antes, r, fin) {
   return new Promise(res => {
+    // Solo se muestra lo que cambió: un niño no necesita leer seis "＝".
     const filas = [...RECURSOS, { id: 'ciencia', nombre: 'Ciencia', icono: '🔬' }].map(rc => {
       const d = r1(S[rc.id] - antes[rc.id]);
-      const bueno = rc.inverso ? d <= 0 : d >= 0;
-      return `<div class="delta ${d === 0 ? '' : bueno ? 'bien' : 'mal'}"><span>${rc.icono} ${rc.nombre}</span><b>${d === 0 ? '＝' : d > 0 ? '▲ +' + d : '▼ ' + d}</b></div>`;
+      if (d === 0) return '';
+      const bueno = rc.inverso ? d < 0 : d > 0;
+      return `<div class="delta ${bueno ? 'bien' : 'mal'}">${rc.icono}<b>${d > 0 ? '+' + d : d}</b></div>`;
     }).join('');
+    // Una sola tarjeta de aprendizaje: si hay un estudio real relacionado, gana al dato curioso.
     const dato = r.dato && DATOS[r.dato];
+    const aprende = r.hallazgo
+      ? `<div class="dato salud">🧬 <b>Ciencia real:</b> ${r.hallazgo.texto} ${estudioChip(r.hallazgo)}</div>`
+      : dato ? `<div class="dato">💡 <b>¿Sabías que…?</b> ${dato.texto} ${fuenteChip(dato.fuente)}</div>` : '';
     const boton = fin ? (fin.gano ? '¡Llegó la nave de relevo! 🚀' : 'Ver qué pasó…') : 'Siguiente sol ▶';
     abrir(`
-      <h2>🌅 Amanece el Sol ${S.sol + (fin ? 0 : 1)} — resumen del Sol ${S.sol}</h2>
-      <div class="deltas">${filas}</div>
+      <h2>🌅 Resumen del sol ${S.sol}</h2>
+      ${filas ? `<div class="deltas">${filas}</div>` : ''}
       ${r.lineas.length ? `<ul class="lineas">${r.lineas.map(l => `<li>${l}</li>`).join('')}</ul>` : '<p class="tranqui">Un sol tranquilo. ¡Todo funcionó!</p>'}
       ${bloqueRecolectado(r)}
-      ${r.hallazgo ? `<div class="dato salud">🧬 <b>Lo que dice la ciencia real:</b> ${r.hallazgo.texto} ${fuenteChip(r.hallazgo.fuente)}</div>` : ''}
-      ${dato ? `<div class="dato">💡 <b>¿Sabías que…?</b> ${dato.texto} ${fuenteChip(dato.fuente)}</div>` : ''}
+      ${aprende}
       <button class="btn-grande" id="btnSig">${boton}</button>`);
     $('#btnSig').onclick = () => { cerrar(); res(); };
   });
@@ -174,39 +185,70 @@ function bloqueRecolectado(r) {
       ? `<div class="plan-res ok">📋 Plan del sol: ${p.cantidad} ${o.icono} ${o.nombre} → ✅ <b>¡Cumplido!</b> Bono recibido.</div>`
       : `<div class="plan-res">📋 Plan del sol: ${p.cantidad} ${o.icono} ${o.nombre} → trajiste ${p.logrado}. No pasa nada: mañana habrá otro plan. 🙂</div>`;
   }
-  if (!total && !plan) return '';
+  // Si no salió a explorar, no se le recuerda cada sol lo que no hizo: el pedido era opcional.
+  if (!total && !p?.cumplido) return '';
   return `<div class="recolectado"><b>🎒 Recolectado hoy:</b> ${total ? filasInventario(r.recolectado) : 'nada (no saliste o volviste con las manos vacías)'}${plan}</div>`;
 }
 
-export function panelInventario(S) {
-  const filas = Object.entries(OBJ).map(([k, o]) => `
-    <div class="inv-fila" style="--c:${o.color}">
-      <span class="inv-ic">${o.icono}</span>
-      <div class="inv-txt"><b>${o.nombre}</b><small>${o.que}</small><small class="inv-uso">✅ ${o.uso}</small></div>
-      <div class="inv-num"><b>${S.inventario.hoy[k]}</b><small>hoy</small></div>
-      <div class="inv-num"><b>${S.inventario.total[k]}</b><small>misión</small></div>
-    </div>`).join('');
+// Tarea del día: el pedido de Control de Misión, por qué lo pide y qué es lo que hay que traer (dato real).
+export function panelTarea(S) {
   const p = S.plan, o = p && OBJ[p.tipo];
+  const sinTarea = enTormenta(S) ? '🌪️ Hoy no hay tarea: con tormenta de polvo nadie puede salir.'
+    : enConjuncion(S) ? '🌞 El Sol está entre Marte y la Tierra: hoy no llegó ningún mensaje.'
+    : S.niveles.radio === 0 ? '📡 Control de Misión envió una tarea… pero la antena está apagada. Enciéndela en la consola.'
+    : 'Hoy no hay tarea.';
+  let cuerpo;
+  if (!p) cuerpo = `<p class="tarea-motivo">${sinTarea}</p>`;
+  else {
+    const hecho = Math.min(S.inventario.hoy[p.tipo], p.cantidad);
+    cuerpo = `
+      <p class="tarea-de">📡 Control de Misión <small>(mensaje con ${MISION.delayMin} min de retraso)</small></p>
+      <div class="tarea-pedido" style="--c:${o.color}">
+        <span class="tarea-ic">${o.icono}</span>
+        <div><b>Trae ${p.cantidad} ${o.nombre.toLowerCase()}</b><small>${p.motivo}</small></div>
+        <div class="tarea-prog">${Array.from({ length: p.cantidad }, (_, i) => `<i class="${i < hecho ? 'on' : ''}">${o.icono}</i>`).join('')}</div>
+      </div>
+      <p class="tarea-que"><b>¿Qué es?</b> ${o.que}</p>
+      <p class="tarea-que"><b>¿Para qué sirve?</b> ${o.uso}</p>
+      ${p.cumplido
+        ? '<p class="plan-res ok">✅ ¡Cumplida! La tripulación recibió el premio.</p>'
+        : `<p class="plan-res">Es opcional. Premio: +${MISION.plan.bono.ciencia} ciencia y +${MISION.plan.bono.salud} salud. Pero salir cuesta oxígeno y radiación: tú decides si vale la pena.</p>`}`;
+  }
   abrir(`
-    <h2>🎒 Inventario de Marte</h2>
-    <p class="tranqui">Lo que tu tripulación recolectó en las caminatas espaciales. Cada cosa se usa enseguida en la base.</p>
-    <div class="inv-lista">${filas}</div>
-    <div class="inv-extra">🟫 Regolito guardado para el próximo nivel de blindaje: <b>${S.regolito}/${MISION.eva.regolitoPorNivel}</b> · Blindaje: <b>${S.blindaje}/3</b></div>
-    ${p ? `<div class="plan-res ${p.cumplido ? 'ok' : ''}">📋 <b>Plan de hoy:</b> trae ${p.cantidad} ${o.icono} ${o.nombre} (${Math.min(S.inventario.hoy[p.tipo], p.cantidad)}/${p.cantidad}) ${p.cumplido ? '✅' : '— opcional, da bono'}</div>` : ''}
-    <div class="inv-extra">📋 Planes del sol cumplidos: <b>${S.planesCumplidos}</b> de ${S.planesEnviados}</div>
-    <button class="btn-grande" id="btnCerrarInv">Volver a la base</button>`, 'ancho');
-  $('#btnCerrarInv').onclick = cerrar;
+    <div class="monitor-cab"><span class="led"></span>Tarea del día · Sol ${S.sol}</div>
+    ${cuerpo}
+    <div class="tarea-mision">Tareas cumplidas en la misión: <b>${S.planesCumplidos}</b> de ${S.planesEnviados}</div>
+    <button class="btn-grande" id="btnCerrarTarea">Entendido</button>`, 'monitor');
+  $('#btnCerrarTarea').onclick = cerrar;
 }
 
+// ¿Qué es real? Cada fuente lleva un sello que dice qué papel juega: cambia la partida, la explica, o es del juego.
 export function panelDatos() {
-  const llamaradas = (CLIMA.flares || []).slice(0, 6).map(f => `<li><b>${f.clase}</b> — ${f.fecha}</li>`).join('');
+  const vivo = CLIMA.real && !CLIMA.tranquilo;
+  const llamaradas = (CLIMA.flares || []).slice(0, 6).map(f => `<li><b>${f.clase}</b> · ${f.fecha}</li>`).join('');
+  const sello = (estampa, clase, titulo, texto, url) => `
+    <${url ? `a href="${url}" target="_blank" rel="noopener"` : 'div'} class="sello">
+      <span class="estampa ${clase}">${estampa}</span><div><b>${titulo}</b><small>${texto}</small></div></${url ? 'a' : 'div'}>`;
+  const R = RADIACION, max = R.marteSuperficie.valor;
+  const barra = (nombre, v, txt) => `<div><span>${nombre}</span><div class="barra"><div style="width:${Math.max(1.5, v / max * 100)}%"></div></div><b>${txt}</b></div>`;
+  const mecanicas = Object.entries(FUENTES).filter(([, f]) => f.papel === 'mecanica');
+  const textos = Object.entries(FUENTES).filter(([, f]) => f.papel !== 'mecanica');
   abrir(`
-    <h2>📡 Datos reales de la NASA en este juego</h2>
-    <div class="clima-box">${CLIMA.real ? '🛰️ <b>EN VIVO</b>' : '📚 <b>ARCHIVO HISTÓRICO</b> (sin conexión)'} — ${CLIMA.resumen}
-      <ul class="flares">${llamaradas}</ul></div>
-    <div class="fuentes">${Object.values(FUENTES).map(f => `
-      <a class="fuente-card" href="${f.url}" target="_blank" rel="noopener"><b>${f.nombre}</b><small>${f.uso}</small></a>`).join('')}</div>
-    <p class="tranqui">Los números del juego están simplificados para que sean fáciles de entender, pero se basan en estas mediciones reales.</p>
+    <h2>¿Qué es real en este juego?</h2>
+    <p class="real-intro">Tú inventas las decisiones. La NASA pone las reglas del mundo.</p>
+    <div class="sellos">
+      ${sello(vivo ? 'EN VIVO' : 'HISTÓRICO', vivo ? 'vivo' : 'mecanica', 'Las llamaradas solares de tu partida',
+        `${CLIMA.resumen}.${vivo ? '' : ' Son llamaradas que de verdad ocurrieron, guardadas en el juego.'}<ul class="flares">${llamaradas}</ul>`, FUENTES.donki.url)}
+      ${mecanicas.filter(([k]) => k !== 'donki').map(([, f]) => sello('CAMBIA TU PARTIDA', 'mecanica', f.nombre, f.uso, f.url)).join('')}
+      ${sello('COMPARA', 'texto', 'Radiación en un día', `
+        <div class="comparar">
+          ${barra('Marte (Curiosity)', R.marteSuperficie.valor, '0,67 mSv')}
+          ${barra('Tierra', R.tierra.valor, '0,007 mSv')}
+        </div>${R.estacionEspacial.texto}`, FUENTES.radlab.url)}
+      ${textos.filter(([k]) => k !== 'radlab').map(([, f]) => sello('TE LO EXPLICA', 'texto', f.nombre, f.uso, f.url)).join('')}
+      ${sello('DEL JUEGO', 'juego', 'Números simplificados',
+        `Cuánta radiación da cada llamarada, cuánto protege el regolito y el límite de ${R.limiteMision} mSv de esta misión son números del juego, para que se entienda rápido. En la vida real, la NASA permite como máximo ${R.limiteCarreraNASA.valor} mSv en toda la carrera de un astronauta.`)}
+    </div>
     <button class="btn-grande" id="btnCerrarDatos">Volver a la base</button>`, 'ancho');
   $('#btnCerrarDatos').onclick = cerrar;
 }

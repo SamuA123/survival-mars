@@ -6,7 +6,7 @@
   <title>Survival Mars</title>
   <meta name="description" content="Entrenador de Misiones para Astronautas Junior — NASA Space Apps Challenge 2026">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lilita+One&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script type="importmap">
     {
@@ -21,22 +21,20 @@
   <div id="mundo"></div>
 
   <header class="hud-top">
-    <div class="marca">🔴 <b>Survival Mars</b><small>Cráter Jezero</small></div>
-    <div class="sol" id="sol">Sol 1</div>
-    <div class="recursos" id="recursos"></div>
-    <div class="botones-top">
-      <button id="btnInventario" class="chip-btn" title="Lo que recolectaste en Marte">🎒 Inventario</button>
-      <button id="btnDatos" class="chip-btn" title="Datos de la NASA usados">📡 Datos NASA</button>
-      <button id="btnAyudaTuto" class="chip-btn" title="Ver el tutorial otra vez">❓</button>
-      <button id="btnSonido" class="chip-btn" title="Sonido">🔊</button>
+    <div class="tablero">
+      <div class="mision" id="sol"></div>
+      <div class="recursos" id="recursos"></div>
     </div>
   </header>
 
-  <div class="sub-top">
-    <div class="clima" id="clima">☀️ Clima espacial: cargando…</div>
-    <div class="tags" id="tags"></div>
-    <div class="plan-sol" id="planSol"></div>
-  </div>
+  <nav class="botones-top">
+    <button id="btnTarea" class="tarea-btn" title="Lo que pide hoy Control de Misión"></button>
+    <button id="btnDatos" class="chip-btn nasa" title="¿Qué es real en este juego?">NASA</button>
+    <button id="btnAyudaTuto" class="chip-btn" title="Ver el tutorial otra vez" aria-label="Tutorial">❓</button>
+    <button id="btnSonido" class="chip-btn" title="Sonido" aria-label="Sonido">🔊</button>
+  </nav>
+
+  <div class="tags" id="tags"></div>
 
   <aside class="panel" id="panel"></aside>
 
@@ -46,6 +44,7 @@
   </section>
 
   <footer class="hud-bottom">
+    <button class="btn-base" id="btnBase">🖥️ Control base</button>
     <div class="energia" id="energia"></div>
     <button class="btn-sol" id="btnSol">Terminar el Sol 🌙</button>
   </footer>
