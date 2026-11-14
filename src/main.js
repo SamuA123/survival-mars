@@ -135,7 +135,7 @@ async function nuevaPartida() {
   const nombre = await pantallaInicio();
   S = crearPartida(nombre);
   iniciarRegistro(S);
-  S.log.unshift({ sol: 1, texto: `🚀 Comandante <b>${nombre.replace(/[<>&]/g, '')}</b> al mando de la base en el cráter Jezero.`, tipo: 'tierra' });
+  S.log.unshift({ sol: 1, texto: `🚀 Comandante <b>${nombre.replace(/[<>&]/g, '')}</b> al mando de la base en la meseta NE Syrtis.`, tipo: 'tierra' });
   iniciarSol(S);
   ocupado = false;
   refrescar();

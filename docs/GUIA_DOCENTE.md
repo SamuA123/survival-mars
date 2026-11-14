@@ -1,7 +1,7 @@
 # Guía para docentes — Survival Mars
 
-**Survival Mars** es un juego gratuito en el navegador (sin descargas ni cuentas) donde los estudiantes dirigen una base en el
-cráter Jezero, en Marte. Sirve para una clase de **45 a 60 minutos** de ciencias, tecnología o pensamiento sistémico.
+**Survival Mars** es un juego gratuito en el navegador (sin descargas ni cuentas) donde los estudiantes dirigen una base en la
+meseta NE Syrtis, al borde de la cuenca Isidis, en Marte. Sirve para una clase de **45 a 60 minutos** de ciencias, tecnología o pensamiento sistémico.
 
 🔗 https://survival-mars.pages.dev · Edad: 7 a 12 años · Funciona en computadoras, tabletas y celulares
 

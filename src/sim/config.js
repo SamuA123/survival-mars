@@ -44,7 +44,7 @@ export const MISION = {
       },
       roca: {
         nombre: 'Roca marciana', icono: '🪨', color: '#b06cff',
-        que: 'Muchas rocas de Marte son basalto, de volcanes antiguos. En el cráter Jezero, el rover Perseverance guarda muestras de rocas para buscar señales de vida antigua.',
+        que: 'Muchas rocas de Marte son basalto, de volcanes antiguos. En NE Syrtis hay rocas con olivino que el agua transformó en carbonato: pistas de que hubo agua y quizás vida antigua.',
         uso: 'Ciencia: el laboratorio la analiza → +6 de ciencia.',
       },
       hielo: {
