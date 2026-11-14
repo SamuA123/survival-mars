@@ -73,6 +73,7 @@ Buscados con la API de OSDR (`https://osdr.nasa.gov/osdr/data/search`). Cada tar
 | Retraso de 4–24 min | https://www.nasa.gov/hrp/hazard-distance-from-earth/ |
 | Reactores Fission Surface Power | https://www.nasa.gov/exploration-systems-development-mission-directorate/fission-surface-power/ |
 | Veggie (lechugas, kale, zinnias) | https://www.nasa.gov/exploration-research-and-technology/growing-plants-in-space/ |
+| Comparador del informe final: 1 radiografía de pecho ≈ 0,1 mSv | FDA / RadiologyInfo.org (referencia médica, no NASA) |
 
 ## 3. Simplificaciones (honestas)
 Para que un niño de 7 años entienda el trade-off, algunos números son simplificados. Los anotamos para que se puedan verificar:
