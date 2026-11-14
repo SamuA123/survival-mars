@@ -18,6 +18,17 @@ export const MISION = {
   repuestos: 2,
   botiquin: 1,
   metaCiencia: 40,            // puntos de ciencia para la 2ª estrella
+  // Caminata espacial (EVA) controlada por el jugador: 1 por sol
+  eva: {
+    costoO2Base: 3,           // llenar el tanque del traje gasta oxígeno de la base
+    costoBateria: 1,          // cargar el traje
+    o2TrajePorSeg: 1.2,       // el tanque del traje dura ~80 s
+    radPorSeg: 0.04,          // mSv por segundo afuera (simplificado)
+    multLlamarada: 6,         // si llega una llamarada durante la caminata
+    saludRescate: 15,         // si se acaba el oxígeno del traje
+    valores: { hielo: 8, roca: 6, regolito: 1, pieza: 1 },  // +O2, +ciencia, +bolsas, +repuestos
+    regolitoPorNivel: 2,      // bolsas de regolito para subir 1 nivel de blindaje
+  },
   guion: { 2: 'llamarada', 4: 'reciclador', 6: 'tormenta', 9: 'remolino', 12: 'llamarada' },
   avisos: {
     1: ['¡Bienvenida, tripulación! Cada mensaje tarda unos 12 minutos en llegar. En una emergencia, ustedes deciden.',

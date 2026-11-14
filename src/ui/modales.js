@@ -116,6 +116,20 @@ export function mostrarResumen(S, antes, r, fin) {
 }
 
 // ------------------------------------------------------------------
+export function mostrarResumenEVA(res, lineas) {
+  return new Promise(ok => {
+    abrir(`
+      <div class="ev-cab"><div class="ev-icono">${res.rescate ? '🆘' : '🧑‍🚀'}</div>
+        <h2>${res.rescate ? '¡Rescate!' : '¡De vuelta en la base!'}</h2></div>
+      <ul class="lineas">${lineas.map(l => `<li>${l}</li>`).join('')}</ul>
+      <div class="dato">💡 <b>¿Sabías que…?</b> ${DATOS.eva.texto} En Marte, cada minuto afuera es una decisión:
+        más tiempo = más descubrimientos, pero también más radiación y menos oxígeno. ${fuenteChip(DATOS.eva.fuente)}</div>
+      <button class="btn-grande" id="btnEvaOk">Continuar ▶</button>`);
+    $('#btnEvaOk').onclick = () => { cerrar(); ok(); };
+  });
+}
+
+// ------------------------------------------------------------------
 export function pantallaFinal(S, fin) {
   return new Promise(res => {
     const aprendidos = S.aprendidos.map(k => `<li>${DATOS[k].texto}</li>`).join('');

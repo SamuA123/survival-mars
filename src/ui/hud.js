@@ -6,7 +6,7 @@ const $ = s => document.querySelector(s);
 
 // Información de cada edificio para el panel lateral
 export const EDIF = {
-  habitat: { nombre: 'Hábitat', icono: '🏠', sistema: 'vital', acciones: ['blindaje'],
+  habitat: { nombre: 'Hábitat', icono: '🏠', sistema: 'vital', acciones: ['eva', 'blindaje'],
     info: 'Aquí viven y duermen los 4 astronautas. Es el refugio cuando hay radiación peligrosa.' },
   invernadero: { nombre: 'Invernadero', icono: '🌱', sistema: 'invernadero', acciones: ['reparar'],
     info: 'Las plantas crecen con luces LED especiales. Cada sol la tripulación come 5 de comida.' },
@@ -20,8 +20,8 @@ export const EDIF = {
     info: 'Guardan la energía que sobra. Si la batería llega a 0 hay un apagón y los sistemas se apagan solos.' },
   reactor: { nombre: 'Mini reactor nuclear', icono: '⚛️', sistema: null, acciones: [],
     info: 'Da poca energía, pero siempre: de día, de noche y en tormentas. Está lejos de la base por seguridad.' },
-  rover: { nombre: 'Rover explorador', icono: '🚙', sistema: null, acciones: ['expedicion'],
-    info: 'Lleva a un astronauta a estudiar rocas lejanas. ¡Mucha ciencia, pero afuera hay más radiación!' },
+  rover: { nombre: 'Rover explorador', icono: '🚙', sistema: null, acciones: ['eva'],
+    info: 'Las rocas más valiosas están lejos de la base. ¡Pero cuanto más lejos vas, más oxígeno del traje gastas y más radiación recibes!' },
 };
 
 export function renderRecursos(S) {

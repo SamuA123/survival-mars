@@ -227,3 +227,47 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .tuto-pie { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; font-size: 13px; color: #8a6a5a; }
 .tuto-saltar { background: none; border: 0; color: #8a6a5a; text-decoration: underline; font-size: 13px; }
 .tuto-sig { background: var(--marte); color: #fff; border: 0; border-radius: 12px; padding: 8px 14px; font-weight: 900; font-size: 15px; }
+
+/* ---------- Caminata espacial (EVA) ---------- */
+body.modo-eva .panel, body.modo-eva .hud-bottom, body.modo-eva .bitacora, body.modo-eva .sub-top,
+body.modo-eva .capa-etiquetas .etiqueta { display: none !important; }
+#evaHud { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+#evaHud > * { pointer-events: auto; }
+.eva-top {
+  position: absolute; top: 86px; left: 50%; transform: translateX(-50%); width: min(620px, calc(100% - 20px));
+  display: grid; grid-template-columns: auto 1fr auto; gap: 6px 14px; align-items: center;
+  background: var(--vidrio); border: 2px solid var(--azul); border-radius: 18px; padding: 10px 16px; backdrop-filter: blur(6px);
+}
+.eva-tit { grid-column: 1 / -1; font-weight: 900; font-size: 18px; color: var(--azul); }
+.eva-barra { display: contents; font-size: 14px; }
+.eva-barra .barra { height: 14px; }
+.eva-barra .barra > div { background: var(--azul); }
+.eva-barra .barra > div.medio { background: var(--acento); }
+.eva-barra .barra > div.peligro { background: var(--rojo); animation: latido .6s infinite; }
+.eva-barra.rad b { grid-column: 2 / -1; }
+.eva-barra.rad.peligro b { color: var(--rojo); animation: latido .6s infinite; }
+.eva-items { grid-column: 1 / -1; display: flex; gap: 14px; font-size: 18px; }
+.eva-aviso {
+  position: absolute; top: 250px; left: 50%; transform: translateX(-50%) scale(.9); opacity: 0; transition: all .25s;
+  background: rgba(160,20,10,.92); padding: 12px 20px; border-radius: 16px; font-size: 20px; font-weight: 900; text-align: center; max-width: 90%;
+}
+.eva-aviso.visible { opacity: 1; transform: translateX(-50%) scale(1); }
+.eva-base {
+  position: absolute; top: 86px; right: 14px; background: var(--vidrio); border: 1px solid var(--borde); border-radius: 999px;
+  padding: 8px 16px; font-size: 18px; font-weight: 700; display: flex; gap: 8px; align-items: center;
+}
+.eva-base.urgente { border-color: var(--rojo); animation: latido .8s infinite; }
+.eva-flecha { display: inline-block; color: var(--acento); font-size: 22px; transition: transform .1s; }
+.eva-ayuda { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); background: var(--vidrio); border-radius: 999px; padding: 6px 16px; font-size: 13px; color: var(--suave); white-space: nowrap; }
+.eva-botones { position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
+.eva-btn { border: 0; border-radius: 16px; padding: 14px 24px; font-size: 20px; font-weight: 900; color: #fff;
+  background: linear-gradient(180deg, #4cb8f0, #1f7fc0); box-shadow: 0 5px 0 #0f4f7a; animation: entra .2s; }
+.eva-btn.oculto { display: none; }
+.joystick { position: absolute; left: 24px; bottom: 24px; width: 120px; height: 120px; border-radius: 50%;
+  background: rgba(255,255,255,.08); border: 2px solid rgba(255,255,255,.25); touch-action: none; display: none; }
+.joy-palo { position: absolute; left: 35px; top: 35px; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.55); }
+@media (pointer: coarse), (max-width: 760px) { .joystick { display: block; } .eva-ayuda { display: none; } }
+.obj-eva { font-size: 20px; background: rgba(20,8,4,.7); border: 2px solid #ffd25c; border-radius: 50%; width: 36px; height: 36px; display: grid; place-items: center; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); animation: flotar 1.5s ease-in-out infinite; }
+@keyframes flotar { 50% { transform: translateY(-5px); } }
+.popup-eva { font-size: 26px; font-weight: 900; color: #fff; text-shadow: 0 2px 6px #000; animation: subir 1.2s ease-out forwards; }
+@keyframes subir { to { transform: translateY(-50px); opacity: 0; } }
