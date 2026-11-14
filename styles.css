@@ -267,7 +267,25 @@ body.modo-eva .capa-etiquetas .etiqueta { display: none !important; }
   background: rgba(255,255,255,.08); border: 2px solid rgba(255,255,255,.25); touch-action: none; display: none; }
 .joy-palo { position: absolute; left: 35px; top: 35px; width: 50px; height: 50px; border-radius: 50%; background: rgba(255,255,255,.55); }
 @media (pointer: coarse), (max-width: 760px) { .joystick { display: block; } .eva-ayuda { display: none; } }
-.obj-eva { font-size: 20px; background: rgba(20,8,4,.7); border: 2px solid #ffd25c; border-radius: 50%; width: 36px; height: 36px; display: grid; place-items: center; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); animation: flotar 1.5s ease-in-out infinite; }
+.obj-eva { display: flex; align-items: center; gap: 4px; background: rgba(20,8,4,.75); border: 2px solid var(--c, #ffd25c); border-radius: 999px; padding: 2px 6px 2px 2px; font-size: 13px; font-weight: 900; white-space: nowrap; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
+.obj-ic { animation: flotar 1.5s ease-in-out infinite; font-size: 20px; width: 30px; height: 30px; display: grid; place-items: center; }
+.obj-nom { display: none; color: #fff; padding-right: 6px; }
+.obj-eva.cerca .obj-nom { display: inline; }
 @keyframes flotar { 50% { transform: translateY(-5px); } }
-.popup-eva { font-size: 26px; font-weight: 900; color: #fff; text-shadow: 0 2px 6px #000; animation: subir 1.2s ease-out forwards; }
+.popup-eva { font-size: 22px; font-weight: 900; color: #fff; text-shadow: 0 2px 6px #000; white-space: nowrap; }
+.popup-eva > span { display: inline-block; animation: subir 1.2s ease-out forwards; }
 @keyframes subir { to { transform: translateY(-50px); opacity: 0; } }
+.eva-items { flex-wrap: wrap; font-size: 15px !important; gap: 8px !important; }
+.eva-item { background: var(--vidrio2); border-radius: 999px; padding: 3px 10px; }
+.eva-tarjeta {
+  position: absolute; left: 14px; top: 260px; width: min(340px, calc(100% - 28px));
+  background: #fff7ef; color: #2b140c; border-radius: 18px; padding: 12px 14px; border-left: 8px solid var(--c, #ffd25c);
+  box-shadow: 0 10px 30px rgba(0,0,0,.45); transform: translateX(-120%); transition: transform .35s ease-out;
+}
+.eva-tarjeta.visible { transform: translateX(0); }
+.tj-cab { display: flex; gap: 10px; align-items: center; }
+.tj-ic { font-size: 40px; }
+.tj-cab small { display: block; color: #8a6a5a; font-size: 12px; }
+.tj-cab b { font-size: 20px; }
+.eva-tarjeta p { margin: 8px 0 0; font-size: 14px; }
+.tj-uso { font-weight: 700; color: #1f6b3a; }

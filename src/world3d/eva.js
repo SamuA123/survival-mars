@@ -6,19 +6,22 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { alturaSuelo } from './terreno.js';
+import { MISION } from '../sim/config.js';
 
 export const PUERTA = new THREE.Vector3(0, 0, 6.4);
 const PANELES = new THREE.Vector3(-13, 0, 4);
 const RADIO_MAX = 76;
 const VELOCIDAD = 7.5;
 
-// Lo más valioso está más lejos de la base → hay que arriesgar más
+// Lo más valioso está más lejos de la base → hay que arriesgar más.
+// Nombre, ícono, color y explicación vienen de MISION.eva.objetos (src/sim/config.js).
+const O = MISION.eva.objetos;
 export const TIPOS = {
-  regolito: { icono: '🟫', nombre: 'Regolito', color: 0xa0522d, rMin: 15, rMax: 30, n: 3 },
-  hielo:    { icono: '🧊', nombre: 'Hielo', color: 0x9be7ff, rMin: 24, rMax: 48, n: 3 },
-  roca:     { icono: '🪨', nombre: 'Roca rara', color: 0xb06cff, rMin: 34, rMax: 66, n: 3 },
-  pieza:    { icono: '🔩', nombre: 'Pieza de sonda', color: 0xcfd6e0, rMin: 52, rMax: 70, n: 1 },
+  regolito: { ...O.regolito, hex: 0xff8a3d, rMin: 14, rMax: 30, n: 4 },
+  hielo:    { ...O.hielo,    hex: 0x9be7ff, rMin: 24, rMax: 50, n: 3 },
+  roca:     { ...O.roca,     hex: 0xb06cff, rMin: 34, rMax: 68, n: 3 },
 };
+const DIST_NOMBRE = 16;   // a esta distancia se muestra el nombre del objeto
 
 // Zonas ocupadas por edificios (para no poner objetos encima)
 const OCUPADO = [[0, 0, 7], [10, 1, 6], [-3, -9, 6], [-13, 4, 9], [6, -8, 4], [-13, 15, 4], [17, -14, 5], [8, 10, 4]];
@@ -44,7 +47,7 @@ export class ControlEVA {
     const m = this.m;
     this.cfg = cfg;
     this.t = 0; this.o2 = 100; this.rad = 0; this.salio = false; this.limpio = false; this.terminado = false;
-    this.items = { hielo: 0, roca: 0, regolito: 0, pieza: 0 };
+    this.items = { regolito: 0, roca: 0, hielo: 0 };
     this.huellas = []; this.ultHuella = null;
 
     // Llamarada sorpresa durante la caminata (más probable si el Sol real está activo)
@@ -63,8 +66,7 @@ export class ControlEVA {
     // Objetos para recolectar
     this.objetos = [];
     for (const [tipo, T] of Object.entries(TIPOS)) {
-      const n = tipo === 'pieza' ? (Math.random() < 0.6 ? 1 : 0) : T.n;
-      for (let k = 0; k < n; k++) this.objetos.push(this._crearObjeto(tipo, T));
+      for (let k = 0; k < T.n; k++) this.objetos.push(this._crearObjeto(tipo, T));
     }
 
     // Cámara: acercar y seguir
@@ -83,28 +85,84 @@ export class ControlEVA {
       x = Math.cos(a) * r; z = Math.sin(a) * r; intentos++;
     } while (intentos < 30 && OCUPADO.some(([ox, oz, rr]) => Math.hypot(x - ox, z - oz) < rr));
     const g = new THREE.Group();
-    let malla;
-    const mat = new THREE.MeshStandardMaterial({ color: T.color, emissive: T.color, emissiveIntensity: 0.35, roughness: 0.4, flatShading: true });
-    if (tipo === 'hielo') malla = new THREE.Mesh(new THREE.IcosahedronGeometry(0.7, 0), Object.assign(mat, { transparent: true, opacity: 0.85 }));
-    else if (tipo === 'roca') malla = new THREE.Mesh(new THREE.DodecahedronGeometry(0.7, 0), mat);
-    else if (tipo === 'regolito') malla = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.7), mat);
-    else malla = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.18, 6, 10), mat);
-    malla.position.y = 0.9; malla.castShadow = true;
+    const malla = this._modelo(tipo);
+    malla.scale.setScalar(1.7);
+    malla.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    // Anillo brillante en el suelo + haz de luz para verlo de lejos
+    const anillo = new THREE.Mesh(new THREE.RingGeometry(1.9, 2.3, 28),
+      new THREE.MeshBasicMaterial({ color: T.hex, transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false }));
+    anillo.rotation.x = -Math.PI / 2; anillo.position.y = 0.08;
     const haz = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 14, 8, 1, true),
-      new THREE.MeshBasicMaterial({ color: T.color, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending }));
+      new THREE.MeshBasicMaterial({ color: T.hex, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending }));
     haz.position.y = 7;
+    // Etiqueta: ícono siempre; nombre cuando el jugador se acerca
     const div = document.createElement('div');
-    div.className = 'obj-eva'; div.textContent = T.icono;
-    const etq = new CSS2DObject(div); etq.position.y = 2.4;
-    g.add(malla, haz, etq);
+    div.className = 'obj-eva';
+    div.style.setProperty('--c', T.color);
+    div.innerHTML = `<span class="obj-ic">${T.icono}</span><span class="obj-nom">${T.nombre}</span>`;
+    const etq = new CSS2DObject(div); etq.position.y = 3.4;
+    g.add(malla, anillo, haz, etq);
     g.position.set(x, alturaSuelo(x, z), z);
     this.m.scene.add(g);
-    return { tipo, g, malla, etq, fase: Math.random() * 6 };
+    return { tipo, g, malla, anillo, etq, fase: Math.random() * 6 };
+  }
+
+  // Modelos que se parecen a lo que son
+  _modelo(tipo) {
+    const g = new THREE.Group();
+    if (tipo === 'regolito') {
+      // Montoncito de tierra roja con piedritas
+      const tierra = new THREE.MeshStandardMaterial({ color: 0xc1562a, roughness: 1, flatShading: true });
+      const monton = new THREE.Mesh(new THREE.ConeGeometry(0.95, 0.75, 9), tierra);
+      monton.position.y = 0.37;
+      g.add(monton);
+      const piedra = new THREE.MeshStandardMaterial({ color: 0x7a2e14, roughness: 1, flatShading: true });
+      for (let i = 0; i < 6; i++) {
+        const p = new THREE.Mesh(new THREE.DodecahedronGeometry(0.12 + Math.random() * 0.1, 0), piedra);
+        const a = i / 6 * Math.PI * 2;
+        p.position.set(Math.cos(a) * 0.85, 0.08, Math.sin(a) * 0.85);
+        g.add(p);
+      }
+      g.userData.girar = false;
+    } else if (tipo === 'roca') {
+      // Roca de basalto oscura con vetas brillantes (minerales interesantes)
+      const geo = new THREE.DodecahedronGeometry(0.75, 1);
+      const pos = geo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const k = 0.8 + Math.abs(Math.sin(i * 12.9898) * 0.35);
+        pos.setXYZ(i, pos.getX(i) * k, pos.getY(i) * k * 0.8, pos.getZ(i) * k);
+      }
+      geo.computeVertexNormals();
+      const roca = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x4a3530, roughness: 0.9, flatShading: true }));
+      roca.position.y = 0.6;
+      g.add(roca);
+      const veta = new THREE.MeshStandardMaterial({ color: 0xd9a0ff, emissive: 0xb06cff, emissiveIntensity: 1.2 });
+      for (let i = 0; i < 4; i++) {
+        const c = new THREE.Mesh(new THREE.OctahedronGeometry(0.13, 0), veta);
+        const a = i * 1.7;
+        c.position.set(Math.cos(a) * 0.55, 0.6 + Math.sin(i * 2.3) * 0.3, Math.sin(a) * 0.55);
+        g.add(c);
+      }
+      g.userData.girar = true;
+    } else {
+      // Hielo de agua: bloque blanco-azulado transparente, medio enterrado
+      const hielo = new THREE.MeshPhysicalMaterial({ color: 0xdff6ff, emissive: 0x6fd3ff, emissiveIntensity: 0.35, roughness: 0.1, transparent: true, opacity: 0.85 });
+      [[0, 0.5, 0, 0.6], [0.5, 0.35, 0.2, 0.4], [-0.4, 0.3, -0.25, 0.35]].forEach(([x, y, z, s]) => {
+        const b = new THREE.Mesh(new THREE.IcosahedronGeometry(s, 0), hielo);
+        b.position.set(x, y, z); b.rotation.set(x * 3, y * 5, z * 2);
+        g.add(b);
+      });
+      const charco = new THREE.Mesh(new THREE.CircleGeometry(0.9, 16), new THREE.MeshBasicMaterial({ color: 0xbfefff, transparent: true, opacity: 0.35 }));
+      charco.rotation.x = -Math.PI / 2; charco.position.y = 0.05;
+      g.add(charco);
+      g.userData.girar = false;
+    }
+    return g;
   }
 
   _popup(texto, pos) {
     const div = document.createElement('div');
-    div.className = 'popup-eva'; div.innerHTML = texto;
+    div.className = 'popup-eva'; div.innerHTML = `<span>${texto}</span>`;
     const o = new CSS2DObject(div);
     o.position.copy(pos).add(new THREE.Vector3(0, 3, 0));
     this.m.scene.add(o);
@@ -170,11 +228,13 @@ export class ControlEVA {
     // --- Objetos ---
     for (const o of this.objetos) {
       if (!o.g.parent) continue;
-      o.malla.rotation.y += dt * 1.5;
-      o.malla.position.y = 0.9 + Math.sin(this.t * 2 + o.fase) * 0.2;
-      if (Math.hypot(o.g.position.x - p.x, o.g.position.z - p.z) < 1.8) {
+      if (o.malla.userData.girar) o.malla.rotation.y += dt * 0.8;
+      o.anillo.scale.setScalar(1 + Math.sin(this.t * 3 + o.fase) * 0.12);
+      const dist = Math.hypot(o.g.position.x - p.x, o.g.position.z - p.z);
+      o.etq.element.classList.toggle('cerca', dist < DIST_NOMBRE);
+      if (dist < 2.4) {
         this.items[o.tipo]++;
-        this._popup(`+1 ${TIPOS[o.tipo].icono}`, o.g.position);
+        this._popup(`+1 ${TIPOS[o.tipo].icono} ${TIPOS[o.tipo].nombre}`, o.g.position);
         o.etq.element.remove();
         o.g.removeFromParent();
         c.onRecoger?.(o.tipo);
@@ -228,7 +288,7 @@ export class ControlEVA {
     };
     anim();
     this.cfg.onFin?.({
-      items: rescate ? { hielo: 0, roca: 0, regolito: 0, pieza: 0 } : this.items,
+      items: rescate ? { regolito: 0, roca: 0, hielo: 0 } : this.items,
       rad: this.rad, rescate, limpio: !rescate && this.limpio, segundos: this.t,
     });
   }

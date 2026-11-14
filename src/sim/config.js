@@ -28,6 +28,24 @@ export const MISION = {
     saludRescate: 15,         // si se acaba el oxígeno del traje
     valores: { hielo: 8, roca: 6, regolito: 1, pieza: 1 },  // +O2, +ciencia, +bolsas, +repuestos
     regolitoPorNivel: 2,      // bolsas de regolito para subir 1 nivel de blindaje
+    // Lo que el jugador recoge: qué es (dato real) y para qué sirve en el juego
+    objetos: {
+      regolito: {
+        nombre: 'Regolito', icono: '🟫', color: '#ff8a3d',
+        que: 'Es la capa de polvo y piedritas sueltas que cubre Marte. Es rojo porque tiene óxido de hierro: ¡Marte está oxidado como un clavo viejo!',
+        uso: 'Blindaje: cada 2 bolsas cubren más el hábitat y lo protegen de la radiación.',
+      },
+      roca: {
+        nombre: 'Roca marciana', icono: '🪨', color: '#b06cff',
+        que: 'Muchas rocas de Marte son basalto, de volcanes antiguos. En el cráter Jezero, el rover Perseverance guarda muestras de rocas para buscar señales de vida antigua.',
+        uso: 'Ciencia: el laboratorio la analiza → +6 de ciencia.',
+      },
+      hielo: {
+        nombre: 'Hielo de agua', icono: '🧊', color: '#9be7ff',
+        que: 'En Marte hay hielo de agua escondido bajo el suelo, sobre todo lejos del ecuador. Derretido da agua; con electricidad se separa en hidrógeno y oxígeno.',
+        uso: 'Oxígeno: el soporte vital lo convierte en aire → +8 de oxígeno.',
+      },
+    },
   },
   guion: { 2: 'llamarada', 4: 'reciclador', 6: 'tormenta', 9: 'remolino', 12: 'llamarada' },
   avisos: {

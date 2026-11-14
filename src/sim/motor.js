@@ -130,13 +130,13 @@ export function terminarEVA(S, r) {
     return lineas;
   }
   const it = r.items;
-  if (it.hielo) { S.o2 = clamp(S.o2 + it.hielo * V.hielo, 0, 100); lineas.push(`🧊 ${it.hielo} trozo(s) de hielo → +${it.hielo * V.hielo} de oxígeno (el agua se separa en hidrógeno y oxígeno).`); aprender(S, 'hielo'); }
-  if (it.roca) { S.ciencia += it.roca * V.roca; lineas.push(`🪨 ${it.roca} roca(s) para el laboratorio → +${it.roca * V.roca} de ciencia.`); }
   if (it.regolito) {
     S.regolito = (S.regolito || 0) + it.regolito;
     while (S.regolito >= MISION.eva.regolitoPorNivel && S.blindaje < 3) { S.regolito -= MISION.eva.regolitoPorNivel; S.blindaje++; }
-    lineas.push(`🟫 ${it.regolito} bolsa(s) de regolito → blindaje ${S.blindaje}/3.`); aprender(S, 'regolito');
+    lineas.push(`🟫 <b>${it.regolito} de regolito</b> (la tierra roja y suelta de Marte) → cubre el hábitat: blindaje ${S.blindaje}/3.`); aprender(S, 'regolito');
   }
+  if (it.roca) { S.ciencia += it.roca * V.roca; lineas.push(`🪨 <b>${it.roca} roca(s) marciana(s)</b> de basalto → el laboratorio las analiza: +${it.roca * V.roca} de ciencia.`); }
+  if (it.hielo) { S.o2 = clamp(S.o2 + it.hielo * V.hielo, 0, 100); lineas.push(`🧊 <b>${it.hielo} bloque(s) de hielo de agua</b> → el agua se separa en hidrógeno y oxígeno: +${it.hielo * V.hielo} de oxígeno.`); aprender(S, 'hielo'); }
   if (it.pieza) { S.repuestos += it.pieza; lineas.push(`🔩 ${it.pieza} pieza(s) de una sonda vieja → +${it.pieza} repuesto(s).`); }
   if (r.limpio) { S.eficiencia = Math.min(1, S.eficiencia + 0.3); lineas.push('🧹 Limpiaste los paneles solares: +30% de eficiencia.'); }
   if (!it.hielo && !it.roca && !it.regolito && !it.pieza && !r.limpio) lineas.push('No recolectaste nada esta vez.');

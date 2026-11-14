@@ -5,7 +5,7 @@ import {
   cambiarNivel, aprender, foto, setClima, enConjuncion, CLIMA, motivoNoEVA, iniciarEVA, terminarEVA,
 } from './sim/motor.js';
 import { MISION } from './sim/config.js';
-import { mostrarHUDEVA, actualizarHUDEVA, avisoEVA, ocultarHUDEVA } from './ui/eva-hud.js';
+import { mostrarHUDEVA, actualizarHUDEVA, avisoEVA, ocultarHUDEVA, tarjetaObjeto } from './ui/eva-hud.js';
 import { cargarClimaEspacial } from './data/donki.js';
 import { renderRecursos, renderEnergia, renderPanel, renderLog } from './ui/hud.js';
 import { pantallaInicio, mostrarEvento, mostrarResumen, mostrarResumenEVA, pantallaFinal, panelDatos } from './ui/modales.js';
@@ -98,7 +98,7 @@ function salirAExplorar() {
     riesgo: CLIMA.riesgo, eficienciaPaneles: S.eficiencia,
     onUpdate: actualizarHUDEVA,
     onAviso: txt => { avisoEVA(txt); beep(300, 0.3, 'sawtooth'); },
-    onRecoger: () => beep(1200, 0.07, 'triangle'),
+    onRecoger: tipo => { beep(1200, 0.07, 'triangle'); tarjetaObjeto(tipo); },
     onFin: async res => {
       ocultarHUDEVA();
       const lineas = terminarEVA(S, res);

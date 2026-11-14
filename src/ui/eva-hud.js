@@ -15,11 +15,12 @@ export function mostrarHUDEVA(control) {
         <span>🫁 Oxígeno del traje</span><div class="barra"><div id="evaO2"></div></div><b id="evaO2n">100%</b></div>
       <div class="eva-barra rad" title="Radiación recibida en esta caminata">
         <span>☢️ Radiación</span><b id="evaRad">0 mSv</b></div>
-      <div class="eva-items">${Object.entries(TIPOS).map(([k, t]) => `<span title="${t.nombre}">${t.icono} <b id="evaIt-${k}">0</b></span>`).join('')}</div>
+      <div class="eva-items">${Object.entries(TIPOS).map(([k, t]) => `<span class="eva-item" title="${t.uso}">${t.icono} ${t.nombre}: <b id="evaIt-${k}">0</b></span>`).join('')}</div>
     </div>
     <div class="eva-aviso" id="evaAviso"></div>
+    <div class="eva-tarjeta" id="evaTarjeta"></div>
     <div class="eva-base" id="evaBase"><span class="eva-flecha" id="evaFlecha">➤</span> 🏠 <b id="evaDist">0</b> m</div>
-    <div class="eva-ayuda">⌨️ <b>WASD</b> o <b>flechas</b> para caminar · <b>E</b> para entrar · Lo más valioso está más lejos…</div>
+    <div class="eva-ayuda">⌨️ <b>WASD</b> o <b>flechas</b> para caminar · Busca 🟫 regolito, 🪨 rocas marcianas y 🧊 hielo de agua · <b>E</b> para entrar</div>
     <div class="eva-botones">
       <button id="evaLimpiar" class="eva-btn oculto">🧹 Limpiar paneles (E)</button>
       <button id="evaEntrar" class="eva-btn oculto">🏠 Entrar a la base (E)</button>
@@ -58,6 +59,22 @@ export function avisoEVA(txt) {
   el.textContent = txt; el.classList.add('visible');
   clearTimeout(avisoTimer);
   avisoTimer = setTimeout(() => el.classList.remove('visible'), 3500);
+}
+
+// Tarjeta al recoger: qué es (dato real) y para qué sirve. La 1ª vez de cada tipo, completa.
+const vistos = new Set();
+let tarjetaTimer = null;
+export function tarjetaObjeto(tipo) {
+  if (!raiz) return;
+  const t = TIPOS[tipo], primera = !vistos.has(tipo);
+  vistos.add(tipo);
+  const el = raiz.querySelector('#evaTarjeta');
+  el.style.setProperty('--c', t.color);
+  el.innerHTML = `<div class="tj-cab"><span class="tj-ic">${t.icono}</span><div><small>¡Recogiste!</small><b>${t.nombre}</b></div></div>
+    ${primera ? `<p>${t.que}</p>` : ''}<p class="tj-uso">✅ ${t.uso}</p>`;
+  el.classList.add('visible');
+  clearTimeout(tarjetaTimer);
+  tarjetaTimer = setTimeout(() => el.classList.remove('visible'), primera ? 7000 : 3000);
 }
 
 export function ocultarHUDEVA() {
