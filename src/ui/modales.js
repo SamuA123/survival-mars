@@ -2,6 +2,7 @@
 // Textos: t() interfaz · tr() textos de src/sim · txt()/fuente*() datos con *_en · L(es, en) textos del rediseño (ver i18n.js).
 import { MISION, RECURSOS } from '../sim/config.js';
 import { pedirAyuda, r1, CLIMA, EVENTOS, enTormenta, enConjuncion } from '../sim/motor.js';
+import { seccionesHechas } from '../sim/motor.js';
 import { DATOS } from '../data/datos-curiosos.js';
 import { FUENTES } from '../data/fuentes.js';
 import { SITIO } from '../data/sitio.js';
@@ -257,7 +258,7 @@ export function panelInventario(S) {
       <h2>${t('inv.tit')}</h2>
       <p class="tranqui">${t('inv.desc')}</p>
       <div class="inv-lista">${filas}</div>
-      <div class="inv-extra">${t('inv.regolito', { r: S.regolito, n: MISION.eva.regolitoPorNivel, b: S.blindaje })}</div>
+      <div class="inv-extra">${t('inv.regolito', { r: S.regolito, n: MISION.eva.regolitoPorNivel, b: S.blindaje, x: seccionesHechas(S) })}</div>
       ${p ? `<div class="plan-res ${p.cumplido ? 'ok' : ''}">${t('inv.planHoy', { c: p.cantidad, i: o.icono, n: tr(o.nombre), h: Math.min(S.inventario.hoy[p.tipo], p.cantidad) })} ${p.cumplido ? '✅' : t('inv.opcional')}</div>` : ''}
       <div class="inv-extra">${t('fin.planes', { a: S.planesCumplidos, b: S.planesEnviados })}</div>
       <button class="btn-grande" id="btnCerrarInv">${t('volver')}</button>`, 'ancho');

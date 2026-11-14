@@ -88,7 +88,8 @@ function pintarPanelRad(e) {
   const el = raiz?.querySelector('#evaRadPanel');
   if (!el || !e.nivel) return;
   const [es, en] = NIVELES[e.nivel];
-  const habitat = Math.round((1 - Math.min(e.blindaje || 0, 3) / 3 * 0.6) * 100);   // % que entra al hábitat
+  // % de radiación que entra al hábitat (secciones de blindaje construidas con el modo B)
+  const habitat = Math.round((e.entraHabitat ?? (1 - Math.min(e.blindaje || 0, 3) / 3 * 0.6)) * 100);
   const html = `
     <span class="rp rp-nivel n-${e.nivel}" title="${L('Según la actividad real del Sol (NASA DONKI) y las llamaradas', 'Based on real solar activity (NASA DONKI) and flares')}">☢️ ${L('Radiación actual', 'Current radiation')}: <b>${L(es, en)}</b></span>
     <span class="rp ${e.exposicion >= 70 ? 'peligro' : ''}" title="${L('Radiación acumulada de la tripulación, respecto del límite de la misión', 'Crew radiation so far, compared with the mission limit')}">👨‍🚀 ${L('Exposición', 'Exposure')}: <b>${e.exposicion}%</b></span>

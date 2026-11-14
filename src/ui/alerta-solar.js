@@ -31,6 +31,8 @@ function nivelRiesgo() {
 }
 
 function pintarIndicador() {
+  // Un simulacro activo mantiene el riesgo alto aunque DONKI termine de cargar después
+  if (simulacro?.activo && (CLIMA.riesgo ?? 0) < 1.5) setClima({ riesgo: 1.5 });
   let el = document.querySelector('#solEstado');
   if (!el) {
     el = document.createElement('button');
@@ -108,7 +110,7 @@ function iniciar() {
   (CLIMA.flares || []).forEach(f => vistas.add(clave(f)));
   if (PARAMS.get('alerta') === '1') {
     simulacro = { clase: 'M5.0', fecha: new Date().toISOString().slice(0, 10) };
-    setTimeout(() => { alertar(simulacro, true); setClima({ riesgo: Math.max(1.5, CLIMA.riesgo ?? 1) }); pintarIndicador(); }, 4000);
+    setTimeout(() => { simulacro.activo = true; alertar(simulacro, true); pintarIndicador(); }, 4000);
   }
   pintarIndicador();
   setInterval(pintarIndicador, 1500);                  // sigue los cambios de idioma, caminata y datos

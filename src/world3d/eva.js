@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { alturaSuelo } from './terreno.js';
 import { MISION } from '../sim/config.js';
+import { proteccionHabitat } from '../sim/motor.js';
 
 export const PUERTA = new THREE.Vector3(0, 0, 6.4);
 const PANELES = new THREE.Vector3(-13, 0, 4);
@@ -67,6 +68,7 @@ export class ControlEVA {
     const S0 = m.getEstado?.();
     this.radBase = S0?.rad ?? 0;                        // dosis acumulada antes de salir
     this.blindajeBase = S0?.blindaje ?? 0;
+    try { this.entraHabitat = S0 ? proteccionHabitat(S0) : 1; } catch { this.entraHabitat = 1; }   // fracción de radiación que entra al hábitat
     this.huellas = []; this.ultHuella = null;
 
     // Llamarada sorpresa durante la caminata (más probable si el Sol real está activo)
@@ -310,7 +312,7 @@ export class ControlEVA {
       // Panel de radiación (idea del grupo)
       nivel: nivelRadiacion(c.riesgo, L.activa),
       exposicion: Math.min(100, Math.round((this.radBase + this.rad) / limite * 100)),
-      blindaje: this.blindajeBase,
+      blindaje: this.blindajeBase, entraHabitat: this.entraHabitat,
       carga: this.carga, mochilaMax: MOCHILA_MAX,
       cercano: this.cercano ? this.cercano.tipo : null, mochilaLlena: this.carga >= MOCHILA_MAX,
     });

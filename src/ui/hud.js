@@ -2,7 +2,7 @@
 // Formas y valores visibles para relacionar cada decisión con sus consecuencias.
 // Diseño de Jorge. Textos: t() interfaz, tr() textos de src/sim, txt() datos con *_en, L(es, en) textos nuevos.
 import { MISION, SISTEMAS, RECURSOS } from '../sim/config.js';
-import { ACCIONES, balance, preverSol, r1, clamp, enTormenta, enConjuncion } from '../sim/motor.js';
+import { ACCIONES, balance, preverSol, r1, clamp, enTormenta, enConjuncion, seccionesHechas } from '../sim/motor.js';
 import { HALLAZGOS } from '../data/salud.js';
 import { t, tr, txt, esEN } from './i18n.js';
 
@@ -194,12 +194,12 @@ const accionBtn = (S, a) => {
 function colRecoleccion(S, foco) {
   const filas = Object.entries(MISION.eva.objetos).map(([k, o]) => `
     <li style="--c:${o.color}" title="${tr(o.uso)}"><span>${o.icono}</span><b>${tr(o.nombre)}</b><em>${S.inventario.total[k]}</em></li>`).join('');
-  const bolsas = MISION.eva.regolitoPorNivel;
+  const hechas = seccionesHechas(S), total = Object.keys(MISION.construccion?.secciones || {}).length || 4;
   return `<h3>🎒 ${L('Recolección', 'Collected')}</h3>
     <ul class="con-inv">${filas}</ul>
-    <div class="con-fila" title="${L(`Cada ${bolsas} bolsas de regolito cubren más el hábitat`, `Every ${bolsas} bags of regolith cover more of the habitat`)}">
-      🧱 ${L('Blindaje', 'Shield')} <span class="cuadros">${Array.from({ length: 3 }, (_, i) => `<i class="${i < S.blindaje ? 'on' : ''}"></i>`).join('')}</span>
-      <small>${S.blindaje < 3 ? `${L('bolsas', 'bags')} ${S.regolito}/${bolsas}` : L('¡completo!', 'complete!')}</small></div>
+    <div class="con-fila" title="${L('Construye secciones de blindaje con el modo construcción (tecla B)', 'Build shield sections with build mode (B key)')}">
+      🧱 ${L('Blindaje', 'Shield')} <span class="cuadros">${Array.from({ length: total }, (_, i) => `<i class="${i < hechas ? 'on' : ''}"></i>`).join('')}</span>
+      <small>${hechas < total ? `${hechas}/${total} · 🟫 ${S.regolito} ${L('bolsas en la base', 'bags in the base')}` : L('¡completo!', 'complete!')}</small></div>
     <div class="con-fila">🧰 ${t('pan.repuestos')} <b>${S.repuestos}</b> · 💊 ${t('pan.botiquin')} <b>${S.botiquin}</b></div>
     <div class="con-puerta ${foco === 'puerta' ? 'foco' : ''}" data-foco="puerta">
       ${accionBtn(S, 'eva')}
