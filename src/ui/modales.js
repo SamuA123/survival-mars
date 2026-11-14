@@ -1,4 +1,5 @@
 // Modales: inicio, emergencias con cuenta regresiva, resumen del sol, final y fuentes NASA.
+// Textos: t() interfaz · tr() textos de src/sim · txt()/fuente*() datos con *_en (ver i18n.js).
 import { MISION, RECURSOS } from '../sim/config.js';
 import { pedirAyuda, r1, CLIMA } from '../sim/motor.js';
 import { DATOS } from '../data/datos-curiosos.js';
@@ -7,6 +8,7 @@ import { SITIO } from '../data/sitio.js';
 import { beep } from './sonido.js';
 import { evaluarLogros, logrosHTML } from './logros.js';
 import { informeHTML } from './informe.js';
+import { t, tr, txt, fuenteNombre, fuenteUso } from './i18n.js';
 
 const $ = s => document.querySelector(s);
 export const escapar = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -18,7 +20,7 @@ export function abrir(html, clase = '') {
 }
 export const cerrar = () => $('#modal').classList.add('oculto');
 
-const fuenteChip = clave => FUENTES[clave] ? `<a class="fuente" href="${FUENTES[clave].url}" target="_blank" rel="noopener">Fuente: ${FUENTES[clave].nombre}</a>` : '';
+const fuenteChip = clave => FUENTES[clave] ? `<a class="fuente" href="${FUENTES[clave].url}" target="_blank" rel="noopener">${t('fuente')} ${fuenteNombre(FUENTES[clave])}</a>` : '';
 
 // ------------------------------------------------------------------
 export function pantallaInicio() {
@@ -27,22 +29,21 @@ export function pantallaInicio() {
       <div class="intro">
         <div class="logo">🔴</div>
         <h1>Survival Mars</h1>
-        <p class="sub">Entrenador de Misiones para Astronautas Junior</p>
-        <p>${SITIO.texto}</p>
-        <p>Eres comandante de la base. Mantén a tu tripulación a salvo durante <b>${MISION.maxSol} sols</b>
-          (días marcianos) y consigue ciencia hasta que llegue la nave de relevo.</p>
-        <label class="nombre">¿Cómo te llamas, comandante?<input id="inNombre" maxlength="16" placeholder="Tu nombre" autocomplete="off"></label>
+        <p class="sub">${t('intro.sub')}</p>
+        <p>${txt(SITIO)}</p>
+        <p>${t('intro.p2', { sols: MISION.maxSol })}</p>
+        <label class="nombre">${t('intro.nombre')}<input id="inNombre" maxlength="16" placeholder="${t('intro.ph')}" autocomplete="off"></label>
         <div class="como">
-          <div>👆<b>Toca un edificio</b><small>y reparte la energía</small></div>
-          <div>⚖️<b>Nada es gratis</b><small>todo cuesta energía, oxígeno o radiación</small></div>
-          <div>⏱️<b>10 segundos</b><small>para decidir en una emergencia</small></div>
+          <div>👆<b>${t('intro.c1b')}</b><small>${t('intro.c1s')}</small></div>
+          <div>⚖️<b>${t('intro.c2b')}</b><small>${t('intro.c2s')}</small></div>
+          <div>⏱️<b>${t('intro.c3b', { s: 10 })}</b><small>${t('intro.c3s')}</small></div>
         </div>
-        <div class="clima-box">${CLIMA.real ? '🛰️' : '📚'} <b>Clima espacial:</b> ${CLIMA.resumen}<br>
-          <small>Datos de NASA DONKI. ¡La actividad real del Sol cambia qué tan arriesgada es tu misión!</small></div>
-        <button class="btn-grande" id="btnEmpezar">¡Comenzar misión! 🚀</button>
-        <p class="controles">🖱️ Arrastra para moverte · Rueda para zoom · Clic derecho para girar</p>
+        <div class="clima-box">${CLIMA.real ? '🛰️' : '📚'} <b>${t('intro.clima')}</b> ${tr(CLIMA.resumen)}<br>
+          <small>${t('intro.climaSub')}</small></div>
+        <button class="btn-grande" id="btnEmpezar">${t('intro.empezar')}</button>
+        <p class="controles">${t('intro.controles')}</p>
       </div>`, 'ancho');
-    $('#btnEmpezar').onclick = () => { beep(880, 0.1); const n = $('#inNombre').value.trim(); cerrar(); res(n || 'Comandante'); };
+    $('#btnEmpezar').onclick = () => { beep(880, 0.1); const n = $('#inNombre').value.trim(); cerrar(); res(n || t('intro.defecto')); };
   });
 }
 
@@ -55,32 +56,33 @@ export function mostrarEvento(S, ev) {
     const ops = ev.opciones.map((o, i) => {
       const ok = !o.disponible || o.disponible(S);
       const det = typeof o.detalle === 'function' ? o.detalle(S) : (o.detalle || '');
-      return `<button class="opcion" data-op="${i}" ${ok ? '' : 'disabled'}><span>${o.texto}</span>${det ? `<small>${ok ? det : 'No disponible'}</small>` : ''}</button>`;
+      return `<button class="opcion" data-op="${i}" ${ok ? '' : 'disabled'}><span>${tr(o.texto)}</span>${det ? `<small>${ok ? tr(det) : t('ev.noDisp')}</small>` : ''}</button>`;
     }).join('');
     abrir(`
       <div class="evento">
         <div class="ev-cab">
-          <div class="ev-icono">${ev.icono}</div><h2>${ev.titulo}</h2>
+          <div class="ev-icono">${ev.icono}</div><h2>${tr(ev.titulo)}</h2>
           ${tiempo ? `<div class="reloj" id="reloj"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17"/><circle id="relojArco" cx="20" cy="20" r="17"/></svg><b id="relojNum">${tiempo}</b></div>` : ''}
         </div>
-        <p>${ev.texto(S)}</p>
+        <p>${tr(ev.texto(S))}</p>
         <div class="opciones">${ops}</div>
-        ${ev.consejo ? `<button class="btn-ayuda" id="btnAyuda">📞 Pedir ayuda a Control de Misión</button><div id="ayuda" class="ayuda"></div>` : ''}
+        ${ev.consejo ? `<button class="btn-ayuda" id="btnAyuda">${t('ev.ayuda')}</button><div id="ayuda" class="ayuda"></div>` : ''}
         <div id="resultado"></div>
       </div>`, tiempo ? 'urgente' : '');
 
     let restante = tiempo, hecho = false;
-    const terminar = txt => {
+    // txt queda en español (lo usan la simulación y el registro); en pantalla se muestra traducido
+    const terminar = txtRes => {
       if (hecho) return; hecho = true;
       clearInterval(cuenta);
       $('#modalCaja').classList.remove('urgente');
       document.querySelectorAll('.opcion, #btnAyuda').forEach(b => b.disabled = true);
-      $('#resultado').innerHTML = `<div class="res">${txt}</div><button class="btn-grande" id="btnSeguir">Continuar ▶</button>`;
-      $('#btnSeguir').onclick = () => { cerrar(); res(txt); };
+      $('#resultado').innerHTML = `<div class="res">${tr(txtRes)}</div><button class="btn-grande" id="btnSeguir">${t('continuar')}</button>`;
+      $('#btnSeguir').onclick = () => { cerrar(); res(txtRes); };
     };
     document.querySelectorAll('.opcion').forEach(b => b.onclick = () => { beep(990, 0.08); terminar(ev.opciones[+b.dataset.op].efecto(S)); });
     const ay = $('#btnAyuda');
-    if (ay) ay.onclick = () => { ay.disabled = true; $('#ayuda').innerHTML = pedirAyuda(S, ev); };
+    if (ay) ay.onclick = () => { ay.disabled = true; $('#ayuda').innerHTML = tr(pedirAyuda(S, ev)); };
     if (tiempo) {
       const arco = $('#relojArco'), L = 2 * Math.PI * 17;
       arco.style.strokeDasharray = L;
@@ -99,20 +101,20 @@ export function mostrarEvento(S, ev) {
 // ------------------------------------------------------------------
 export function mostrarResumen(S, antes, r, fin) {
   return new Promise(res => {
-    const filas = [...RECURSOS, { id: 'ciencia', nombre: 'Ciencia', icono: '🔬' }].map(rc => {
+    const filas = [...RECURSOS, { id: 'ciencia', nombre: t('rec.ciencia'), icono: '🔬' }].map(rc => {
       const d = r1(S[rc.id] - antes[rc.id]);
       const bueno = rc.inverso ? d <= 0 : d >= 0;
-      return `<div class="delta ${d === 0 ? '' : bueno ? 'bien' : 'mal'}"><span>${rc.icono} ${rc.nombre}</span><b>${d === 0 ? '＝' : d > 0 ? '▲ +' + d : '▼ ' + d}</b></div>`;
+      return `<div class="delta ${d === 0 ? '' : bueno ? 'bien' : 'mal'}"><span>${rc.icono} ${tr(rc.nombre)}</span><b>${d === 0 ? '＝' : d > 0 ? '▲ +' + d : '▼ ' + d}</b></div>`;
     }).join('');
     const dato = r.dato && DATOS[r.dato];
-    const boton = fin ? (fin.gano ? '¡Llegó la nave de relevo! 🚀' : 'Ver qué pasó…') : 'Siguiente sol ▶';
+    const boton = fin ? (fin.gano ? t('res.gano') : t('res.perdio')) : t('res.sig');
     abrir(`
-      <h2>🌅 Amanece el Sol ${S.sol + (fin ? 0 : 1)} — resumen del Sol ${S.sol}</h2>
+      <h2>${t('res.titulo', { a: S.sol + (fin ? 0 : 1), s: S.sol })}</h2>
       <div class="deltas">${filas}</div>
-      ${r.lineas.length ? `<ul class="lineas">${r.lineas.map(l => `<li>${l}</li>`).join('')}</ul>` : '<p class="tranqui">Un sol tranquilo. ¡Todo funcionó!</p>'}
+      ${r.lineas.length ? `<ul class="lineas">${r.lineas.map(l => `<li>${tr(l)}</li>`).join('')}</ul>` : `<p class="tranqui">${t('res.tranqui')}</p>`}
       ${bloqueRecolectado(r)}
-      ${r.hallazgo ? `<div class="dato salud">🧬 <b>Lo que dice la ciencia real:</b> ${r.hallazgo.texto} ${fuenteChip(r.hallazgo.fuente)}</div>` : ''}
-      ${dato ? `<div class="dato">💡 <b>¿Sabías que…?</b> ${dato.texto} ${fuenteChip(dato.fuente)}</div>` : ''}
+      ${r.hallazgo ? `<div class="dato salud">${t('res.ciencia')} ${txt(r.hallazgo)} ${fuenteChip(r.hallazgo.fuente)}</div>` : ''}
+      ${dato ? `<div class="dato">${t('res.sabias')} ${txt(dato)} ${fuenteChip(dato.fuente)}</div>` : ''}
       <button class="btn-grande" id="btnSig">${boton}</button>`);
     $('#btnSig').onclick = () => { cerrar(); res(); };
   });
@@ -123,11 +125,10 @@ export function mostrarResumenEVA(res, lineas) {
   return new Promise(ok => {
     abrir(`
       <div class="ev-cab"><div class="ev-icono">${res.rescate ? '🆘' : '🧑‍🚀'}</div>
-        <h2>${res.rescate ? '¡Rescate!' : '¡De vuelta en la base!'}</h2></div>
-      <ul class="lineas">${lineas.map(l => `<li>${l}</li>`).join('')}</ul>
-      <div class="dato">💡 <b>¿Sabías que…?</b> ${DATOS.eva.texto} En Marte, cada minuto afuera es una decisión:
-        más tiempo = más descubrimientos, pero también más radiación y menos oxígeno. ${fuenteChip(DATOS.eva.fuente)}</div>
-      <button class="btn-grande" id="btnEvaOk">Continuar ▶</button>`);
+        <h2>${res.rescate ? t('eva.rescate') : t('eva.vuelta')}</h2></div>
+      <ul class="lineas">${lineas.map(l => `<li>${tr(l)}</li>`).join('')}</ul>
+      <div class="dato">${t('res.sabias')} ${txt(DATOS.eva)} ${t('eva.sabiasExtra')} ${fuenteChip(DATOS.eva.fuente)}</div>
+      <button class="btn-grande" id="btnEvaOk">${t('continuar')}</button>`);
     $('#btnEvaOk').onclick = () => { cerrar(); ok(); };
   });
 }
@@ -135,27 +136,27 @@ export function mostrarResumenEVA(res, lineas) {
 // ------------------------------------------------------------------
 export function pantallaFinal(S, fin) {
   return new Promise(res => {
-    const aprendidos = S.aprendidos.map(k => `<li>${DATOS[k].texto}</li>`).join('');
+    const aprendidos = S.aprendidos.map(k => `<li>${txt(DATOS[k])}</li>`).join('');
     const e = fin.estrellas || 0;
     const nuevos = evaluarLogros(S, fin);   // insignias (src/ui/logros.js)
     abrir(`
       <div class="final">
         <div class="logo">${fin.gano ? '🚀' : fin.icono}</div>
-        <h1>${fin.gano ? '¡Misión cumplida!' : '¡Misión abortada!'}</h1>
+        <h1>${fin.gano ? t('fin.cumplida') : t('fin.abortada')}</h1>
         <p>${fin.gano
-          ? `Comandante <b>${escapar(S.nombre)}</b>: tu tripulación sobrevivió ${MISION.maxSol} sols en Marte.`
-          : `${fin.texto} La tripulación volvió a la Tierra en el Sol ${S.sol}. ¡Los verdaderos planificadores de la NASA también aprenden de cada problema!`}</p>
+          ? t('fin.gano', { n: escapar(S.nombre), s: MISION.maxSol })
+          : t('fin.perdio', { t: tr(fin.texto), s: S.sol })}</p>
         ${fin.gano ? `<div class="estrellas">${'⭐'.repeat(e)}${'☆'.repeat(3 - e)}</div>
-          <small class="criterios">⭐ Sobrevivir · ⭐ Lograr ${MISION.metaCiencia} de ciencia · ⭐ Lograrlo sin arriesgar a la tripulación (radiación &lt; ${MISION.radLimite / 2} mSv y salud ≥ 70)</small>
-          ${S.ciencia < MISION.metaCiencia ? `<p class="tranqui">Sobrevivieron, pero la misión vino a Marte a hacer ciencia. ¿Puedes conseguir ${MISION.metaCiencia} puntos sin arriesgar a nadie?</p>` : ''}` : ''}
-        <div class="final-stats">🫁 ${S.o2}% · 🥔 ${S.comida}% · ☢️ ${S.rad} mSv · 🔬 ${S.ciencia} ciencia</div>
-        <div class="final-inv">🎒 Recolectaste en Marte: ${filasInventario(S.inventario.total)}
-          <br>📋 Planes del sol cumplidos: <b>${S.planesCumplidos}</b> de ${S.planesEnviados}</div>
+          <small class="criterios">${t('fin.criterios', { c: MISION.metaCiencia, r: MISION.radLimite / 2 })}</small>
+          ${S.ciencia < MISION.metaCiencia ? `<p class="tranqui">${t('fin.pocaCiencia', { c: MISION.metaCiencia })}</p>` : ''}` : ''}
+        <div class="final-stats">🫁 ${S.o2}% · 🥔 ${S.comida}% · ☢️ ${S.rad} mSv · 🔬 ${S.ciencia} ${t('fin.ciencia')}</div>
+        <div class="final-inv">${t('fin.recolectaste')} ${filasInventario(S.inventario.total)}
+          <br>${t('fin.planes', { a: S.planesCumplidos, b: S.planesEnviados })}</div>
         ${logrosHTML(nuevos)}
         ${informeHTML(S)}
-        <h3>🧠 Lo que aprendiste (${S.aprendidos.length})</h3>
+        <h3>${t('fin.aprendiste', { n: S.aprendidos.length })}</h3>
         <ul class="aprendidos">${aprendidos}</ul>
-        <button class="btn-grande" id="btnOtra">Jugar otra vez 🔄</button>
+        <button class="btn-grande" id="btnOtra">${t('fin.otra')}</button>
       </div>`, 'ancho');
     beep(fin.gano ? 1046 : 220, 0.5, 'triangle');
     $('#btnOtra').onclick = () => { cerrar(); res(); };
@@ -163,11 +164,10 @@ export function pantallaFinal(S, fin) {
 }
 
 // ------------------------------------------------------------------
-// ------------------------------------------------------------------
 //  INVENTARIO de lo recolectado en Marte
 // ------------------------------------------------------------------
 const OBJ = MISION.eva.objetos;
-const filasInventario = inv => Object.entries(OBJ).map(([k, o]) => `<b>${inv[k]}</b> ${o.icono} ${o.nombre}`).join(' · ');
+const filasInventario = inv => Object.entries(OBJ).map(([k, o]) => `<b>${inv[k]}</b> ${o.icono} ${tr(o.nombre)}`).join(' · ');
 
 function bloqueRecolectado(r) {
   const total = Object.values(r.recolectado || {}).reduce((a, b) => a + b, 0);
@@ -176,42 +176,42 @@ function bloqueRecolectado(r) {
   if (p) {
     const o = OBJ[p.tipo];
     plan = p.cumplido
-      ? `<div class="plan-res ok">📋 Plan del sol: ${p.cantidad} ${o.icono} ${o.nombre} → ✅ <b>¡Cumplido!</b> Bono recibido.</div>`
-      : `<div class="plan-res">📋 Plan del sol: ${p.cantidad} ${o.icono} ${o.nombre} → trajiste ${p.logrado}. No pasa nada: mañana habrá otro plan. 🙂</div>`;
+      ? `<div class="plan-res ok">${t('inv.planOk', { c: p.cantidad, i: o.icono, n: tr(o.nombre) })}</div>`
+      : `<div class="plan-res">${t('inv.planNo', { c: p.cantidad, i: o.icono, n: tr(o.nombre), l: p.logrado })}</div>`;
   }
   if (!total && !plan) return '';
-  return `<div class="recolectado"><b>🎒 Recolectado hoy:</b> ${total ? filasInventario(r.recolectado) : 'nada (no saliste o volviste con las manos vacías)'}${plan}</div>`;
+  return `<div class="recolectado"><b>${t('inv.hoyTit')}</b> ${total ? filasInventario(r.recolectado) : t('inv.hoyNada')}${plan}</div>`;
 }
 
 export function panelInventario(S) {
   const filas = Object.entries(OBJ).map(([k, o]) => `
     <div class="inv-fila" style="--c:${o.color}">
       <span class="inv-ic">${o.icono}</span>
-      <div class="inv-txt"><b>${o.nombre}</b><small>${o.que}</small><small class="inv-uso">✅ ${o.uso}</small></div>
-      <div class="inv-num"><b>${S.inventario.hoy[k]}</b><small>hoy</small></div>
-      <div class="inv-num"><b>${S.inventario.total[k]}</b><small>misión</small></div>
+      <div class="inv-txt"><b>${tr(o.nombre)}</b><small>${tr(o.que)}</small><small class="inv-uso">✅ ${tr(o.uso)}</small></div>
+      <div class="inv-num"><b>${S.inventario.hoy[k]}</b><small>${t('inv.hoy')}</small></div>
+      <div class="inv-num"><b>${S.inventario.total[k]}</b><small>${t('inv.mision')}</small></div>
     </div>`).join('');
   const p = S.plan, o = p && OBJ[p.tipo];
   abrir(`
-    <h2>🎒 Inventario de Marte</h2>
-    <p class="tranqui">Lo que tu tripulación recolectó en las caminatas espaciales. Cada cosa se usa enseguida en la base.</p>
+    <h2>${t('inv.tit')}</h2>
+    <p class="tranqui">${t('inv.desc')}</p>
     <div class="inv-lista">${filas}</div>
-    <div class="inv-extra">🟫 Regolito guardado para el próximo nivel de blindaje: <b>${S.regolito}/${MISION.eva.regolitoPorNivel}</b> · Blindaje: <b>${S.blindaje}/3</b></div>
-    ${p ? `<div class="plan-res ${p.cumplido ? 'ok' : ''}">📋 <b>Plan de hoy:</b> trae ${p.cantidad} ${o.icono} ${o.nombre} (${Math.min(S.inventario.hoy[p.tipo], p.cantidad)}/${p.cantidad}) ${p.cumplido ? '✅' : '— opcional, da bono'}</div>` : ''}
-    <div class="inv-extra">📋 Planes del sol cumplidos: <b>${S.planesCumplidos}</b> de ${S.planesEnviados}</div>
-    <button class="btn-grande" id="btnCerrarInv">Volver a la base</button>`, 'ancho');
+    <div class="inv-extra">${t('inv.regolito', { r: S.regolito, n: MISION.eva.regolitoPorNivel, b: S.blindaje })}</div>
+    ${p ? `<div class="plan-res ${p.cumplido ? 'ok' : ''}">${t('inv.planHoy', { c: p.cantidad, i: o.icono, n: tr(o.nombre), h: Math.min(S.inventario.hoy[p.tipo], p.cantidad) })} ${p.cumplido ? '✅' : t('inv.opcional')}</div>` : ''}
+    <div class="inv-extra">${t('fin.planes', { a: S.planesCumplidos, b: S.planesEnviados })}</div>
+    <button class="btn-grande" id="btnCerrarInv">${t('volver')}</button>`, 'ancho');
   $('#btnCerrarInv').onclick = cerrar;
 }
 
 export function panelDatos() {
   const llamaradas = (CLIMA.flares || []).slice(0, 6).map(f => `<li><b>${f.clase}</b> — ${f.fecha}</li>`).join('');
   abrir(`
-    <h2>📡 Datos reales de la NASA en este juego</h2>
-    <div class="clima-box">${CLIMA.real ? '🛰️ <b>EN VIVO</b>' : '📚 <b>ARCHIVO HISTÓRICO</b> (sin conexión)'} — ${CLIMA.resumen}
+    <h2>${t('datos.tit')}</h2>
+    <div class="clima-box">${CLIMA.real ? t('datos.vivo') : t('datos.archivo')} — ${tr(CLIMA.resumen)}
       <ul class="flares">${llamaradas}</ul></div>
     <div class="fuentes">${Object.values(FUENTES).map(f => `
-      <a class="fuente-card" href="${f.url}" target="_blank" rel="noopener"><b>${f.nombre}</b><small>${f.uso}</small></a>`).join('')}</div>
-    <p class="tranqui">Los números del juego están simplificados para que sean fáciles de entender, pero se basan en estas mediciones reales.</p>
-    <button class="btn-grande" id="btnCerrarDatos">Volver a la base</button>`, 'ancho');
+      <a class="fuente-card" href="${f.url}" target="_blank" rel="noopener"><b>${fuenteNombre(f)}</b><small>${fuenteUso(f)}</small></a>`).join('')}</div>
+    <p class="tranqui">${t('datos.nota')}</p>
+    <button class="btn-grande" id="btnCerrarDatos">${t('volver')}</button>`, 'ancho');
   $('#btnCerrarDatos').onclick = cerrar;
 }

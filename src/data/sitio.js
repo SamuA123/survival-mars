@@ -10,6 +10,7 @@ export const SITIO = {
   lat: 18, lon: 77,           // ~18° N, 77° E (a unos pocos km del cráter Jezero)
   fuente: 'neSyrtis',
   texto: 'Tu base está en la meseta NE Syrtis, al borde de la gran cuenca Isidis, que dejó un asteroide gigante hace casi 4.000 millones de años. La NASA la eligió como uno de los 3 sitios finalistas para el rover Perseverance, porque sus rocas guardan pistas de agua antigua.',
+  texto_en: 'Your base is on the NE Syrtis plateau, at the edge of the huge Isidis basin, made by a giant asteroid almost 4,000 million years ago. NASA chose it as one of the 3 finalist landing sites for the Perseverance rover, because its rocks hold clues of ancient water.',
   tempMediaC: -60,            // temperatura media de Marte (aprox.)
   luzSolarRelativa: 0.43,     // Marte recibe ~43% de la luz solar que la Tierra
   duracionSol: '24 h 39 min', // día solar marciano: 24 h 39 min 35 s

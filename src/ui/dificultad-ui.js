@@ -1,6 +1,7 @@
 // Selector de dificultad en la pantalla de inicio (se inserta solo, sin tocar modales.js).
 import { DIFICULTADES, aplicarDificultad } from '../sim/dificultad.js';
 import { MISION } from '../sim/config.js';
+import { t } from './i18n.js';
 
 const CLAVE = 'survivalMars.dificultad';
 let elegida = (() => { try { return localStorage.getItem(CLAVE) || 'cadete'; } catch { return 'cadete'; } })();
@@ -12,10 +13,10 @@ function insertar() {
   if (!btn || intro.querySelector('.dificultad')) return;
   const caja = document.createElement('div');
   caja.className = 'dificultad';
-  caja.innerHTML = `<div class="dif-tit">Elige tu rango</div>
+  caja.innerHTML = `<div class="dif-tit">${t('dif.tit')}</div>
     <div class="dif-opciones">${Object.entries(DIFICULTADES).map(([id, d]) => `
       <button type="button" class="dif-op" data-dif="${id}">
-        <span class="dif-ic">${d.icono}</span><b>${d.nombre}</b><small>${d.edad}</small><em>${d.resumen}</em>
+        <span class="dif-ic">${d.icono}</span><b>${t(`dif.${id}.n`)}</b><small>${t(`dif.${id}.e`)}</small><em>${t(`dif.${id}.r`)}</em>
       </button>`).join('')}</div>`;
   intro.insertBefore(caja, btn);
   caja.addEventListener('click', e => {
@@ -37,7 +38,7 @@ function actualizarTextos() {
   const D = DIFICULTADES[elegida];
   document.querySelectorAll('#modalCaja .intro b').forEach(b => {
     if (/^\d+ sols$/.test(b.textContent)) b.textContent = `${MISION.maxSol} sols`;
-    if (/^\d+ segundos$/.test(b.textContent)) b.textContent = `${D.tiempoEmergencia} segundos`;
+    if (/^\d+ (segundos|seconds)$/.test(b.textContent)) b.textContent = t('intro.c3b', { s: D.tiempoEmergencia });
   });
 }
 
