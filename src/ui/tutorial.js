@@ -1,25 +1,23 @@
 // Tutorial guiado del Sol 1. Un globo de diálogo señala elementos y espera a que el niño actúe.
 import { balance } from '../sim/motor.js';
 import { beep } from './sonido.js';
+import { t } from './i18n.js';
 
 const CLAVE = 'survivalMars.tutorialVisto';
 export function tutorialVisto() { try { return localStorage.getItem(CLAVE) === '1'; } catch { return false; } }
 function marcarVisto() { try { localStorage.setItem(CLAVE, '1'); } catch { /* sin almacenamiento */ } }
 
 // objetivo: selector CSS a resaltar · espera: condición para avanzar sola (si no hay, botón "Siguiente")
+// Los textos están en src/ui/i18n.js (tuto.1 … tuto.8)
 const PASOS = [
-  { objetivo: null, texto: '👋 ¡Hola, comandante! Esta es tu base en Marte. Te enseño cómo funciona en 30 segundos.' },
-  { objetivo: '.etiqueta[data-edificio="habitat"]', texto: '👆 <b>Toca el Hábitat</b>, la cúpula blanca donde vive tu tripulación.',
-    espera: c => c.sel === 'habitat' },
-  { objetivo: '.control', texto: 'Aquí está el <b>soporte vital</b>: fabrica el oxígeno. Los botones <b>−</b> y <b>+</b> cambian cuánta energía usa. Déjalo en 2 por ahora.' },
-  { objetivo: '#energia', texto: '⚡ Esta barra es tu <b>energía de hoy</b>. Verde = lo que produces. Naranja = lo que gastas. ¡Si gastas más de lo que produces, la batería baja!' },
-  { objetivo: '.etiqueta[data-edificio="lab"]', texto: '🔬 Ahora <b>toca el Laboratorio</b>. Ahí se hace la ciencia de la misión.',
-    espera: c => c.sel === 'lab' },
-  { objetivo: '.control', texto: 'Pulsa <b>+</b> para encender los experimentos.',
-    espera: c => c.S.niveles.lab > 0 },
-  { objetivo: '#energia', texto: c => `¿Ves? Ahora gastas más energía (${balance(c.S).bal >= 0 ? 'te sobra menos' : '¡te falta!'}). <b>En Marte nada es gratis:</b> la ciencia cuesta energía, y la energía es para el oxígeno, la comida y el calor.` },
-  { objetivo: '#btnSol', texto: '🌙 Cuando termines de planear, pulsa <b>Terminar el Sol</b>. Si llega una emergencia, ¡tendrás muy pocos segundos para decidir! ¡Buena suerte!',
-    final: true },
+  { objetivo: null, texto: () => t('tuto.1') },
+  { objetivo: '.etiqueta[data-edificio="habitat"]', texto: () => t('tuto.2'), espera: c => c.sel === 'habitat' },
+  { objetivo: '.control', texto: () => t('tuto.3') },
+  { objetivo: '#energia', texto: () => t('tuto.4') },
+  { objetivo: '.etiqueta[data-edificio="lab"]', texto: () => t('tuto.5'), espera: c => c.sel === 'lab' },
+  { objetivo: '.control', texto: () => t('tuto.6'), espera: c => c.S.niveles.lab > 0 },
+  { objetivo: '#energia', texto: c => t('tuto.7', { e: balance(c.S).bal >= 0 ? t('tuto.7.sobra') : t('tuto.7.falta') }) },
+  { objetivo: '#btnSol', texto: () => t('tuto.8'), final: true },
 ];
 
 export function iniciarTutorial(contexto) {
@@ -43,9 +41,9 @@ export function iniciarTutorial(contexto) {
     const p = PASOS[i];
     const txt = typeof p.texto === 'function' ? p.texto(contexto()) : p.texto;
     globo.innerHTML = `<div class="tuto-txt">${txt}</div>
-      <div class="tuto-pie"><button class="tuto-saltar">Saltar tutorial</button>
+      <div class="tuto-pie"><button class="tuto-saltar">${t('tuto.saltar')}</button>
       <span>${i + 1}/${PASOS.length}</span>
-      ${p.espera ? '' : `<button class="tuto-sig">${p.final ? '¡Entendido!' : 'Siguiente ▶'}</button>`}</div>`;
+      ${p.espera ? '' : `<button class="tuto-sig">${p.final ? t('tuto.ok') : t('tuto.sig')}</button>`}</div>`;
     globo.querySelector('.tuto-saltar').onclick = terminar;
     const sig = globo.querySelector('.tuto-sig');
     if (sig) sig.onclick = siguiente;

@@ -1,112 +1,151 @@
 // Fuentes de datos de la NASA usadas en el juego.
 // Cada dato del juego apunta a una de estas claves con `fuente: 'clave'`.
 // Se muestran al jugador en el panel "📡 Datos de la NASA".
+// nombre_en / uso_en = versión en inglés (botón ES/EN).
 export const FUENTES = {
   donki: {
     nombre: 'NASA DONKI — Space Weather Database',
     url: 'https://kauai.ccmc.gsfc.nasa.gov/DONKI/',
     uso: 'Llamaradas solares reales de los últimos 30 días: cambian el riesgo de radiación de tu misión.',
+    uso_en: 'Real solar flares from the last 30 days: they change the radiation risk of your mission.',
   },
   curiosityRAD: {
     nombre: 'Curiosity — Radiation Assessment Detector (RAD), Hassler et al. 2014 (Science 343)',
     url: 'https://ntrs.nasa.gov/citations/20180007641',
     uso: 'Radiación medida en la superficie de Marte: ~0,67 mSv por día (cráter Gale, 2012-2013).',
+    uso_en: 'Radiation measured on the surface of Mars: ~0.67 mSv per day (Gale Crater, 2012-2013).',
   },
   radlab: {
     nombre: 'NASA OSDR — RadLab (dosimetría de la Estación Espacial)',
+    nombre_en: 'NASA OSDR — RadLab (Space Station dosimetry)',
     url: 'https://visualization.osdr.nasa.gov/radlab/',
     uso: 'Dosis reales medidas a bordo de la Estación Espacial Internacional, para comparar.',
+    uso_en: 'Real doses measured on board the International Space Station, for comparison.',
   },
   osdr: {
     nombre: 'NASA Open Science Data Repository (OSDR)',
     url: 'https://osdr.nasa.gov/bio/',
     uso: 'Estudios reales sobre la salud de los astronautas en el espacio.',
+    uso_en: 'Real studies about astronaut health in space.',
   },
   marsTrek: {
     nombre: 'NASA Mars Trek',
     url: 'https://trek.nasa.gov/mars/',
     uso: 'Datos del lugar de la base (cráter Jezero).',
+    uso_en: 'Data about the base site (Jezero Crater).',
   },
   csaComida: {
     nombre: 'Agencia Espacial Canadiense — Producción de alimentos en la Luna',
+    nombre_en: 'Canadian Space Agency — Food production on the Moon',
     url: 'https://www.asc-csa.gc.ca/eng/youth-educators/',
     uso: 'Cómo se cultiva comida en el espacio.',
+    uso_en: 'How food is grown in space.',
   },
   moxie: {
     nombre: 'NASA — MOXIE (Perseverance) completa su misión',
+    nombre_en: 'NASA — MOXIE (Perseverance) completes its mission',
     url: 'https://www.nasa.gov/missions/mars-2020-perseverance/perseverance-rover/nasas-oxygen-generating-experiment-moxie-completes-mars-mission/',
     uso: 'MOXIE fabricó 122 gramos de oxígeno con el aire de Marte.',
+    uso_en: 'MOXIE made 122 grams of oxygen from the Martian air.',
   },
   aguaISS: {
     nombre: 'NASA — La Estación Espacial recupera el 98% del agua',
+    nombre_en: 'NASA — The Space Station recovers 98% of its water',
     url: 'https://www.nasa.gov/missions/station/iss-research/nasa-achieves-water-recovery-milestone-on-international-space-station/',
     uso: 'Reciclaje de agua del soporte vital.',
+    uso_en: 'Water recycling in the life support system.',
   },
   opportunity: {
     nombre: 'NASA — Fin de la misión del rover Opportunity (tormenta de polvo de 2018)',
+    nombre_en: 'NASA — End of the Opportunity rover mission (2018 dust storm)',
     url: 'https://science.nasa.gov/mission/mer-opportunity/',
     uso: 'Tormentas de polvo que tapan los paneles solares.',
+    uso_en: 'Dust storms that cover solar panels.',
   },
   fissionPower: {
     nombre: 'NASA — Fission Surface Power (reactores para la Luna y Marte)',
+    nombre_en: 'NASA — Fission Surface Power (reactors for the Moon and Mars)',
     url: 'https://www.nasa.gov/exploration-systems-development-mission-directorate/fission-surface-power/',
     uso: 'El mini reactor nuclear de la base.',
+    uso_en: 'The base\'s mini nuclear reactor.',
   },
   veggie: {
     nombre: 'NASA — Cultivar plantas en el espacio (Veggie)',
+    nombre_en: 'NASA — Growing plants in space (Veggie)',
     url: 'https://www.nasa.gov/exploration-research-and-technology/growing-plants-in-space/',
     uso: 'El invernadero de la base.',
+    uso_en: 'The base\'s greenhouse.',
   },
   conjuncion: {
     nombre: 'NASA — ¿Qué es la conjunción solar de Marte?',
+    nombre_en: 'NASA — What is Mars solar conjunction?',
     url: 'https://www.nasa.gov/solar-system/whats-mars-solar-conjunction-and-why-does-it-matter/',
     uso: 'Los sols sin comunicación con la Tierra.',
+    uso_en: 'The sols with no communication with Earth.',
   },
   retraso: {
     nombre: 'NASA — Peligro: distancia de la Tierra (programa de investigación humana)',
+    nombre_en: 'NASA — Hazard: distance from Earth (Human Research Program)',
     url: 'https://www.nasa.gov/hrp/hazard-distance-from-earth/',
     uso: 'Retraso de los mensajes Tierra-Marte (de unos 4 a 24 minutos).',
+    uso_en: 'Delay of Earth-Mars messages (about 4 to 24 minutes).',
   },
   mroCrateres: {
     nombre: 'NASA Mars Reconnaissance Orbiter — impactos nuevos en Marte',
+    nombre_en: 'NASA Mars Reconnaissance Orbiter — new impacts on Mars',
     url: 'https://www.jpl.nasa.gov/news/nasa-probe-counts-space-rock-impacts-on-mars/',
     uso: 'Más de 200 cráteres nuevos por año: evento de micrometeorito.',
+    uso_en: 'More than 200 new craters per year: the micrometeorite event.',
   },
 
   // ---- Estudios concretos de NASA OSDR (cada uno con su página) ----
   'OSD-342': {
     nombre: 'NASA OSDR · OSD-342 — Rodent Research-19: pérdida de músculo y hueso en el espacio',
+    nombre_en: 'NASA OSDR · OSD-342 — Rodent Research-19: muscle and bone loss in space',
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-342',
     uso: 'Ratones en la Estación Espacial perdieron músculo y hueso en 33 días.',
+    uso_en: 'Mice on the Space Station lost muscle and bone in 33 days.',
   },
   'OSD-566': {
     nombre: 'NASA OSDR · OSD-566 — Respuestas inmunes y hormonales a la radiación ionizante',
+    nombre_en: 'NASA OSDR · OSD-566 — Immune and hormonal responses to ionizing radiation',
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-566',
     uso: 'Cómo la radiación espacial afecta las defensas del cuerpo.',
+    uso_en: 'How space radiation affects the body\'s defenses.',
   },
   'OSD-343': {
     nombre: 'NASA OSDR · OSD-343 — Estrés de las mitocondrias en el espacio (59 astronautas + Estudio de Gemelos)',
+    nombre_en: 'NASA OSDR · OSD-343 — Mitochondrial stress in space (59 astronauts + Twins Study)',
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-343',
     uso: 'El espacio estresa las "centrales de energía" de las células.',
+    uso_en: 'Space stresses the "power plants" of the cells.',
   },
   'OSD-766': {
     nombre: 'NASA OSDR · OSD-766 — VEG-05: tomates cultivados 101 días en la Estación Espacial',
+    nombre_en: 'NASA OSDR · OSD-766 — VEG-05: tomatoes grown for 101 days on the Space Station',
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-766',
     uso: 'Cultivo de comida con luces LED rojas y azules.',
+    uso_en: 'Growing food with red and blue LED lights.',
   },
   'OSD-678': {
     nombre: 'NASA OSDR · OSD-678 — CARA: la luz guía a las plantas en el espacio',
+    nombre_en: 'NASA OSDR · OSD-678 — CARA: light guides plants in space',
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-678',
     uso: 'Plantas Arabidopsis cultivadas con luz y en oscuridad en la Estación Espacial.',
+    uso_en: 'Arabidopsis plants grown in light and in darkness on the Space Station.',
   },
   'OSD-177': {
     nombre: 'NASA OSDR · OSD-177 — Hongo Fusarium en las zinnias de la Estación Espacial',
+    nombre_en: 'NASA OSDR · OSD-177 — Fusarium fungus on the Space Station zinnias',
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-177',
     uso: 'Las plantas también se enferman en el espacio (evento de plaga).',
+    uso_en: 'Plants get sick in space too (the plant disease event).',
   },
   'OSD-87': {
     nombre: 'NASA OSDR · OSD-87 — Efectos del vuelo espacial en la retina (STS-135)',
+    nombre_en: 'NASA OSDR · OSD-87 — Effects of spaceflight on the retina (STS-135)',
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-87',
     uso: 'El espacio también afecta los ojos.',
+    uso_en: 'Space also affects the eyes.',
   },
 };

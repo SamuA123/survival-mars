@@ -7,7 +7,8 @@ export const SITIO = {
   diametroKm: 45,
   fuente: 'marsTrek',
   texto: 'Tu base está en el cráter Jezero, donde aterrizó el rover Perseverance el 18 de febrero de 2021. ¡Hace miles de millones de años aquí había un lago con un río que llegaba a él!',
-  tempMediaC: -60,            // temperatura media de Marte (aprox.)
+  texto_en: 'Your base is in Jezero Crater, where the Perseverance rover landed on February 18, 2021. Billions of years ago there was a lake here, with a river flowing into it!',
+  tempMediaC: -60,           // temperatura media de Marte (aprox.)
   luzSolarRelativa: 0.43,     // Marte recibe ~43% de la luz solar que la Tierra
   duracionSol: '24 h 39 min', // día solar marciano: 24 h 39 min 35 s
   retrasoMin: 12,             // retraso usado en el juego (real: entre ~4 y ~24 minutos, según la posición)

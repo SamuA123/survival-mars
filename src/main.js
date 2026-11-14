@@ -15,6 +15,7 @@ import { iniciarRegistro, registrarDecision, registrarSol, registrarEVA } from '
 import { enTormenta } from './sim/motor.js';
 import './ui/dificultad-ui.js';   // selector Cadete / Comandante en la pantalla de inicio
 import './ui/voz.js';             // narrador por voz (botones 🔈 y 🗣️)
+import { t, idioma, setIdioma, aplicarEstaticos } from './ui/i18n.js';
 
 const $ = s => document.querySelector(s);
 let S = crearPartida();
@@ -135,7 +136,7 @@ async function nuevaPartida() {
   const nombre = await pantallaInicio();
   S = crearPartida(nombre);
   iniciarRegistro(S);
-  S.log.unshift({ sol: 1, texto: `🚀 Comandante <b>${nombre.replace(/[<>&]/g, '')}</b> al mando de la base en el cráter Jezero.`, tipo: 'tierra' });
+  S.log.unshift({ sol: 1, texto: t('log.inicio', { n: nombre.replace(/[<>&]/g, '') }), tipo: 'tierra' });
   iniciarSol(S);
   ocupado = false;
   refrescar();
@@ -148,6 +149,14 @@ $('#btnInventario').onclick = () => { if (!S.enEVA) panelInventario(S); };
 $('#btnSonido').onclick = () => { audio.on = !audio.on; $('#btnSonido').textContent = audio.on ? '🔊' : '🔇'; };
 $('#btnAyudaTuto').onclick = () => { if (!ocupado && !tutorial?.activo()) tutorial = iniciarTutorial(() => ({ S, sel })); };
 $('#btnLog').onclick = () => $('#bitacoraBox').classList.toggle('abierta');
+// Botón ES / EN (la elección se guarda en localStorage desde i18n.js)
+$('#btnIdioma').onclick = () => {
+  const enInicio = !$('#modal').classList.contains('oculto') && !!document.querySelector('#modalCaja .intro');
+  setIdioma(idioma === 'es' ? 'en' : 'es');
+  if (enInicio) { location.reload(); return; }   // la pantalla de inicio se vuelve a dibujar en el nuevo idioma
+  refrescar();
+};
+aplicarEstaticos();
 
 refrescar();
 cargarClimaEspacial().then(c => { setClima(c); refrescar(); });
