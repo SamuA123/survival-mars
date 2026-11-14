@@ -1,9 +1,10 @@
 // HUD de la caminata espacial: oxígeno del traje, radiación, objetos, flecha a la base, joystick.
 import { TIPOS } from '../world3d/eva.js';
 import { beep } from './sonido.js';
-import { t, tr } from './i18n.js';
+import { t, tr, onIdioma } from './i18n.js';
 
 let raiz = null, avisoTimer = null, ultimoBeep = 0, planEVA = null, planAvisado = false;
+let ultimoAviso = null, ultimaTarjeta = null;
 
 // plan = { tipo, cantidad, cumplido } del Plan del sol (o null si no llegó)
 export function mostrarHUDEVA(control, plan = null) {
@@ -14,18 +15,18 @@ export function mostrarHUDEVA(control, plan = null) {
   raiz.id = 'evaHud';
   raiz.innerHTML = `
     <div class="eva-top">
-      <div class="eva-tit">${t('eva.tit')}</div>
+      <div class="eva-tit" data-i18n="eva.tit">${t('eva.tit')}</div>
       <div class="eva-barra" title="${t('eva.o2.t')}">
-        <span>${t('eva.o2')}</span><div class="barra"><div id="evaO2"></div></div><b id="evaO2n">100%</b></div>
+        <span data-i18n="eva.o2">${t('eva.o2')}</span><div class="barra"><div id="evaO2"></div></div><b id="evaO2n">100%</b></div>
       <div class="eva-barra rad" title="${t('eva.rad.t')}">
-        <span>${t('eva.rad')}</span><b id="evaRad">0 mSv</b></div>
+        <span data-i18n="eva.rad">${t('eva.rad')}</span><b id="evaRad">0 mSv</b></div>
       <div class="eva-items">${Object.entries(TIPOS).map(([k, o]) => `<span class="eva-item ${planEVA?.tipo === k ? 'objetivo' : ''}" title="${tr(o.uso)}">${o.icono} ${tr(o.nombre)}: <b id="evaIt-${k}">0</b>${planEVA?.tipo === k ? `<small>/${planEVA.cantidad} 📋</small>` : ''}</span>`).join('')}</div>
       ${planEVA ? `<div class="eva-plan" id="evaPlan">${t('eva.plan', { c: planEVA.cantidad, i: TIPOS[planEVA.tipo].icono, n: tr(TIPOS[planEVA.tipo].nombre) })} <small>${t('plan.opcional')}</small></div>` : ''}
     </div>
     <div class="eva-aviso" id="evaAviso"></div>
     <div class="eva-tarjeta" id="evaTarjeta"></div>
     <div class="eva-base" id="evaBase"><span class="eva-flecha" id="evaFlecha">➤</span> 🏠 <b id="evaDist">0</b> m</div>
-    <div class="eva-ayuda">${t('eva.ayuda')}</div>
+    <div class="eva-ayuda" data-i18n-html="eva.ayuda">${t('eva.ayuda')}</div>
     <div class="eva-botones">
       <button id="evaLimpiar" class="eva-btn oculto">${t('eva.limpiar')}<span class="tecla"> (E)</span></button>
       <button id="evaEntrar" class="eva-btn oculto">${t('eva.entrar')}<span class="tecla"> (E)</span></button>
@@ -51,7 +52,7 @@ export function actualizarHUDEVA(e) {
     planAvisado = true;
     q('#evaPlan').innerHTML = t('eva.planListo');
     q('#evaPlan').classList.add('listo');
-    avisoEVA(t('eva.planAviso'), true);
+    avisoEVA(() => t('eva.planAviso'), true);
     beep(1320, 0.15, 'triangle');
   }
   q('#evaDist').textContent = e.distBase;
@@ -62,14 +63,15 @@ export function actualizarHUDEVA(e) {
   // Avisos de oxígeno
   const ahora = performance.now();
   if (o2 < 25 && ahora - ultimoBeep > 900) { beep(o2 < 12 ? 1000 : 760, 0.08); ultimoBeep = ahora; }
-  if (o2 < 30 && o2 > 28) avisoEVA(t('eva.pocoO2'));
+  if (o2 < 30 && o2 > 28) avisoEVA(() => t('eva.pocoO2'));
 }
 
 // txt puede venir de src/world3d (en español): se traduce con tr()
 export function avisoEVA(txt, bueno = false) {
   if (!raiz) return;
+  ultimoAviso = txt;
   const el = raiz.querySelector('#evaAviso');
-  el.textContent = tr(txt); el.classList.add('visible');
+  el.textContent = tr(typeof txt === 'function' ? txt() : txt); el.classList.add('visible');
   el.classList.toggle('bueno', bueno);
   clearTimeout(avisoTimer);
   avisoTimer = setTimeout(() => el.classList.remove('visible'), 3500);
@@ -81,6 +83,7 @@ let tarjetaTimer = null;
 export function tarjetaObjeto(tipo) {
   if (!raiz) return;
   const o = TIPOS[tipo], primera = !vistos.has(tipo);
+  ultimaTarjeta = { tipo, primera };
   vistos.add(tipo);
   const el = raiz.querySelector('#evaTarjeta');
   el.style.setProperty('--c', o.color);
@@ -94,7 +97,30 @@ export function tarjetaObjeto(tipo) {
 export function ocultarHUDEVA() {
   document.body.classList.remove('modo-eva');
   raiz?.remove(); raiz = null;
+  ultimoAviso = null; ultimaTarjeta = null;
+  clearTimeout(avisoTimer); clearTimeout(tarjetaTimer);
 }
+
+onIdioma(() => {
+  if (!raiz) return;
+  raiz.querySelector('.eva-barra').title = t('eva.o2.t');
+  raiz.querySelector('.eva-barra.rad').title = t('eva.rad.t');
+  raiz.querySelector('#evaEntrar').innerHTML = `${t('eva.entrar')}<span class="tecla"> (E)</span>`;
+  raiz.querySelector('#evaLimpiar').innerHTML = `${t('eva.limpiar')}<span class="tecla"> (E)</span>`;
+  raiz.querySelectorAll('.eva-item').forEach((el, i) => {
+    const [k, o] = Object.entries(TIPOS)[i];
+    const valor = raiz.querySelector('#evaIt-' + k).textContent;
+    el.title = tr(o.uso);
+    el.innerHTML = `${o.icono} ${tr(o.nombre)}: <b id="evaIt-${k}">${valor}</b>${planEVA?.tipo === k ? `<small>/${planEVA.cantidad} 📋</small>` : ''}`;
+  });
+  const plan = raiz.querySelector('#evaPlan');
+  if (plan) plan.innerHTML = planAvisado ? t('eva.planListo') : `${t('eva.plan', { c: planEVA.cantidad, i: TIPOS[planEVA.tipo].icono, n: tr(TIPOS[planEVA.tipo].nombre) })} <small>${t('plan.opcional')}</small>`;
+  if (ultimoAviso) raiz.querySelector('#evaAviso').textContent = tr(typeof ultimoAviso === 'function' ? ultimoAviso() : ultimoAviso);
+  if (ultimaTarjeta) {
+    const o = TIPOS[ultimaTarjeta.tipo];
+    raiz.querySelector('#evaTarjeta').innerHTML = `<div class="tj-cab"><span class="tj-ic">${o.icono}</span><div><small>${t('eva.recogiste')}</small><b>${tr(o.nombre)}</b></div></div>${ultimaTarjeta.primera ? `<p>${tr(o.que)}</p>` : ''}<p class="tj-uso">✅ ${tr(o.uso)}</p>`;
+  }
+});
 
 function activarJoystick(control) {
   const joy = raiz.querySelector('#joy'), palo = raiz.querySelector('#joyPalo');

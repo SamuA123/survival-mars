@@ -16,9 +16,13 @@ import { enTormenta } from './sim/motor.js';
 import './ui/dificultad-ui.js';   // selector Cadete / Comandante en la pantalla de inicio
 import './ui/voz.js';             // narrador por voz (botones 🔈 y 🗣️)
 import './ui/ubicacion.js';       // 📍 resumen del lugar de la base + mapas de NASA Mars Trek
-import { t, idioma, setIdioma, aplicarEstaticos } from './ui/i18n.js';
+import { t, idioma, setIdioma, aplicarEstaticos, onIdioma } from './ui/i18n.js';
+import { esDemo, aplicarDemo } from './sim/demostracion.js';
+import { LLAMARADAS_RESPALDO } from './data/donki.js';
 
 const $ = s => document.querySelector(s);
+aplicarDemo();
+document.body.classList.toggle('modo-demo', esDemo);
 let S = crearPartida();
 let sel = null;
 let ocupado = false;
@@ -67,15 +71,18 @@ async function terminarSol() {
     if (ev.fx) mundo.efecto(ev.fx);
     refrescar();
     // Medir cuánto tarda en elegir una opción (para el registro e insignias)
-    const t0 = performance.now(); let tDecision = null;
+    const t0 = performance.now(); let tDecision = null, opcion = null;
     const medir = e => {
-      if (tDecision == null && e.target.closest('.opcion')) tDecision = (performance.now() - t0) / 1000;
+      if (tDecision == null && e.target.closest('.opcion:not(:disabled)')) {
+        tDecision = (performance.now() - t0) / 1000;
+        opcion = Number(e.target.closest('.opcion').dataset.op);
+      }
       if (e.target.closest('#btnAyuda') && S.registro) S.registro.pidioAyuda = true;
     };
     document.addEventListener('click', medir, true);
     res = await mostrarEvento(S, ev);
     document.removeEventListener('click', medir, true);
-    if (ev.tiempo) registrarDecision(S, id, tDecision, String(res).includes('Se acabó el tiempo'));
+    if (ev.tiempo) registrarDecision(S, id, tDecision, String(res).includes('Se acabó el tiempo'), opcion);
     aprender(S, ev.dato);
     refrescar();
   }
@@ -136,8 +143,9 @@ async function nuevaPartida() {
   refrescar();
   const nombre = await pantallaInicio();
   S = crearPartida(nombre);
+  S.demo = esDemo;
   iniciarRegistro(S);
-  S.log.unshift({ sol: 1, texto: t('log.inicio', { n: nombre.replace(/[<>&]/g, '') }), tipo: 'tierra' });
+  S.log.unshift({ sol: 1, texto: `🚀 Comandante <b>${nombre.replace(/[<>&]/g, '')}</b> al mando de la base en la meseta NE Syrtis.`, tipo: 'tierra' });
   iniciarSol(S);
   ocupado = false;
   refrescar();
@@ -159,11 +167,9 @@ $('#btnAyudaTuto').onclick = () => { if (!ocupado && !tutorial?.activo()) tutori
 $('#btnLog').onclick = () => $('#bitacoraBox').classList.toggle('abierta');
 // Botón ES / EN (la elección se guarda en localStorage desde i18n.js)
 $('#btnIdioma').onclick = () => {
-  const enInicio = !$('#modal').classList.contains('oculto') && !!document.querySelector('#modalCaja .intro');
   setIdioma(idioma === 'es' ? 'en' : 'es');
-  if (enInicio) { location.reload(); return; }   // la pantalla de inicio se vuelve a dibujar en el nuevo idioma
-  refrescar();
 };
+onIdioma(() => { refrescar(); ponerLigero(mundo.ligero, false); });
 aplicarEstaticos();
 
 refrescar();
@@ -176,7 +182,7 @@ function ponerLigero(on, guardar = true) {
   mundo.setLigero(on);
   $('#btnLigero').classList.toggle('activo', on);
   $('#btnLigero').classList.remove('sugerido');
-  $('#btnLigero').title = on ? 'Gráficos ligeros: ACTIVADOS (toca para volver a normales)' : 'Gráficos ligeros (para computadoras lentas)';
+  $('#btnLigero').title = t(on ? 'top.ligeroOn' : 'top.ligero');
   if (guardar) { try { localStorage.setItem(CLAVE_LIGERO, on ? '1' : '0'); } catch { /* sin almacenamiento */ } }
 }
 $('#btnLigero').onclick = () => ponerLigero(!mundo.ligero);
@@ -197,5 +203,10 @@ else if (leerLigero() === null) {
   else setTimeout(sugerir, 1500);
 }
 
-cargarClimaEspacial().then(c => { setClima(c); refrescar(); refrescarClimaInicio(); });
+if (esDemo) {
+  setClima({ real: false, tranquilo: false, origen: 'historico', consultadoEn: null,
+    flares: [{ ...LLAMARADAS_RESPALDO[0] }], riesgo: 1,
+    resumen: 'Demostración con una llamarada histórica NASA del 2024-10-03.',
+    resumen_en: 'Demo using a historical NASA flare from 2024-10-03.' });
+} else cargarClimaEspacial().then(c => { setClima(c); refrescar(); refrescarClimaInicio(); });
 nuevaPartida();

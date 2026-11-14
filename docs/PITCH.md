@@ -2,6 +2,22 @@
 
 > Revisar en la página del equipo de Space Apps los campos y límites exactos del formulario de envío antes de pegar.
 
+## Recorrido listo para presentar
+
+Abrir **https://survival-mars.pages.dev/?demo=1&lang=en** una vez que estos cambios estén desplegados. En local usar `http://localhost:5500/?demo=1&lang=en`.
+
+1. **Sol 1 — energía:** abrir Base control y encender el laboratorio. Mostrar el pronóstico de oxígeno, comida y ciencia. El laboratorio consume la misma energía que necesitan los otros sistemas.
+2. **Sol 2 — protección y autonomía:** aparece una llamarada histórica del 3 de octubre de 2024. Pedir ayuda: la respuesta llega tarde. Elegir refugio y mostrar el costo en trabajo y cosecha.
+3. **Sol 3 — tormenta:** elegir entre proteger los paneles o conservar parte de la producción solar. Mostrar la consecuencia y terminar con una pregunta del repaso.
+
+El modo se identifica como demostración, usa datos históricos y da 30 segundos por emergencia para explicar la decisión. No requiere cambiar el estado desde la consola ni depende de DONKI. La secuencia de eventos es fija; las caminatas siguen siendo opcionales.
+
+**Narración breve en inglés:**
+
+“Survival Mars turns NASA data into decisions children can experience. More science uses power that life support also needs. Shelter reduces radiation exposure, but the crew gives up a day of work. Earth’s advice takes minutes to arrive, so the child must decide. We use NASA DONKI observations, Curiosity measurements and linked OSDR studies. The scenarios and doses are simplified learning rules, not a forecast for Mars. At the end, children explain three trade-offs and receive feedback.”
+
+No afirmar mejoras de aprendizaje hasta completar la prueba de usuarios de `VALIDACION.md`.
+
 ## 1. Guion del video (2 minutos)
 
 | Tiempo | En pantalla | Narración (ES) |
@@ -10,13 +26,13 @@
 | 0:12–0:25 | Modal de la tormenta con la cuenta regresiva | "Eso le pasó de verdad al rover Opportunity en 2018. Así es **Survival Mars**: un entrenador de misiones para niños de 7 a 12 años." |
 | 0:25–0:45 | Tocar el hábitat, botones − / +, barra de energía en rojo | "El niño es comandante de una base en la meseta NE Syrtis, uno de los sitios que la NASA estudió para Perseverance. Reparte energía entre oxígeno, comida, comunicaciones y ciencia. **Nada es gratis**: encender el laboratorio deja menos energía para el oxígeno." |
 | 0:45–1:05 | Caminata espacial: el astronauta camina, recoge una roca, aparece la tarjeta; sube la radiación | "Puede salir a explorar: recoger regolito para el blindaje, hielo de agua para fabricar oxígeno y rocas marcianas para la ciencia. Pero cada segundo afuera gasta oxígeno del traje y suma radiación." |
-| 1:05–1:25 | Alerta de llamarada con "Basada en una llamarada real que la NASA detectó el…" | "La actividad del Sol es **real**: el juego consulta la base de datos DONKI de la NASA. Si hoy el Sol está activo, tu misión es más peligrosa." |
+| 1:05–1:25 | Alerta de llamarada con "Basada en una llamarada real que la NASA detectó el…" | "El ejemplo viene de una observación real de NASA. Usamos esa actividad solar para inspirar escenarios de entrenamiento; las dosis y la dificultad están simplificadas." |
 | 1:25–1:40 | Botón "Pedir ayuda": "tu mensaje tarda 12 minutos…" | "¿Pedir ayuda a la Tierra? El mensaje tarda minutos en llegar. En Marte, la tripulación decide sola." |
 | 1:40–1:52 | Resumen del sol con la tarjeta de OSDR + panel 📡 Datos NASA | "Cada consecuencia muestra un estudio real de la NASA, con su fuente, para que niños y maestros puedan comprobarlo." |
 | 1:52–2:00 | Pantalla final con estrellas + link | "Se juega en el navegador, sin descargas ni cuentas. **survival-mars.pages.dev**. ¿Estás listo para el asiento del comandante?" |
 
 **Consejos de grabación:** usar la versión publicada; borrar `localStorage` para que salga el tutorial; grabar a 1080p;
-para mostrar la tormenta sin jugar 6 sols, usar la consola del navegador (`juego.S`) solo durante la grabación.
+para mostrar la secuencia corta, usar el modo `?demo=1` identificado en pantalla.
 
 ## 2. Texto de envío (English — for judges)
 

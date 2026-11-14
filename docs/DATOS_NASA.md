@@ -10,7 +10,7 @@ dentro del juego (botón **📡 Datos NASA**, tarjetas "¿Sabías que…?" y "Lo
 
 | Dataset / fuente NASA | Tipo | Mecánica del juego | Por qué |
 |---|---|---|---|
-| **DONKI – Solar Flares (FLR)** | 🛰️ **En vivo** (API) | Riesgo de llamaradas y evento "¡Alerta de llamarada solar!" | La actividad real del Sol en los últimos 30 días decide qué tan seguido llegan llamaradas y de qué clase son (C, M, X). Conecta la decisión de **refugiarse o seguir trabajando** con el clima espacial de hoy. |
+| **DONKI – Solar Flares (FLR)** | Consulta reciente / caché / archivo, identificado en pantalla | Dificultad de los ejercicios y clase/fecha de las llamaradas utilizadas | Observaciones reales inspiran escenarios educativos para elegir entre **refugiarse o seguir trabajando**. No es un pronóstico de partículas ni de dosis en Marte. |
 | **Curiosity RAD** (Hassler et al. 2014) | 📚 Guardado | Radiación de fondo por sol, límite de la misión, blindaje | 0,67 mSv/día medidos en la superficie de Marte. Cada sol la tripulación suma radiación; las caminatas y las llamaradas suman más. |
 | **OSDR – RadLab** (dosimetría de la ISS) | 📚 Guardado | Comparación ISS vs. Marte | En la ISS se reciben ~0,2–0,5 mSv/día; en Marte, más. Explica por qué Marte es más peligroso que la Estación. |
 | **OSDR – estudios de biología espacial** | 📚 Guardado | Tarjeta "Lo que dice la ciencia real" tras cada sol | Cuando pasa algo (llamarada, poca comida, poco oxígeno), el juego muestra el hallazgo de un estudio real con su ID OSD-xxx. |
@@ -30,13 +30,17 @@ nunca "en vivo", tal como pide el reto.
 
 ## 2. Detalle por fuente
 
-### 2.1 DONKI – llamaradas solares (en vivo)
+### 2.1 DONKI – llamaradas solares y procedencia
 - Endpoint: `https://api.nasa.gov/DONKI/FLR?startDate=…&endDate=…&api_key=…` (últimos 30 días). Código: `src/data/donki.js`.
+- Segunda fuente si falla la primera: `https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR`.
+- **Consulta reciente:** respuesta obtenida en esta carga. **Consulta guardada:** caché de hasta seis horas. Ambas muestran la hora original de consulta. **Archivo histórico:** respaldo si no se puede consultar NASA.
+- Si la consulta devuelve cero eventos, se conserva la lista vacía. Un ejercicio guionado puede usar un ejemplo histórico, identificado como tal; esos ejemplos no se mezclan con los resultados de la consulta.
 - Cálculo de riesgo: `riesgo = 0,6 + 0,08 × (llamaradas M) + 0,4 × (llamaradas X)`, limitado a [0,6 – 2,5].
-  Afecta la probabilidad de eventos de llamarada y de una llamarada sorpresa durante la caminata espacial.
+  Es una fórmula de **dificultad del juego**, no un modelo científico de riesgo para Marte. Afecta los eventos aleatorios y la caminata; los eventos guionados siguen su calendario de entrenamiento.
 - Cada evento de llamarada usa una **llamarada real** de la lista (clase y fecha) y lo muestra:
-  *"Basada en una llamarada real que la NASA detectó el …"*.
+  *"Basada en una llamarada real que la NASA detectó el …"*. La llegada de partículas y la dosis del escenario son simuladas: no se deducen científicamente de la clase de la llamarada.
 - Fuente: https://kauai.ccmc.gsfc.nasa.gov/DONKI/ · API: https://api.nasa.gov
+- Respaldo curado: [X9.0 del 3 de octubre de 2024](https://svs.gsfc.nasa.gov/14701/) y [X8.7 del 14 de mayo de 2024](https://svs.gsfc.nasa.gov/14592/), con publicaciones de NASA SDO. Se retiraron las entradas sin verificación específica del archivo anterior.
 
 ### 2.2 Radiación (Curiosity RAD y RadLab)
 | Valor | Dato real | En el juego | Fuente |
@@ -93,7 +97,6 @@ Para que un niño de 7 años entienda el trade-off, algunos números son simplif
   Sí respetan las proporciones reales: los paneles en Marte rinden menos que en la Tierra (~43 % de luz) y una tormenta los deja casi en cero.
 - **Retraso fijo de 12 minutos** (el real varía de ~4 a ~24 según la posición de los planetas).
 - **Límite de la misión: 60 mSv** (el límite real de carrera de la NASA es 600 mSv). Se baja para que la radiación importe en 15 sols.
-- **Dosis por llamarada**: las tormentas de partículas reales varían en órdenes de magnitud; el juego solo respeta que X > M > C
-  y que refugiarse y el blindaje de regolito reducen la dosis.
+- **Dosis por llamarada**: X > M > C es una regla de dificultad del juego. La clase de una llamarada no determina por sí sola una dosis en Marte. La llegada de partículas depende de otros factores. El refugio y el blindaje reducen la exposición en el modelo educativo.
 - **Hielo en NE Syrtis**: en el Marte real, el hielo superficial abunda más lejos del ecuador; el juego lo coloca cerca de la base para jugar.
   La tarjeta del hielo lo aclara ("sobre todo lejos del ecuador").

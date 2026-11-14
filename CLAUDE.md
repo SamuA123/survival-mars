@@ -11,7 +11,7 @@ balanceando energía, soporte vital, comida, blindaje contra radiación y retras
 ## Tecnología
 - Three.js por import map desde CDN (sin npm, sin build). ES modules nativos.
 - Servir localmente: `python -m http.server 5500 --bind 127.0.0.1`. En la PC de Samuel el puerto 8000 está bloqueado.
-- Todo el texto del juego en español, lenguaje simple para niños.
+- Todo el texto visible del juego en español e inglés, con lenguaje simple para niños. Mantener ambos idiomas al agregar pantallas o mensajes; el cambio debe conservar la partida.
 
 ## Estructura y dueños (trabajo en paralelo: NO editar carpetas del otro)
 | Carpeta | Contenido | Rama / dueño |

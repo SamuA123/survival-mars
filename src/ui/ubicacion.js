@@ -5,6 +5,7 @@
 // =====================================================================
 import { SITIO } from '../data/sitio.js';
 import { FUENTES } from '../data/fuentes.js';
+import { t, campo, fuenteNombre, onIdioma, setIdioma, idioma } from './i18n.js';
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -15,26 +16,30 @@ function abrirUbicacion() {
   const secciones = (SITIO.resumen || []).map(s => {
     const f = FUENTES[s.fuente];
     return `<section class="ubic-sec">
-      <h3>${s.icono} ${esc(s.titulo)}</h3>
-      <ul>${s.puntos.map(p => `<li>${esc(p)}</li>`).join('')}</ul>
-      ${f ? `<a class="fuente" href="${f.url}" target="_blank" rel="noopener">Fuente: ${esc(f.nombre)}</a>` : ''}
+      <h3>${s.icono} ${esc(campo(s, 'titulo'))}</h3>
+      <ul>${campo(s, 'puntos').map(p => `<li>${esc(p)}</li>`).join('')}</ul>
+      ${f ? `<a class="fuente" href="${f.url}" target="_blank" rel="noopener">${t('fuente')} ${esc(fuenteNombre(f))}</a>` : ''}
     </section>`;
   }).join('');
   const mapas = (SITIO.mapas || []).map((m, i) =>
-    `<a class="ubic-mapa ${i ? 'sec' : ''}" href="${m.url}" target="_blank" rel="noopener">${esc(m.texto)} ↗</a>`).join('');
+    `<a class="ubic-mapa ${i ? 'sec' : ''}" href="${m.url}" target="_blank" rel="noopener">${esc(campo(m, 'texto'))} ↗</a>`).join('');
   capa.innerHTML = `
-    <div class="ubic-caja" role="dialog" aria-label="Ubicación de la base">
-      <button class="ubic-cerrar" aria-label="Cerrar">✕</button>
-      <div class="ubic-cab"><span>📍</span><div><small>Tu base en Marte</small><b>${esc(SITIO.nombreCompleto || SITIO.nombre)}</b></div></div>
+    <div class="ubic-caja" role="dialog" aria-modal="true" aria-label="${t('ubic.dialog')}">
+      <button class="ubic-cerrar" aria-label="${t('cerrar')}">✕</button>
+      <button class="chip-btn ubic-idioma">${idioma === 'es' ? '🌐 English' : '🌐 Español'}</button>
+      <div class="ubic-cab"><span>📍</span><div><small>${t('ubic.base')}</small><b>${esc(campo(SITIO, 'nombreCompleto') || campo(SITIO, 'nombre'))}</b></div></div>
       ${secciones}
       <div class="ubic-mapas">${mapas}</div>
-      <button class="btn-grande ubic-ok">Volver</button>
+      <button class="btn-grande ubic-ok">${t('volver')}</button>
     </div>`;
-  const cerrar = () => capa.remove();
+  const alEscape = e => { if (e.key === 'Escape') cerrar(); };
+  const cerrar = () => { capa.remove(); removeEventListener('keydown', alEscape); };
+  capa.querySelector('.ubic-idioma').onclick = () => setIdioma(idioma === 'es' ? 'en' : 'es');
   capa.addEventListener('click', e => {
     if (e.target === capa || e.target.closest('.ubic-cerrar, .ubic-ok')) cerrar();
   });
-  addEventListener('keydown', function alEscape(e) { if (e.key === 'Escape') { cerrar(); removeEventListener('keydown', alEscape); } });
+  addEventListener('keydown', alEscape);
+  capa.cerrar = cerrar;
   document.body.appendChild(capa);
 }
 
@@ -43,8 +48,8 @@ function insertarBoton() {
   const barra = document.querySelector('.botones-top');
   if (!barra || barra.querySelector('#btnUbicacion')) return;
   const b = document.createElement('button');
-  b.id = 'btnUbicacion'; b.className = 'chip-btn'; b.title = 'Dónde está tu base en Marte';
-  b.textContent = '📍 Ubicación';
+  b.id = 'btnUbicacion'; b.className = 'chip-btn'; b.title = t('ubic.title');
+  b.textContent = '📍'; b.setAttribute('aria-label', t('ubic.title'));
   b.addEventListener('click', abrirUbicacion);
   barra.prepend(b);
 }
@@ -57,7 +62,7 @@ function insertarEnInicio() {
   if (!ancla) return;
   const a = document.createElement('button');
   a.type = 'button'; a.className = 'ubic-link';
-  a.textContent = '📍 Conoce el lugar de tu base (con mapa de la NASA)';
+  a.textContent = t('ubic.intro');
   a.addEventListener('click', abrirUbicacion);
   ancla.after(a);
 }
@@ -88,5 +93,17 @@ document.head.appendChild(css);
 new MutationObserver(insertarEnInicio).observe(document.querySelector('#modalCaja') || document.body, { childList: true, subtree: true });
 insertarBoton();
 insertarEnInicio();
+onIdioma(() => {
+  const b = document.querySelector('#btnUbicacion');
+  if (b) { b.title = t('ubic.title'); b.setAttribute('aria-label', t('ubic.title')); }
+  const enlace = document.querySelector('.ubic-link');
+  if (enlace) enlace.textContent = t('ubic.intro');
+  const capa = document.querySelector('.ubic-capa');
+  if (capa) {
+    const scroll = capa.querySelector('.ubic-caja').scrollTop;
+    capa.cerrar(); abrirUbicacion();
+    document.querySelector('.ubic-caja').scrollTop = scroll;
+  }
+});
 
 export { abrirUbicacion };

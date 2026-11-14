@@ -6,6 +6,7 @@
 export const FUENTES = {
   donki: {
     nombre: 'NASA DONKI — clima espacial',
+    nombre_en: 'NASA DONKI — space weather',
     url: 'https://kauai.ccmc.gsfc.nasa.gov/DONKI/',
     uso: 'Llamaradas solares reales de los últimos 30 días: cambian el riesgo de radiación de tu misión.',
     uso_en: 'Real solar flares from the last 30 days: they change the radiation risk of your mission.',
@@ -42,20 +43,26 @@ export const FUENTES = {
   },
   neSyrtis: {
     nombre: 'NASA — NE Syrtis, uno de los 3 sitios finalistas de Mars 2020',
+    nombre_en: 'NASA — NE Syrtis, one of three Mars 2020 finalist landing sites',
     url: 'https://astrobiology.nasa.gov/news/scientists-shortlist-three-landing-sites-for-mars-2020/',
     uso: 'Lugar de la base: meseta NE Syrtis, al borde de la cuenca Isidis.',
+    uso_en: 'Base location: NE Syrtis plateau, on the edge of the Isidis basin.',
     papel: 'texto',
   },
   topoJezero: {
     nombre: 'ESA / DLR (Mars Express HRSC) — Mapa topográfico del cráter Jezero y alrededores',
+    nombre_en: 'ESA / DLR (Mars Express HRSC) — Topographic map of Jezero Crater and surroundings',
     url: 'https://www.esa.int/ESA_Multimedia/Images/2021/02/Topographic_map_of_Jezero_crater_and_surrounds',
     uso: 'Altura del terreno: el fondo de Jezero está ~2.600 m bajo el nivel de referencia de Marte.',
+    uso_en: 'Terrain elevation: Jezero’s floor is about 2,600 m below the Martian reference level.',
     papel: 'texto',
   },
   neSyrtisGeologia: {
     nombre: 'Brown University (2017) — Mapa geológico de NE Syrtis: olivino, carbonatos y cuenca Isidis',
+    nombre_en: 'Brown University (2017) — NE Syrtis geology: olivine, carbonates and the Isidis basin',
     url: 'https://www.brown.edu/news/2017-04-20/syrtis',
     uso: 'Edad de la cuenca Isidis (~3.960 millones de años) y rocas con olivino alterado por agua.',
+    uso_en: 'Age of the Isidis basin (about 3.96 billion years) and water-altered olivine-bearing rocks.',
     papel: 'texto',
   },
   csaComida: {
@@ -140,6 +147,7 @@ export const FUENTES = {
   },
   nasaMarte: {
     nombre: 'NASA Ciencia — Marte',
+    nombre_en: 'NASA Science — Mars',
     url: 'https://science.nasa.gov/mars/facts/',
     uso: 'Datos básicos de Marte: duración del sol, luz solar, retraso de las señales.',
     uso_en: 'Basic Mars facts: length of a sol, sunlight, signal delay.',
@@ -147,6 +155,7 @@ export const FUENTES = {
   },
   iss: {
     nombre: 'NASA — Estación Espacial Internacional',
+    nombre_en: 'NASA — International Space Station',
     url: 'https://www.nasa.gov/international-space-station/',
     uso: 'Cómo se recicla el agua y cómo se trabaja fuera de la nave.',
     uso_en: 'How water is recycled and how astronauts work outside the station.',

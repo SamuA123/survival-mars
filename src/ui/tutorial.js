@@ -1,7 +1,7 @@
 // Tutorial guiado del Sol 1. Un globo de diálogo señala elementos y espera a que el niño actúe.
 import { balance } from '../sim/motor.js';
 import { beep } from './sonido.js';
-import { t, esEN } from './i18n.js';
+import { t, esEN, onIdioma } from './i18n.js';
 const L = (es, en) => esEN() ? en : es;
 
 const CLAVE = 'survivalMars.tutorialVisto';
@@ -42,6 +42,7 @@ export function iniciarTutorial(contexto) {
 
   function terminar() {
     clearInterval(timer);
+    dejarIdioma();
     globo.remove(); foco.remove();
     marcarVisto();
   }
@@ -50,6 +51,10 @@ export function iniciarTutorial(contexto) {
     i++;
     if (i >= PASOS.length) return terminar();
     beep(820, 0.06);
+    dibujar();
+  }
+
+  function dibujar() {
     const p = PASOS[i];
     const txt = typeof p.texto === 'function' ? p.texto(contexto()) : p.texto;
     globo.innerHTML = `<div class="tuto-txt">${txt}</div>
@@ -88,5 +93,6 @@ export function iniciarTutorial(contexto) {
   }, 150);
 
   siguiente();
+  const dejarIdioma = onIdioma(() => { if (globo.isConnected) dibujar(); });
   return { terminar, activo: () => globo.isConnected };
 }

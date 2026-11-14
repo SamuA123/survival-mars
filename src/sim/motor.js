@@ -12,7 +12,7 @@ export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const r1 = v => Math.round(v * 10) / 10;
 
 // Clima espacial (lo llena main.js con DONKI)
-export const CLIMA = { real: false, tranquilo: false, flares: LLAMARADAS_RESPALDO, riesgo: 1, resumen: 'cargando…' };
+export const CLIMA = { real: false, tranquilo: false, origen: 'cargando', consultadoEn: null, flares: LLAMARADAS_RESPALDO, riesgo: 1, resumen: 'cargando…' };
 export function setClima(c) { Object.assign(CLIMA, c); }
 
 // ---------------------------------------------------------------------
@@ -57,6 +57,31 @@ export function balance(S) {
   const solar = solarHoy(S), nuclear = MISION.nuclear, gen = solar + nuclear, cons = consumo(S);
   const bal = gen - cons;
   return { solar, nuclear, gen, cons, bal, manana: clamp(S.bateria + bal, 0, MISION.bateriaMax), apagon: S.bateria + bal < 0 };
+}
+
+// Shared by the preview and the actual simulation. Future events are not predicted.
+export function preverSol(S) {
+  const gen = solarHoy(S) + MISION.nuclear;
+  const niv = { ...S.niveles };
+  let construir = S.construir;
+  const disponible = S.bateria + gen;
+  const apagados = [];
+  if (construir && consumo(S, niv, construir) > disponible) { construir = false; apagados.push('la construcción'); }
+  for (const id of ['lab', 'radio', 'invernadero', 'vital']) {
+    while (consumo(S, niv, construir) > disponible + 1e-9 && niv[id] > 0) {
+      niv[id]--;
+      const nom = SISTEMAS[id].nombre.toLowerCase();
+      if (!apagados.includes(nom)) apagados.push(nom);
+    }
+  }
+  const trabajan = !S.refugio && !S.ocupados;
+  return {
+    niv, construir, apagados,
+    bateria: r1(clamp(S.bateria + gen - consumo(S, niv, construir), 0, MISION.bateriaMax)),
+    oxigeno: clamp(Math.round(S.o2 + [-20, -8, 0, 4][niv.vital]), 0, 100) - S.o2,
+    comida: clamp(Math.round(S.comida + [0, 2, 4, 6][niv.invernadero] * S.invSalud * (trabajan ? 1 : 0.5) - 5), 0, 100) - S.comida,
+    ciencia: trabajan ? [0, 4, 8][niv.lab] : 0,
+  };
 }
 
 // ---------------------------------------------------------------------
@@ -252,9 +277,9 @@ export const EVENTOS = {
     texto: S => {
       const f = S.llamarada;
       const origen = CLIMA.real && !CLIMA.tranquilo
-        ? `🛰️ Basada en una llamarada <b>real</b> que la NASA detectó el ${f.fecha} (DONKI, en vivo).`
+        ? `🛰️ Basada en una llamarada <b>real</b> que la NASA detectó el ${f.fecha} (consulta NASA DONKI).`
         : `📚 Basada en una llamarada histórica real del ${f.fecha} (archivo NASA DONKI).`;
-      return `Los satélites detectaron una llamarada clase <b>${f.clase}</b>. Una lluvia de partículas de alta energía viene hacia Marte.<br><small class="real">${origen}</small>`;
+      return `Ejercicio: llamarada clase <b>${f.clase}</b>. En este escenario simulado, una tormenta de partículas llega a Marte. ¿Proteges a la tripulación o sigues trabajando?<br><small class="real">${origen}</small>`;
     },
     consejo: 'Todos al refugio. La salud de la tripulación es primero; los experimentos pueden esperar.',
     inicio(S) { S.llamarada = elegirLlamarada(); },
@@ -393,20 +418,8 @@ export function simularSol(S, resultadoEvento, ev) {
   if (resultadoEvento) lineas.push(`${ev.icono} ${resultadoEvento}`);
 
   // 1) Energía: si no alcanza, se apagan sistemas (primero lo menos vital)
-  const gen = solarHoy(S) + MISION.nuclear;
-  const niv = { ...S.niveles };
-  let construir = S.construir;
-  const disponible = S.bateria + gen;
-  const apagados = [];
-  if (construir && consumo(S, niv, construir) > disponible) { construir = false; apagados.push('la construcción'); }
-  for (const id of ['lab', 'radio', 'invernadero', 'vital']) {
-    while (consumo(S, niv, construir) > disponible + 1e-9 && niv[id] > 0) {
-      niv[id]--;
-      const nom = SISTEMAS[id].nombre.toLowerCase();
-      if (!apagados.includes(nom)) apagados.push(nom);
-    }
-  }
-  S.bateria = r1(clamp(S.bateria + gen - consumo(S, niv, construir), 0, MISION.bateriaMax));
+  const { niv, construir, apagados, bateria } = preverSol(S);
+  S.bateria = bateria;
   S.energiaOk = apagados.length === 0;
   if (apagados.length) { lineas.push(`🔌 <b>¡Apagón!</b> La energía no alcanzó y se apagó o bajó: ${apagados.join(', ')}.`); aprender(S, 'bateria'); }
 

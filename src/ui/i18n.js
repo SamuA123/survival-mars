@@ -7,9 +7,13 @@
 //  La elección se guarda en localStorage.
 // =====================================================================
 const CLAVE = 'survivalMars.idioma';
-export let idioma = (() => { try { return localStorage.getItem(CLAVE) === 'en' ? 'en' : 'es'; } catch { return 'es'; } })();
-const oyentes = [];
-export const onIdioma = fn => oyentes.push(fn);
+export let idioma = (() => {
+  const pedido = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('lang') : null;
+  if (pedido === 'en' || pedido === 'es') return pedido;
+  try { return localStorage.getItem(CLAVE) === 'en' ? 'en' : 'es'; } catch { return 'es'; }
+})();
+const oyentes = new Set();
+export const onIdioma = fn => { oyentes.add(fn); return () => oyentes.delete(fn); };
 export function setIdioma(l) {
   idioma = l === 'en' ? 'en' : 'es';
   try { localStorage.setItem(CLAVE, idioma); } catch { /* sin almacenamiento */ }
@@ -250,6 +254,35 @@ const T = {
   },
 };
 
+Object.assign(T.es, {
+  'top.ligero': 'Gráficos ligeros (para computadoras lentas)',
+  'top.ligeroOn': 'Gráficos ligeros: ACTIVADOS (toca para volver a normales)',
+  'ubic.boton': '📍 Ubicación', 'ubic.title': 'Dónde está tu base en Marte',
+  'ubic.intro': '📍 Conoce el lugar de tu base (con mapa de la NASA)',
+  'ubic.dialog': 'Ubicación de la base', 'ubic.base': 'Tu base en Marte', 'cerrar': 'Cerrar',
+  'clima.consulta': 'CONSULTA RECIENTE', 'clima.cache': 'CONSULTA GUARDADA', 'clima.historico': 'ARCHIVO HISTÓRICO',
+  'clima.cargando': 'Cargando datos NASA…', 'clima.fecha': 'Última consulta: {fecha}',
+  'fin.aprendiste': '🧠 Datos que exploraste ({n})',
+});
+Object.assign(T.en, {
+  'top.ligero': 'Low graphics (for slower computers)',
+  'top.ligeroOn': 'Low graphics: ON (tap to restore normal graphics)',
+  'ubic.boton': '📍 Location', 'ubic.title': 'Where your base is on Mars',
+  'ubic.intro': '📍 Explore your base location (with a NASA map)',
+  'ubic.dialog': 'Base location', 'ubic.base': 'Your base on Mars', 'cerrar': 'Close',
+  'clima.consulta': 'RECENT QUERY', 'clima.cache': 'SAVED QUERY', 'clima.historico': 'HISTORICAL ARCHIVE',
+  'clima.cargando': 'Loading NASA data…', 'clima.fecha': 'Last queried: {fecha}',
+  'fin.aprendiste': '🧠 Facts you explored ({n})',
+});
+
+export const campo = (o, nombre) => idioma === 'en' ? (o?.[nombre + '_en'] ?? o?.[nombre]) : o?.[nombre];
+export const resumenClima = c => idioma === 'en' ? (c.resumen_en || tr(c.resumen)) : c.resumen;
+export const estadoClima = c => t('clima.' + (c.origen || (c.real ? 'consulta' : 'historico')));
+export function fechaClima(c) {
+  if (!c.consultadoEn) return '';
+  return t('clima.fecha', { fecha: new Date(c.consultadoEn).toLocaleString(idioma === 'en' ? 'en-US' : 'es-PE', { timeZoneName: 'short' }) });
+}
+
 export function t(clave, vars = {}) {
   const s = T[idioma][clave] ?? T.es[clave] ?? clave;
   return s.replace(/\{(\w+)\}/g, (_, n) => (vars[n] ?? ''));
@@ -260,7 +293,8 @@ export function t(clave, vars = {}) {
 // ---------------------------------------------------------------------
 const EXACTO = new Map(Object.entries({
   // Recursos y sistemas (config.js)
-  'Energía': 'Power', 'Oxígeno': 'Oxygen', 'Comida': 'Food', 'Radiación': 'Radiation', 'Tripulación': 'Crew',
+  'Energía': 'Power', 'Oxígeno': 'Oxygen', 'Comida': 'Food', 'Radiación': 'Radiation', 'Tripulación': 'Crew', 'Ciencia': 'Science', 'Construcción': 'Construction',
+  '🐢 El juego va un poco lento en esta computadora. Prueba el botón 🐢 (gráficos ligeros).': '🐢 The game is running slowly on this computer. Try the 🐢 button (low graphics).',
   'La batería guarda energía para la noche y las tormentas.': 'The battery stores power for the night and for storms.',
   'Lo fabrica el soporte vital. ¡Sin oxígeno no se respira!': 'Life support makes it. Without oxygen nobody can breathe!',
   'La tripulación come cada sol. El invernadero produce más.': 'The crew eats every sol. The greenhouse makes more.',
@@ -404,6 +438,10 @@ const RIESGO = { bajo: 'low', medio: 'medium', ALTO: 'HIGH' };
 
 // [regex, reemplazo] — reemplazo puede ser función; tr() se aplica a las partes anidadas
 const PATRONES = [
+  [/^🚀 Comandante <b>(.*?)<\/b> al mando de la base en la meseta NE Syrtis\.$/s, '🚀 Commander <b>$1</b> is in charge of the base on the NE Syrtis plateau.'],
+  [/^Ejercicio: llamarada clase <b>([^<]+)<\/b>\. En este escenario simulado, una tormenta de partículas llega a Marte\. ¿Proteges a la tripulación o sigues trabajando\?<br><small class="real">(.*)<\/small>$/s,
+    (m, c, origen) => `Training exercise: class <b>${c}</b> solar flare. In this simulated scenario, a particle storm reaches Mars. Will you protect the crew or keep working?<br><small class="real">${tr(origen)}</small>`],
+  [/^🛰️ Basada en una llamarada <b>real<\/b> que la NASA detectó el (.+) \(consulta NASA DONKI\)\.$/, '🛰️ Based on a <b>real</b> flare NASA detected on $1 (NASA DONKI query).'],
   [/^⏰ <b>¡Se acabó el tiempo!<\/b> (.*)$/s, (m, r) => `⏰ <b>Time's up!</b> ${tr(r)}`],
   [/^🧱 Construir blindaje de regolito \((\d)\/3\)$/, '🧱 Build regolith shield ($1/3)'],
   [/^Recoge hielo, rocas y más\. Cuesta (\d+) de oxígeno de la base; afuera recibes radiación\.$/, 'Collect ice, rocks and more. Costs $1 of the base\'s oxygen; outside you get radiation.'],
@@ -460,7 +498,7 @@ export function tr(s) {
 //  3) DATOS (src/data) y utilidades
 // ---------------------------------------------------------------------
 export const txt = o => (idioma === 'en' && o?.texto_en) ? o.texto_en : o?.texto;
-export const fuenteNombre = f => (idioma === 'en' && f?.nombre_en) ? f.nombre_en : f?.nombre;
+export const fuenteNombre = f => campo(f, 'nombre');
 export const fuenteUso = f => (idioma === 'en' && f?.uso_en) ? f.uso_en : f?.uso;
 
 // Textos fijos de index.html: data-i18n (texto), data-i18n-html (HTML), data-i18n-title (title)
@@ -468,6 +506,7 @@ export function aplicarEstaticos() {
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
   document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
   const b = document.querySelector('#btnIdioma');
   if (b) { b.textContent = idioma === 'es' ? '🌐 EN' : '🌐 ES'; b.title = t('top.idioma.t'); }
 }

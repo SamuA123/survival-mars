@@ -88,7 +88,7 @@ function botonAuto() {
   if (!cont || cont.querySelector('#btnNarrador')) return;
   const b = document.createElement('button');
   b.id = 'btnNarrador'; b.className = 'chip-btn';
-  const pintar = () => { b.textContent = auto ? t('voz.on') : t('voz.off'); b.title = t('voz.t'); b.classList.toggle('activo-voz', auto); };
+  const pintar = () => { b.textContent = '🗣️'; b.title = (auto ? t('voz.on') : t('voz.off')) + ' · ' + t('voz.t'); b.setAttribute('aria-label', b.title); b.setAttribute('aria-pressed', String(auto)); b.classList.toggle('activo-voz', auto); };
   b.onclick = () => {
     auto = !auto; pintar();
     try { localStorage.setItem(CLAVE, auto ? '1' : '0'); } catch { /* sin almacenamiento */ }

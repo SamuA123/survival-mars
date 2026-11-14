@@ -2,10 +2,10 @@
 // Principio: el niño ve FORMAS (cuánto se llena un tanque), no números. Los números van en el tooltip.
 // Diseño de Jorge. Textos: t() interfaz, tr() textos de src/sim, txt() datos con *_en, L(es, en) textos nuevos.
 import { MISION, SISTEMAS, RECURSOS } from '../sim/config.js';
-import { ACCIONES, balance, r1, clamp, enTormenta, enConjuncion } from '../sim/motor.js';
+import { ACCIONES, balance, preverSol, r1, clamp, enTormenta, enConjuncion } from '../sim/motor.js';
 import { HALLAZGOS } from '../data/salud.js';
 import { SITIO } from '../data/sitio.js';
-import { t, tr, txt, esEN } from './i18n.js';
+import { t, tr, txt, esEN, campo } from './i18n.js';
 
 const $ = s => document.querySelector(s);
 const L = (es, en) => esEN() ? en : es;
@@ -128,7 +128,7 @@ export function renderPanel(S, sel) {
   el.innerHTML = `
     <div class="pantalla">
       <header class="con-cab">
-        <span class="led"></span><b>${L('Consola de la base', 'Base console')}</b><small>${SITIO.nombre} · Sol ${S.sol}</small>
+        <span class="led"></span><b>${L('Consola de la base', 'Base console')}</b><small>${campo(SITIO, 'nombre')} · Sol ${S.sol}</small>
         <button class="cerrar" data-sel="" aria-label="${L('Volver afuera', 'Back outside')}">${L('Volver afuera ✕', 'Back outside ✕')}</button>
       </header>
       ${e ? `<p class="con-pista">${e.icono} <b>${e.nombre}:</b> ${e.info}</p>` : ''}
@@ -196,7 +196,8 @@ function colTripulante(S) {
 
 // Derecha: energía de mañana y los sistemas que la gastan
 function colEnergia(S, foco) {
-  const b = balance(S);
+  const b = balance(S), pronostico = preverSol(S);
+  const signo = n => n > 0 ? `+${n}` : String(n);
   const sistemas = Object.entries(SISTEMAS).map(([id, s]) => {
     const n = S.niveles[id];
     const malo = n < (id === 'vital' ? 2 : id === 'lab' ? 0 : 1);
@@ -221,6 +222,12 @@ function colEnergia(S, foco) {
       <div class="sis-cab">☀️ <b>${nombreEd('paneles')}</b><small>${L('limpios', 'clean')} ${Math.round(S.eficiencia * 100)}%</small></div>
       ${accionBtn(S, 'paneles')}${accionBtn(S, 'limpiar')}
     </div>
+    <details class="pronostico" open>
+      <summary>${L('Si terminas el sol ahora…', 'If you end the sol now…')}</summary>
+      <p>${L('Con este plan, antes de nuevas emergencias:', 'With this plan, before any new emergencies:')}</p>
+      <div class="pronostico-valores">🫁 ${signo(pronostico.oxigeno)} · 🥔 ${signo(pronostico.comida)} · 🔬 ${signo(pronostico.ciencia)}</div>
+      ${pronostico.apagados.length ? `<p class="malo">${L('La energía no alcanza. Se reducirá:', 'There is not enough power. These will be reduced:')} ${pronostico.apagados.map(n => tr(n === 'la construcción' ? 'Construcción' : n[0].toUpperCase() + n.slice(1))).join(', ')}.</p>` : ''}
+    </details>
     ${sistemas}`;
 }
 
