@@ -151,5 +151,35 @@ $('#btnAyudaTuto').onclick = () => { if (!ocupado && !tutorial?.activo()) tutori
 $('#btnLog').onclick = () => $('#bitacoraBox').classList.toggle('abierta');
 
 refrescar();
+// ---------------------------------------------------------------------
+//  GRÁFICOS LIGEROS: botón 🐢, ?ligero=1 en el link, o automático si va lento
+// ---------------------------------------------------------------------
+const CLAVE_LIGERO = 'survivalMars.ligero';
+const leerLigero = () => { try { return localStorage.getItem(CLAVE_LIGERO); } catch { return null; } };
+function ponerLigero(on, guardar = true) {
+  mundo.setLigero(on);
+  $('#btnLigero').classList.toggle('activo', on);
+  $('#btnLigero').classList.remove('sugerido');
+  $('#btnLigero').title = on ? 'Gráficos ligeros: ACTIVADOS (toca para volver a normales)' : 'Gráficos ligeros (para computadoras lentas)';
+  if (guardar) { try { localStorage.setItem(CLAVE_LIGERO, on ? '1' : '0'); } catch { /* sin almacenamiento */ } }
+}
+$('#btnLigero').onclick = () => ponerLigero(!mundo.ligero);
+const pideLigero = new URLSearchParams(location.search).get('ligero');
+if (pideLigero !== null) ponerLigero(pideLigero !== '0', false);
+else if (leerLigero() === '1') ponerLigero(true, false);
+else if (leerLigero() === null) {
+  // Primera visita: si se ve lento, SUGERIR el modo ligero (no se cambia solo, para evitar falsos avisos)
+  const sugerir = () => mundo.medirFPS().then(fps => {
+    if (fps === null) return;                       // pestaña oculta: medición no válida
+    if (fps < 28 && !mundo.ligero) {
+      $('#btnLigero').classList.add('sugerido');
+      S.log.unshift({ sol: S.sol, texto: `🐢 El juego va un poco lento en esta computadora. Prueba el botón 🐢 (gráficos ligeros).`, tipo: 'aviso' });
+      refrescar();
+    }
+  });
+  if (document.hidden) document.addEventListener('visibilitychange', sugerir, { once: true });
+  else setTimeout(sugerir, 1500);
+}
+
 cargarClimaEspacial().then(c => { setClima(c); refrescar(); });
 nuevaPartida();

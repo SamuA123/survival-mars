@@ -478,3 +478,15 @@ button { touch-action: manipulation; }
 @media (pointer: coarse) { .tecla { display: none; } }
 .eva-tarjeta { opacity: 0; transition: transform .35s ease-out, opacity .35s; }
 .eva-tarjeta.visible { opacity: 1; }
+.chip-btn.activo { border-color: var(--verde); background: rgba(76,209,122,.2); }
+.chip-btn.sugerido { border-color: var(--acento); animation: latido 1s infinite; }
+@media (max-width: 760px), (max-height: 500px) and (orientation: landscape) {
+  /* El botón del narrador trae texto: en pantallas chicas mostrar solo el ícono */
+  #btnNarrador { width: 36px; padding-left: 8px; padding-right: 0; overflow: hidden; white-space: nowrap; text-align: left; }
+}
+@media (max-width: 760px) {
+  .botones-top { gap: 3px; }
+  .chip-btn { padding: 4px 6px; font-size: 15px; }
+  #btnNarrador { width: 30px; padding-left: 6px; }
+  .hud-top { gap: 4px 6px; }
+}

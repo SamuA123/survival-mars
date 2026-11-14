@@ -176,6 +176,48 @@ export class Mundo {
   }
   _sombra(obj) { obj.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); }
 
+  // ------------------------------------------------------------------
+  //  MODO GRÁFICOS LIGEROS (computadoras escolares lentas):
+  //  sin sombras, menos partículas de polvo y menor resolución interna.
+  // ------------------------------------------------------------------
+  setLigero(on) {
+    this.ligero = !!on;
+    this.renderer.shadowMap.enabled = !on;
+    this.sol.castShadow = !on;
+    this.renderer.setPixelRatio(on ? 1 : Math.min(devicePixelRatio, this.movil ? 1.5 : 2));
+    this.polvo.geometry.setDrawRange(0, on ? 700 : Infinity);
+    this.remolino.geometry.setDrawRange(0, on ? 150 : Infinity);
+    // Los materiales deben recompilarse al activar/desactivar sombras
+    this.scene.traverse(o => {
+      if (!o.material) return;
+      (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.needsUpdate = true; });
+    });
+    this._resize();
+  }
+
+  // Mide los cuadros por segundo (para SUGERIR el modo ligero).
+  // Devuelve null si la pestaña no estuvo visible todo el tiempo: en segundo plano
+  // el navegador frena la animación a propósito y la medición no sirve.
+  medirFPS(ms = 4000) {
+    return new Promise(res => {
+      if (document.hidden) return res(null);
+      let cuadros = 0, valido = true;
+      const alOcultar = () => { valido = false; };
+      document.addEventListener('visibilitychange', alOcultar, { once: true });
+      const ini = performance.now();
+      const paso = () => {
+        cuadros++;
+        const t = performance.now() - ini;
+        if (t < ms) requestAnimationFrame(paso);
+        else {
+          document.removeEventListener('visibilitychange', alOcultar);
+          res(valido && !document.hidden ? cuadros / (t / 1000) : null);
+        }
+      };
+      requestAnimationFrame(paso);
+    });
+  }
+
   _initBase() {
     this.ed = {};
     const ventanaMat = () => std(0x222222, { emissive: 0xffc96b, emissiveIntensity: 0 });
@@ -478,14 +520,14 @@ export class Mundo {
     const n = 3500, pos = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) { pos[i * 3] = (Math.random() - 0.5) * 120; pos[i * 3 + 1] = Math.random() * 20; pos[i * 3 + 2] = (Math.random() - 0.5) * 120; }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    this.polvo = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xd99a68, size: 0.35, transparent: true, opacity: 0, depthWrite: false }));
+    this.polvo = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xd99a68, size: 3, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false }));
     this.scene.add(this.polvo);
     this.polvoNivel = 0;
 
     // Remolino
     const m = 500, pr = new Float32Array(m * 3);
     const gr = new THREE.BufferGeometry(); gr.setAttribute('position', new THREE.BufferAttribute(pr, 3));
-    this.remolino = new THREE.Points(gr, new THREE.PointsMaterial({ color: 0xe0a070, size: 0.3, transparent: true, opacity: 0.8, depthWrite: false }));
+    this.remolino = new THREE.Points(gr, new THREE.PointsMaterial({ color: 0xe0a070, size: 3.5, sizeAttenuation: false, transparent: true, opacity: 0.8, depthWrite: false }));
     this.remolino.visible = false;
     this.remolinoT = 0;
     this.scene.add(this.remolino);
@@ -591,7 +633,8 @@ export class Mundo {
     this.polvo.material.opacity = this.polvoNivel * 0.75;
     if (this.polvoNivel > 0.01) {
       const p = this.polvo.geometry.attributes.position;
-      for (let i = 0; i < p.count; i++) {
+      const visibles = Math.min(p.count, this.polvo.geometry.drawRange.count);   // en modo ligero se mueven menos
+      for (let i = 0; i < visibles; i++) {
         let x = p.getX(i) + dt * (18 + (i % 7) * 3);
         if (x > 60) x -= 120;
         p.setX(i, x); p.setY(i, (p.getY(i) + dt * Math.sin(i + this.t) * 0.8 + 20) % 20);
