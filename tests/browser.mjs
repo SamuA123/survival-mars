@@ -33,8 +33,16 @@ const wait = async (expression, timeout = 20000) => {
   throw new Error('Timed out: ' + expression);
 };
 const click = selector => js(`document.querySelector(${JSON.stringify(selector)}).click()`);
+const tap = async selector => {
+  await js(`document.querySelector(${JSON.stringify(selector)}).scrollIntoView({block:'nearest'})`);
+  await wait(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); const r = el.getBoundingClientRect(); return el.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)); })()`);
+  const point = await js(`(() => { const r = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+  await cdp('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', clickCount: 1 });
+  await cdp('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', clickCount: 1 });
+};
 const text = selector => js(`document.querySelector(${JSON.stringify(selector)}).innerText`);
 const screenshot = async name => {
+  await new Promise(resolve => setTimeout(resolve, 400)); // let panel entry animations settle
   const { data } = await cdp('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
   await mkdir('node_modules/qa', { recursive: true });
   await writeFile(`node_modules/qa/${name}.png`, Buffer.from(data, 'base64'));
@@ -43,7 +51,7 @@ const screenshot = async name => {
 try {
   await cdp('Page.enable'); await cdp('Runtime.enable');
   await cdp('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
-  await cdp('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem('survivalMars.tutorialVisto','1'); localStorage.setItem('survivalMars.ligero','1');` });
+  await cdp('Page.addScriptToEvaluateOnNewDocument', { source: `localStorage.setItem('survivalMars.tutorialVisto','1'); localStorage.removeItem('survivalMars.tutorialVisto.v2'); localStorage.setItem('survivalMars.ligero','1');` });
   await cdp('Page.navigate', { url: 'http://127.0.0.1:5500/?demo=1&lang=es' });
   await wait(`!!document.querySelector('#btnEmpezar')`);
   await js(`document.querySelector('#inNombre').value = 'Test Pilot'`);
@@ -57,12 +65,40 @@ try {
   assert.doesNotMatch(await text('.ubic-caja'), /Tu base|Ubicación|Topografía|Fuente:/);
   await click('.ubic-idioma'); assert.match(await text('.ubic-caja'), /Topografía/);
   await click('.ubic-idioma'); await click('.ubic-ok');
-  await click('#btnEmpezar');
+  assert.match(await text('#btnAprender'), /Learn to play/);
+  await click('#btnAprender');
   await wait(`!document.querySelector('#modal').classList.contains('oculto') === false`);
   assert.equal(await js(`juego.S.nombre`), 'Test Pilot');
+  await wait(`!!document.querySelector('.tuto-globo')`);
+  const paso = n => wait(`document.querySelector('.tuto-pie > span')?.textContent === '${n}/9'`);
+  await tap('.tuto-sig'); await paso(2);
+  await tap('.tuto-abrir'); await paso(3);
+  assert.equal(await js(`document.querySelectorAll('#panel .sis').length`), 1);
+  await tap('.tuto-sig'); await paso(4);
+  await tap('.tuto-abrir'); await paso(5);
+  await tap('[data-sis="lab"][data-d="1"]'); await paso(6);
+  await tap('.tuto-sig'); await paso(7);
+  await tap('.tuto-sig'); await paso(8);
+  await tap('.tuto-abrir'); await paso(9);
+  await tap('#btnSol'); await wait(`!!document.querySelector('#btnSig')`);
+  assert.equal(await js(`localStorage.getItem('survivalMars.tutorialVisto.v2')`), '1');
+  await click('#btnSig');
+  await wait(`document.querySelector('#modal').classList.contains('oculto')`);
   await click('#btnBase');
   assert.match(await text('#panel'), /If you end the sol now/);
   assert.doesNotMatch(await text('#panel'), /Meseta|Soporte vital|Recolección/);
+  for (const [building, system] of [['habitat', 'vital'], ['invernadero', 'invernadero'], ['lab', 'lab'], ['antena', 'radio']]) {
+    await click(`[data-sel="${building}"]`);
+    assert.equal(await js(`document.querySelectorAll('#panel .sis').length`), 1);
+    assert.equal(await js(`document.querySelector('#panel .sis').dataset.foco`), system);
+    if (building === 'invernadero') assert.match(await text('#panel'), /You harvest.*you use/s);
+    if (building === 'antena') assert.match(await text('#panel'), /Message inbox/);
+    await click('.panel-volver');
+  }
+  await click('[data-sel="tripulacion"]'); assert.equal(await js(`document.querySelectorAll('#panel [data-sis]').length`), 0);
+  await click('.panel-volver');
+  await click('[data-sel="inventario"]'); assert.match(await text('#panel'), /Martian rock/);
+  await click('.panel-volver');
   await screenshot('english-base');
   await click('#btnBase');
 
@@ -100,7 +136,7 @@ try {
   await screenshot('english-nasa'); await click('#btnCerrarDatos');
 
   // A complete three-sol demo, including the final review.
-  for (let sol = 1; sol <= 3; sol++) {
+  for (let sol = await js(`juego.S.sol`); sol <= 3; sol++) {
     await click('#btnSol');
     await wait(`!!document.querySelector('.opcion') || !!document.querySelector('#btnSig')`);
     if (await js(`!!document.querySelector('.opcion')`)) { await click('.opcion:not(:disabled)'); await click('#btnSeguir'); }
@@ -128,7 +164,8 @@ try {
   await wait(`!!document.querySelector('[data-dif="cadete"]')`);
   await click('[data-dif="cadete"]'); assert.match(await text('.intro'), /10 sols/);
   await click('[data-dif="comandante"]'); assert.match(await text('.intro'), /15 sols/);
-  await click('#btnEmpezar');
+  await click('#btnAprender'); await wait(`!!document.querySelector('.tuto-saltar')`); await click('.tuto-saltar');
+  assert.equal(await js(`localStorage.getItem('survivalMars.tutorialVisto.v2')`), null);
   await wait(`document.querySelector('#modal').classList.contains('oculto')`);
   assert.equal(await js(`(await import('/src/sim/config.js')).MISION.maxSol`), 15);
   assert.equal(await js(`juego.S.demo`), false);
@@ -136,18 +173,39 @@ try {
   assert.match(await text('#modalCaja'), /no flares/);
   assert.equal(await js(`document.querySelectorAll('.flares li').length`), 0);
   await click('#btnCerrarDatos');
-  await click('#btnBase'); await click('[data-accion="eva"]');
+  await click('#btnBase'); await click('[data-sel="rover"]'); await click('[data-accion="eva"]');
   await wait(`!!document.querySelector('#evaHud')`);
   await js(`(await import('/src/ui/eva-hud.js')).tarjetaObjeto('roca')`);
   await click('#btnIdioma'); assert.match(await text('#evaHud'), /Roca marciana/);
   await click('#btnIdioma'); assert.match(await text('#evaHud'), /Martian rock/);
-  assert.match(await text('#evaTarjeta'), /You collected|Picked up|collected/i);
+  assert.match(await text('#evaTarjeta'), /\+1 Martian rock/);
+  assert.match(await text('#evaTarjeta'), /science when you return/);
   assert.equal(await js(`juego.mundo.eva.activo`), true);
+  for (const [width, height, mobile] of [[1440, 1000, false], [390, 844, true], [844, 390, true]]) {
+    await cdp('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile });
+    await js(`(await import('/src/ui/eva-hud.js')).tarjetaObjeto('roca')`);
+    await wait(`getComputedStyle(document.querySelector('#evaTarjeta')).visibility === 'visible'`);
+    assert.ok(await js(`(() => {
+      const r = document.querySelector('#evaTarjeta').getBoundingClientRect();
+      return [...document.querySelectorAll('.hud-top, .eva-top, .eva-base, .eva-botones, .joystick, .botones-top')].every(el => {
+        const b = el.getBoundingClientRect();
+        return !b.width || !b.height || getComputedStyle(el).visibility === 'hidden' || r.right <= b.left || r.left >= b.right || r.bottom <= b.top || r.top >= b.bottom;
+      });
+    })()`), `Pickup overlaps HUD at ${width}x${height}`);
+    await screenshot(`pickup-${width}x${height}`);
+  }
+  await cdp('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
   await screenshot('english-spacewalk');
   await js(`juego.mundo.eva.terminar(false)`);
   await wait(`!!document.querySelector('#btnEvaOk')`);
   assert.match(await text('#modalCaja'), /Back at the base|Back to the base/);
   await click('#btnEvaOk');
+  await cdp('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+  await click('#btnBase'); await click('[data-sel="invernadero"]');
+  assert.equal(await js(`document.querySelector('#panel').scrollWidth <= document.querySelector('#panel').clientWidth`), true);
+  assert.ok(await js(`document.querySelector('.t-comida small').getBoundingClientRect().height > 0`), 'Food label and value should remain visible on mobile');
+  assert.ok(await js(`(() => { const r = document.querySelector('#btnSol').getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight; })()`), 'End sol button is clipped');
+  await screenshot('mobile-greenhouse');
   console.log('PASS: normal difficulty settings, empty NASA query and live spacewalk language switching');
   assert.deepEqual(errors, [], 'Browser runtime errors');
   console.log('PASS: mobile layout and no browser exceptions');

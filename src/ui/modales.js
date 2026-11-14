@@ -58,16 +58,21 @@ export function pantallaInicio() {
           <p>${t('intro.p2', { sols: MISION.maxSol })}</p>
           <label class="nombre">${t('intro.nombre')}<input id="inNombre" maxlength="16" placeholder="${t('intro.ph')}" autocomplete="off"></label>
           <div class="como">
-            <div>👆<b>${t('intro.c1b')}</b><small>${t('intro.c1s')}</small></div>
-            <div>⚖️<b>${t('intro.c2b')}</b><small>${t('intro.c2s')}</small></div>
-            <div>⏱️<b>${t('intro.c3b', { s: EVENTOS.llamarada.tiempo })}</b><small>${t('intro.c3s')}</small></div>
+            <div>①<b>${L('Abre un edificio', 'Open a building')}</b><small>${L('Descubre su función y sus controles', 'Discover its purpose and controls')}</small></div>
+            <div>②<b>${L('Reparte energía', 'Share the power')}</b><small>${L('Aire y comida para sobrevivir; laboratorio para hacer ciencia', 'Air and food to survive; a lab to do science')}</small></div>
+            <div>③<b>${L('Termina el sol', 'End the sol')}</b><small>${L('Mira las consecuencias y planea el siguiente', 'See the results and plan the next one')}</small></div>
           </div>
           <div class="clima-box" id="climaInicio">${textoClima()}</div>
-          <button class="btn-grande" id="btnEmpezar">${t('intro.empezar')}</button>
+          <div class="inicio-acciones">
+            <button class="btn-grande" id="btnAprender">${L('Aprender a jugar, paso a paso 🚀', 'Learn to play, step by step 🚀')}</button>
+            <button class="btn-secundario" id="btnEmpezar">${L('Ya sé jugar · empezar sin guía', 'I know how to play · start without a guide')}</button>
+          </div>
           <p class="controles">${t('intro.controles')}</p>
         </div>`, 'ancho');
       $('#inNombre').value = nombre;
-      $('#btnEmpezar').onclick = () => { beep(880, 0.1); const n = $('#inNombre').value.trim(); cerrar(); res(n || t('intro.defecto')); };
+      const empezar = guiar => { beep(880, 0.1); const n = $('#inNombre').value.trim(); cerrar(); res({ nombre: n || t('intro.defecto'), guiar }); };
+      $('#btnAprender').onclick = () => empezar(true);
+      $('#btnEmpezar').onclick = () => empezar(false);
     };
     redibujarModal = dibujar;
     dibujar();

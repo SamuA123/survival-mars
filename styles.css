@@ -562,3 +562,77 @@ button { touch-action: manipulation; }
 .repaso input { flex: 0 0 auto; width: 18px; height: 18px; margin-top: 2px; }
 .repaso-feedback { background: var(--papel2); padding: 10px; border-radius: 8px; }
 .repaso-puntos { font-weight: 700; }
+
+/* Prueba de jugadores: una tarea por panel y avisos que dejan libre el HUD. */
+.panel.consola.edificio { inset: 78px 14px 96px auto; width: min(520px, calc(100% - 28px)); }
+body.en-edificio .hud-top { visibility: visible; }
+.edificio-contenido { flex: 1; min-height: 0; overflow-y: auto; padding: 16px; }
+.edificio-proposito { margin: 0 0 14px; font-size: 18px; font-weight: 700; }
+.con-cab { justify-content: space-between; }
+.panel-volver, .btn-secundario { background: var(--papel2); color: var(--tinta); border: 2px solid var(--tinta); border-radius: 10px; padding: 10px 14px; font-weight: 700; cursor: pointer; }
+.panel-volver { margin: 8px; flex-shrink: 0; }
+.edificios-menu { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+.edificios-menu button { text-align: left; padding: 12px; border: 2px solid var(--tinta); border-radius: 12px; background: var(--papel2); color: var(--tinta); }
+.edificios-menu button:hover { background: #fff3cf; }
+.edificios-menu span { font-size: 24px; float: left; margin-right: 8px; }
+.edificios-menu small { display: block; margin-top: 6px; }
+.resultado-plan { border: 2px solid var(--tinta); border-radius: 12px; background: #fff3cf; padding: 12px; margin: 10px 0; }
+.resultado-plan p { margin: 6px 0; }
+.aviso-sistema { color: var(--rojo); font-weight: 700; }
+.mensajes-radio { padding: 0; list-style: none; display: grid; gap: 8px; }
+.mensajes-radio li, .inventario-explica details { background: var(--papel2); padding: 10px; border-radius: 10px; margin-bottom: 8px; }
+.mensajes-radio p { margin: 4px 0; }
+.estado-numeros { text-align: center; font-weight: 700; }
+.inicio-acciones { display: grid; gap: 10px; margin: 12px 0; }
+.tq-valor { display: block; font-size: 10px; font-family: var(--fuente); }
+.tuto-pie { flex-wrap: wrap; }
+.tuto-abrir { border: 2px solid var(--tinta); background: #fff3cf; border-radius: 8px; padding: 8px; font-weight: 700; }
+#evaTarjeta { position: fixed; top: 76px; bottom: auto; right: auto; width: min(270px, calc(100vw - 24px)); padding: 9px 12px; transform: none; border: 2px solid var(--tinta); border-left: 6px solid var(--c); pointer-events: none; transition: opacity .15s; text-align: left; }
+#evaTarjeta b, #evaTarjeta small { display: block; }
+#evaTarjeta small { margin-top: 3px; }
+@media (max-width: 760px) {
+  .panel.consola.edificio { inset: 175px 8px 92px; width: auto; padding: 6px; }
+  .edificio-contenido { padding: 12px; }
+  .edificios-menu { gap: 8px; }
+  .edificios-menu button { padding: 10px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .panel.consola.edificio { inset: 54px 8px 64px auto; width: min(440px, calc(100% - 16px)); }
+}
+
+@media (max-width: 760px) {
+  .hud-top { top: 60px; left: 8px; }
+  .tablero { padding: 6px 8px; transform: none; }
+  .ruta-cab b { font-size: 18px; }
+  .recursos { gap: 6px; margin-top: 6px; }
+  .tq-vidrio { height: 32px; width: 26px; }
+  .tanque { width: 52px; }
+  .hud-top .tanque small { display: block; font-size: 10px; line-height: 1.1; }
+  .hud-top .tq-vidrio { height: 26px; }
+  .hud-top .tq-ic { font-size: 16px; }
+  .hud-top .ruta { margin: 4px 0; }
+  .hud-top .ruta i { width: 14px; height: 12px; }
+  .hud-top .meta-ciencia { font-size: 11px; }
+  .hud-top .tripulacion { font-size: 17px; padding-bottom: 12px; }
+  .panel.consola.edificio { top: 230px; }
+  .hud-bottom { left: 8px; right: 8px; bottom: 8px; width: auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr); }
+  .hud-bottom .btn-base, .hud-bottom .btn-sol { min-width: 0; padding: 8px 5px; font-size: 15px; white-space: normal; }
+  .hud-bottom .energia { min-width: 0; padding: 4px 6px; column-gap: 4px; }
+  .hud-bottom .energia small { font-size: 10px; }
+  .hud-bottom .pila { min-width: 0; gap: 1px; padding: 2px; }
+  .hud-bottom .pila i { min-width: 0; width: auto; flex: 1; height: 14px; }
+  .hud-bottom .bal { min-width: 22px; font-size: 16px; }
+  .eva-top { top: 230px; bottom: auto; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .hud-top { top: 60px; left: 8px; }
+  .tablero { padding: 6px 8px; transform: none; }
+  .hud-top .ruta, .hud-top .tq-vidrio { display: none; }
+  .hud-top .recursos { margin-top: 4px; gap: 6px; }
+  .hud-top .tanque { width: auto; min-width: 42px; }
+  .hud-top .tq-ic { display: inline; font-size: 14px; }
+  .hud-top .tanque small { display: inline-block; font-size: 10px; }
+  .hud-top .tripulacion { font-size: 12px; padding-bottom: 0; }
+  .eva-top { top: 145px; bottom: auto; height: auto; }
+  #evaTarjeta { width: min(200px, calc(100vw - 24px)); font-size: 12px; }
+}

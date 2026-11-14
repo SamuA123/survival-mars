@@ -15,7 +15,7 @@ let auto = (() => { try { return localStorage.getItem(CLAVE) === '1'; } catch { 
 const LEIBLES = [
   '#modalCaja .evento > p', '#modalCaja .res', '#modalCaja .dato', '#modalCaja .lineas',
   '#modalCaja .intro > p', '#modalCaja .final > p', '#modalCaja .comparador',
-  '.eva-tarjeta', '.tuto-txt', '.eva-aviso',
+  '.tuto-txt', '.eva-aviso',
 ];
 
 // Elige una voz del idioma actual (español o inglés)

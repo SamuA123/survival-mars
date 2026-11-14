@@ -438,6 +438,9 @@ const RIESGO = { bajo: 'low', medio: 'medium', ALTO: 'HIGH' };
 
 // [regex, reemplazo] — reemplazo puede ser función; tr() se aplica a las partes anidadas
 const PATRONES = [
+  [/^🥔 Cosecha: ([\d.]+) · consumo: ([\d.]+) · reservas: ([\d.]+)\.$/, '🥔 Harvest: $1 · used: $2 · reserves: $3.'],
+  [/^📡 Videollamada con la Tierra: \+([\d.]+) de salud\.$/, '📡 Video call with Earth: +$1 health.'],
+  [/^⚠️ Queda poca comida: la tripulación tiene hambre \(-(\d+) de salud\)\. Aumenta la cosecha o ahorra reservas\.$/, '⚠️ Food is running low: the crew is hungry (-$1 health). Grow more food or build up reserves.'],
   [/^🚀 Comandante <b>(.*?)<\/b> al mando de la base en la meseta NE Syrtis\.$/s, '🚀 Commander <b>$1</b> is in charge of the base on the NE Syrtis plateau.'],
   [/^Ejercicio: llamarada clase <b>([^<]+)<\/b>\. En este escenario simulado, una tormenta de partículas llega a Marte\. ¿Proteges a la tripulación o sigues trabajando\?<br><small class="real">(.*)<\/small>$/s,
     (m, c, origen) => `Training exercise: class <b>${c}</b> solar flare. In this simulated scenario, a particle storm reaches Mars. Will you protect the crew or keep working?<br><small class="real">${tr(origen)}</small>`],

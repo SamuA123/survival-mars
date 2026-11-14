@@ -8,6 +8,11 @@ export const MISION = {
   nuclear: 3,                 // kWh constantes del mini reactor
   bateriaMax: 40,
   bateriaInicial: 26,
+  comidaInicial: 40,
+  consumoComida: 5,
+  cosecha: [0, 2, 4, 6],
+  comidaBaja: 20,
+  penalizacionHambre: 3,     // regla educativa: reservas bajas dificultan recuperarse
   consumoBase: 1,             // computadoras y luces
   frioTormenta: 2,            // kWh extra de calefacción en tormenta (el polvo tapa el Sol y enfría)
   delayMin: SITIO.retrasoMin,

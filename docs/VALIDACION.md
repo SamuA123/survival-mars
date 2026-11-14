@@ -10,6 +10,20 @@ node --experimental-default-type=module --test tests/regresiones.mjs
 
 Incluyen respuestas vacías y erróneas de DONKI, segunda fuente, caché con hora original, respaldo histórico, contenido bilingüe y 864 planes de energía comparados con el avance real del motor.
 
+## Revisión a partir del feedback de un jugador
+
+El feedback sobre la URL original motivó estos ajustes en `samuel`:
+
+- Inicio con objetivo, ciclo de tres acciones y elección explícita de guía en cada partida. Saltarla no la marca como completada.
+- Panel independiente para cada edificio; tripulación e inventario tienen accesos propios desde Control base.
+- Recolección con aviso de 2,5 segundos y ubicación calculada para evitar el HUD y los controles. Las explicaciones completas están en Inventario.
+- Invernadero con cosecha, consumo, cambio de reservas y duración estimada. Comida inicial: 50 en Cadete y 40 en Comandante. Con reservas de 20 o menos hay una penalización de hambre de 3 de salud por sol; sin comida, de 10. Son reglas del juego.
+- Antena con bandeja de avisos y respuestas, cantidad de mensajes pendientes y explicación de cada nivel. Las respuestas esperan si la antena está apagada.
+
+Las pruebas de Chrome cubren la guía completa, un único sistema por edificio y la ausencia de superposición del aviso de recolección en 1440×1000, 390×844 y 844×390. Se revisa que el botón para terminar el sol no quede recortado en móvil. Las pruebas del motor cubren hambre, recepción de tareas, respuestas pendientes y videollamadas.
+
+La siguiente validación humana debe confirmar si el jugador entiende la comida y la antena sin explicación del equipo. El feedback original es evidencia de problemas de uso; todavía no hay una prueba humana de estas correcciones.
+
 La prueba visual usa el protocolo de depuración de Chrome y Node 22+, sin Playwright:
 
 1. Servir el proyecto: `python -m http.server 5500 --bind 127.0.0.1`.

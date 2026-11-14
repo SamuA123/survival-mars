@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cargarClimaEspacial } from '../src/data/donki.js';
-import { crearPartida, preverSol, simularSol } from '../src/sim/motor.js';
+import { crearPartida, preverSol, simularSol, iniciarSol, pedirAyuda, EVENTOS } from '../src/sim/motor.js';
 import { HALLAZGOS } from '../src/data/salud.js';
 import { DATOS } from '../src/data/datos-curiosos.js';
 import { SITIO } from '../src/data/sitio.js';
@@ -108,4 +108,39 @@ test('Learning content and every location section have English counterparts', ()
     assert.equal(section.puntos_en.length, section.puntos.length);
   }
   for (const map of SITIO.mapas) assert.ok(map.texto_en);
+});
+
+test('Low food prevents recovery and causes gradual health loss; empty stores hurt more', () => {
+  for (const [comida, esperado] of [[20, 77], [0, 70], [50, 82]]) {
+    const S = crearPartida(); Object.assign(S, { comida, salud: 80 });
+    S.niveles.invernadero = 0;
+    simularSol(S);
+    assert.equal(S.salud, esperado);
+  }
+});
+
+test('Antenna receives tasks and alerts, and keeps replies queued while switched off', () => {
+  const S = crearPartida(); iniciarSol(S);
+  assert.ok(S.plan);
+  assert.ok(S.mensajes.length);
+  pedirAyuda(S, EVENTOS.reciclador);
+  S.niveles.radio = 0; S.sol = 2; iniciarSol(S);
+  assert.equal(S.plan, null);
+  assert.equal(S.pendientes.length, 1);
+  assert.equal(S.mensajes.filter(m => m.tipo === 'respuesta').length, 0);
+  S.niveles.radio = 1; S.sol = 3; iniciarSol(S);
+  assert.equal(S.pendientes.length, 0);
+  assert.equal(S.mensajes.filter(m => m.tipo === 'respuesta').length, 1);
+  assert.ok(S.plan);
+});
+
+test('Video calls restore health at an extra power cost and stop during conjunction', () => {
+  const normal = crearPartida(), video = crearPartida(), conj = crearPartida();
+  for (const S of [normal, video, conj]) S.salud = 80;
+  video.niveles.radio = conj.niveles.radio = 2; conj.sol = 10;
+  const normalPower = preverSol(normal).bateria, videoPower = preverSol(video).bateria;
+  assert.equal(normalPower - videoPower, 1);
+  simularSol(normal); simularSol(video); simularSol(conj);
+  assert.equal(video.salud - normal.salud, 2);
+  assert.equal(conj.salud, normal.salud);
 });

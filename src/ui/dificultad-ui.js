@@ -12,7 +12,7 @@ aplicarDificultad(elegida);
 function insertar() {
   if (esDemo) return;
   const intro = document.querySelector('#modalCaja .intro');
-  const btn = intro?.querySelector('#btnEmpezar');
+  const btn = intro?.querySelector('.inicio-acciones');
   if (!btn || intro.querySelector('.dificultad')) return;
   const caja = document.createElement('div');
   caja.className = 'dificultad';

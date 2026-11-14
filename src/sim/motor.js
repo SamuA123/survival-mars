@@ -19,7 +19,7 @@ export function setClima(c) { Object.assign(CLIMA, c); }
 export function crearPartida(nombre = 'Comandante') {
   return {
     nombre, sol: 1, fase: 'planear',
-    bateria: MISION.bateriaInicial, o2: 100, comida: 60, salud: 100, rad: 0, ciencia: 0,
+    bateria: MISION.bateriaInicial, o2: 100, comida: MISION.comidaInicial, salud: 100, rad: 0, ciencia: 0,
     niveles: { vital: 2, invernadero: 2, radio: 1, lab: 0 },
     paneles: true, eficiencia: 1, invSalud: 1,
     repuestos: MISION.repuestos, botiquin: MISION.botiquin,
@@ -28,7 +28,7 @@ export function crearPartida(nombre = 'Comandante') {
     evaHecha: false, enEVA: false, regolito: 0,
     inventario: { hoy: { regolito: 0, roca: 0, hielo: 0 }, total: { regolito: 0, roca: 0, hielo: 0 } },
     plan: null, planesCumplidos: 0, planesEnviados: 0,
-    energiaOk: true, pendientes: [], aprendidos: [], ultimoEvento: null,
+    energiaOk: true, pendientes: [], mensajes: [], aprendidos: [], ultimoEvento: null,
     llamarada: null, evento: null, historial: [], log: [],
   };
 }
@@ -79,7 +79,8 @@ export function preverSol(S) {
     niv, construir, apagados,
     bateria: r1(clamp(S.bateria + gen - consumo(S, niv, construir), 0, MISION.bateriaMax)),
     oxigeno: clamp(Math.round(S.o2 + [-20, -8, 0, 4][niv.vital]), 0, 100) - S.o2,
-    comida: clamp(Math.round(S.comida + [0, 2, 4, 6][niv.invernadero] * S.invSalud * (trabajan ? 1 : 0.5) - 5), 0, 100) - S.comida,
+    cosecha: r1(MISION.cosecha[niv.invernadero] * S.invSalud * (trabajan ? 1 : 0.5)),
+    comida: clamp(Math.round(S.comida + MISION.cosecha[niv.invernadero] * S.invSalud * (trabajan ? 1 : 0.5) - MISION.consumoComida), 0, 100) - S.comida,
     ciencia: trabajan ? [0, 4, 8][niv.lab] : 0,
   };
 }
@@ -381,9 +382,12 @@ export function iniciarSol(S) {
     const despues = MISION.conjuncion[MISION.conjuncion.length - 1] + 1;
     S.pendientes.push(...llegan.map(p => ({ ...p, sol: despues })));
   } else if (S.niveles.radio > 0) {
+    S.mensajes.push(...avisos.map(texto => ({ sol: S.sol, texto, tipo: 'aviso' })), ...llegan.map(p => ({ sol: S.sol, texto: p.texto, tipo: 'respuesta' })));
+    S.mensajes = S.mensajes.slice(-12);
     for (const a of avisos) log(S, `📡 <b>Control de Misión</b> <small>(enviado hace ${MISION.delayMin} min)</small>: ${a}`, 'tierra');
     for (const p of llegan) log(S, `📡 <b>Respuesta a tu pregunta del Sol ${p.desde}</b>: ${p.texto}`, 'tierra');
   } else if (avisos.length || llegan.length) {
+    S.pendientes.push(...llegan.map(p => ({ ...p, sol: S.sol + 1 })));
     log(S, '📡 Había mensajes de la Tierra… pero las comunicaciones estaban <b>apagadas</b>. ¡No los recibiste!', 'mal');
   }
   if (S.sol === 1) aprender(S, 'sol');
@@ -434,8 +438,9 @@ export function simularSol(S, resultadoEvento, ev) {
   }
 
   // 3) Comida
-  let cosecha = [0, 2, 4, 6][niv.invernadero] * S.invSalud * (trabajan ? 1 : 0.5);
-  S.comida += cosecha - 5;
+  const cosecha = MISION.cosecha[niv.invernadero] * S.invSalud * (trabajan ? 1 : 0.5);
+  S.comida += cosecha - MISION.consumoComida;
+  lineas.push(`🥔 Cosecha: ${r1(cosecha)} · consumo: ${MISION.consumoComida} · reservas: ${clamp(Math.round(S.comida), 0, 100)}.`);
 
   // 4) Ciencia
   if (niv.lab > 0) {
@@ -446,7 +451,11 @@ export function simularSol(S, resultadoEvento, ev) {
   }
 
   // 5) Comunicaciones
-  if (niv.radio >= 2 && !enConjuncion(S)) S.salud += 2;
+  if (niv.radio >= 2 && !enConjuncion(S)) {
+    const recuperacion = Math.min(2, 100 - S.salud);
+    S.salud += recuperacion;
+    if (recuperacion > 0) lineas.push(`📡 Videollamada con la Tierra: +${recuperacion} de salud.`);
+  }
 
   // 6) Radiación de fondo (en Marte siempre hay un poco)
   S.rad += MISION.radDiaria * (S.blindaje >= 3 ? RADIACION.atenuacionBlindaje : 1);
@@ -468,6 +477,10 @@ export function simularSol(S, resultadoEvento, ev) {
   let sano = niv.vital >= 2;
   if (S.o2 < 25) { S.salud -= 10; sano = false; lineas.push('⚠️ ¡Queda poco oxígeno! La tripulación se siente mareada.'); }
   if (S.comida <= 0) { S.salud -= 10; sano = false; lineas.push('⚠️ ¡Se acabó la comida!'); }
+  else if (S.comida <= MISION.comidaBaja) {
+    S.salud -= MISION.penalizacionHambre; sano = false;
+    lineas.push(`⚠️ Queda poca comida: la tripulación tiene hambre (-${MISION.penalizacionHambre} de salud). Aumenta la cosecha o ahorra reservas.`);
+  }
   if (sano) S.salud += 2;
 
   for (const k of ['o2', 'comida', 'salud']) S[k] = clamp(Math.round(S[k]), 0, 100);

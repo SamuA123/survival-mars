@@ -10,7 +10,7 @@ import { cargarClimaEspacial } from './data/donki.js';
 import { renderRecursos, renderEnergia, renderPanel, renderLog } from './ui/hud.js';
 import { pantallaInicio, mostrarEvento, mostrarResumen, mostrarResumenEVA, pantallaFinal, panelDatos, panelTarea, refrescarClimaInicio } from './ui/modales.js';
 import { beep, audio } from './ui/sonido.js';
-import { iniciarTutorial, tutorialVisto } from './ui/tutorial.js';
+import { iniciarTutorial } from './ui/tutorial.js';
 import { iniciarRegistro, registrarDecision, registrarSol, registrarEVA } from './sim/registro.js';
 import { enTormenta } from './sim/motor.js';
 import './ui/dificultad-ui.js';   // selector Cadete / Comandante en la pantalla de inicio
@@ -50,13 +50,19 @@ document.addEventListener('click', e => {
   if (t.dataset.sis) { cambiarNivel(S, t.dataset.sis, +t.dataset.d); beep(+t.dataset.d > 0 ? 880 : 440, 0.05); }
   else if (t.dataset.accion === 'eva') { return salirAExplorar(); }
   else if (t.dataset.accion) { ACCIONES[t.dataset.accion].hacer(S); beep(700, 0.06); }
-  else if ('sel' in t.dataset) { mundo.seleccionar(t.dataset.sel || null); return; }
+  else if ('sel' in t.dataset) { seleccionarPanel(t.dataset.sel || null); return; }
   refrescar();
 });
 
+function seleccionarPanel(id) {
+  if (['base', 'tripulacion', 'inventario'].includes(id)) {
+    mundo.seleccionar(null); sel = id; refrescar();
+  } else mundo.seleccionar(id);
+}
+
 async function terminarSol() {
   if (ocupado) return;
-  if (tutorial?.activo()) tutorial.terminar();
+  if (tutorial?.activo()) tutorial.terminar(tutorial.ultimoPaso());
   ocupado = true;
   mundo.seleccionar(null);
   refrescar();
@@ -141,7 +147,7 @@ async function nuevaPartida() {
   ocupado = true;
   S = crearPartida();
   refrescar();
-  const nombre = await pantallaInicio();
+  const { nombre, guiar } = await pantallaInicio();
   S = crearPartida(nombre);
   S.demo = esDemo;
   iniciarRegistro(S);
@@ -149,17 +155,17 @@ async function nuevaPartida() {
   iniciarSol(S);
   ocupado = false;
   refrescar();
-  if (!tutorialVisto()) tutorial = iniciarTutorial(() => ({ S, sel }));
+  if (guiar) tutorial = iniciarTutorial(() => ({ S, sel }));
 }
 
 $('#btnSol').onclick = terminarSol;
 $('#btnDatos').onclick = panelDatos;
 $('#btnTarea').onclick = () => { if (!S.enEVA) panelTarea(S); };
-// Consola de la base: se abre completa ("base") o, tocando un edificio, con ese sistema resaltado.
+// Control base abre el menú; cada edificio, tripulación e inventario tiene su propio panel.
 $('#btnBase').onclick = () => {
   if (ocupado) return;
   if (sel) return mundo.seleccionar(null);
-  mundo.seleccionar(null); sel = 'base'; beep(760, 0.05); refrescar();
+  seleccionarPanel('base'); beep(760, 0.05);
 };
 addEventListener('keydown', e => { if (e.key === 'Escape' && sel && !ocupado) mundo.seleccionar(null); });
 $('#btnSonido').onclick = () => { audio.on = !audio.on; $('#btnSonido').textContent = audio.on ? '🔊' : '🔇'; };

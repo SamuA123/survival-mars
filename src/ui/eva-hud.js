@@ -1,7 +1,9 @@
 // HUD de la caminata espacial: oxígeno del traje, radiación, objetos, flecha a la base, joystick.
 import { TIPOS } from '../world3d/eva.js';
 import { beep } from './sonido.js';
-import { t, tr, onIdioma } from './i18n.js';
+import { MISION } from '../sim/config.js';
+const L = (es, en) => esEN() ? en : es;
+import { t, tr, onIdioma, esEN } from './i18n.js';
 
 let raiz = null, avisoTimer = null, ultimoBeep = 0, planEVA = null, planAvisado = false;
 let ultimoAviso = null, ultimaTarjeta = null;
@@ -24,7 +26,7 @@ export function mostrarHUDEVA(control, plan = null) {
       ${planEVA ? `<div class="eva-plan" id="evaPlan">${t('eva.plan', { c: planEVA.cantidad, i: TIPOS[planEVA.tipo].icono, n: tr(TIPOS[planEVA.tipo].nombre) })} <small>${t('plan.opcional')}</small></div>` : ''}
     </div>
     <div class="eva-aviso" id="evaAviso"></div>
-    <div class="eva-tarjeta" id="evaTarjeta"></div>
+    <div class="eva-tarjeta" id="evaTarjeta" role="status" aria-live="polite" aria-atomic="true"></div>
     <div class="eva-base" id="evaBase"><span class="eva-flecha" id="evaFlecha">➤</span> 🏠 <b id="evaDist">0</b> m</div>
     <div class="eva-ayuda" data-i18n-html="eva.ayuda">${t('eva.ayuda')}</div>
     <div class="eva-botones">
@@ -77,22 +79,51 @@ export function avisoEVA(txt, bueno = false) {
   avisoTimer = setTimeout(() => el.classList.remove('visible'), 3500);
 }
 
-// Tarjeta al recoger: qué es (dato real) y para qué sirve. La 1ª vez de cada tipo, completa.
-const vistos = new Set();
+// Aviso breve: la explicación completa queda disponible en Inventario.
 let tarjetaTimer = null;
-export function tarjetaObjeto(tipo) {
-  if (!raiz) return;
-  const o = TIPOS[tipo], primera = !vistos.has(tipo);
-  ultimaTarjeta = { tipo, primera };
-  vistos.add(tipo);
+function pintarRecogida() {
+  if (!raiz || !ultimaTarjeta) return;
+  const { tipo } = ultimaTarjeta, o = TIPOS[tipo], v = MISION.eva.valores;
+  const uso = tipo === 'roca' ? L(`+${v.roca} ciencia al volver`, `+${v.roca} science when you return`)
+    : tipo === 'hielo' ? L(`hasta +${v.hielo} oxígeno al volver`, `up to +${v.hielo} oxygen when you return`)
+    : L('1 bolsa para el blindaje al volver', '1 bag for shielding when you return');
   const el = raiz.querySelector('#evaTarjeta');
   el.style.setProperty('--c', o.color);
-  el.innerHTML = `<div class="tj-cab"><span class="tj-ic">${o.icono}</span><div><small>${t('eva.recogiste')}</small><b>${tr(o.nombre)}</b></div></div>
-    ${primera ? `<p>${tr(o.que)}</p>` : ''}<p class="tj-uso">✅ ${tr(o.uso)}</p>`;
-  el.classList.add('visible');
-  clearTimeout(tarjetaTimer);
-  tarjetaTimer = setTimeout(() => el.classList.remove('visible'), primera ? 7000 : 3000);
+  el.innerHTML = `<b>${o.icono} +1 ${tr(o.nombre)}</b><small>${uso}</small>`;
+  posicionarRecogida();
 }
+
+export function tarjetaObjeto(tipo) {
+  if (!raiz || !TIPOS[tipo]) return;
+  ultimaTarjeta = { tipo };
+  const el = raiz.querySelector('#evaTarjeta');
+  el.classList.add('visible');
+  pintarRecogida();
+  clearTimeout(tarjetaTimer);
+  tarjetaTimer = setTimeout(() => el.classList.remove('visible'), 2500);
+}
+
+// Busca una zona libre de indicadores y controles, también al girar el teléfono.
+function posicionarRecogida() {
+  const el = raiz?.querySelector('#evaTarjeta');
+  if (!el?.classList.contains('visible')) return;
+  const ancho = el.offsetWidth, alto = el.offsetHeight, margen = 12;
+  const ocupados = [...document.querySelectorAll('.hud-top, .eva-top, .eva-base, .eva-botones, .joystick, .botones-top, .eva-ayuda, .eva-aviso.visible')]
+    .filter(n => getComputedStyle(n).visibility !== 'hidden')
+    .map(n => n.getBoundingClientRect()).filter(r => r.width && r.height);
+  const xs = [innerWidth - ancho - margen, margen, (innerWidth - ancho) / 2];
+  for (let y = 76; y + alto <= innerHeight - margen; y += 12) {
+    for (const x of xs) {
+      if (x < 0 || ocupados.some(r => x < r.right + 8 && x + ancho > r.left - 8 && y < r.bottom + 8 && y + alto > r.top - 8)) continue;
+      Object.assign(el.style, { left: x + 'px', top: y + 'px' });
+      el.style.visibility = 'visible';
+      return;
+    }
+  }
+  // En una pantalla excepcionalmente pequeña prevalece la lectura del HUD.
+  el.style.visibility = 'hidden';
+}
+addEventListener('resize', posicionarRecogida);
 
 export function ocultarHUDEVA() {
   document.body.classList.remove('modo-eva');
@@ -116,10 +147,7 @@ onIdioma(() => {
   const plan = raiz.querySelector('#evaPlan');
   if (plan) plan.innerHTML = planAvisado ? t('eva.planListo') : `${t('eva.plan', { c: planEVA.cantidad, i: TIPOS[planEVA.tipo].icono, n: tr(TIPOS[planEVA.tipo].nombre) })} <small>${t('plan.opcional')}</small>`;
   if (ultimoAviso) raiz.querySelector('#evaAviso').textContent = tr(typeof ultimoAviso === 'function' ? ultimoAviso() : ultimoAviso);
-  if (ultimaTarjeta) {
-    const o = TIPOS[ultimaTarjeta.tipo];
-    raiz.querySelector('#evaTarjeta').innerHTML = `<div class="tj-cab"><span class="tj-ic">${o.icono}</span><div><small>${t('eva.recogiste')}</small><b>${tr(o.nombre)}</b></div></div>${ultimaTarjeta.primera ? `<p>${tr(o.que)}</p>` : ''}<p class="tj-uso">✅ ${tr(o.uso)}</p>`;
-  }
+  if (ultimaTarjeta) pintarRecogida();
 });
 
 function activarJoystick(control) {
