@@ -14,8 +14,8 @@ export function fbm(x, z) { let s = 0, a = 1, f = 1; for (let i = 0; i < 4; i++)
 export const RADIO_PLATAFORMA = 24.5;
 
 // Mesas: colinas de cima plana, típicas del terreno en capas de NE Syrtis. [x, z, radio, alto]
-const MESAS = [[-72, -42, 14, 9], [-40, -84, 18, 12], [-98, 12, 12, 7], [18, -98, 16, 10],
-  [-30, 96, 13, 8], [-112, -70, 20, 14], [-70, 70, 12, 7]];
+const MESAS = [[-52, -30, 11, 8], [-28, -62, 13, 10], [-66, 6, 10, 7], [6, -64, 12, 9],
+  [-46, 46, 10, 7], [40, -50, 9, 6], [-98, -62, 18, 13], [-40, -105, 16, 11]];
 
 export function altura(x, z) {
   const r = Math.hypot(x, z);
