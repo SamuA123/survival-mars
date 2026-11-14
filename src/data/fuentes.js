@@ -1,19 +1,22 @@
-// Fuentes de datos de la NASA usadas en el juego.
+// Fuentes de datos usadas en el juego.
 // Cada dato del juego apunta a una de estas claves con `fuente: 'clave'`.
-// Se muestran al jugador en el panel "📡 Datos de la NASA".
+// Se muestran al jugador en el panel "📡 Datos de la NASA" / "¿Qué es real?".
+// `papel`: 'mecanica' = cambia lo que pasa en la partida · 'texto' = explica lo que pasó.
 // nombre_en / uso_en = versión en inglés (botón ES/EN).
 export const FUENTES = {
   donki: {
-    nombre: 'NASA DONKI — Space Weather Database',
+    nombre: 'NASA DONKI — clima espacial',
     url: 'https://kauai.ccmc.gsfc.nasa.gov/DONKI/',
     uso: 'Llamaradas solares reales de los últimos 30 días: cambian el riesgo de radiación de tu misión.',
     uso_en: 'Real solar flares from the last 30 days: they change the radiation risk of your mission.',
+    papel: 'mecanica',
   },
   curiosityRAD: {
     nombre: 'Curiosity — Radiation Assessment Detector (RAD), Hassler et al. 2014 (Science 343)',
     url: 'https://ntrs.nasa.gov/citations/20180007641',
     uso: 'Radiación medida en la superficie de Marte: ~0,67 mSv por día (cráter Gale, 2012-2013).',
     uso_en: 'Radiation measured on the surface of Mars: ~0.67 mSv per day (Gale Crater, 2012-2013).',
+    papel: 'mecanica',
   },
   radlab: {
     nombre: 'NASA OSDR — RadLab (dosimetría de la Estación Espacial)',
@@ -21,33 +24,39 @@ export const FUENTES = {
     url: 'https://visualization.osdr.nasa.gov/radlab/',
     uso: 'Dosis reales medidas a bordo de la Estación Espacial Internacional, para comparar.',
     uso_en: 'Real doses measured on board the International Space Station, for comparison.',
+    papel: 'texto',
   },
   osdr: {
     nombre: 'NASA Open Science Data Repository (OSDR)',
     url: 'https://osdr.nasa.gov/bio/',
     uso: 'Estudios reales sobre la salud de los astronautas en el espacio.',
     uso_en: 'Real studies about astronaut health in space.',
+    papel: 'texto',
   },
   marsTrek: {
     nombre: 'NASA Mars Trek',
     url: 'https://trek.nasa.gov/mars/',
     uso: 'Mapas y relieve de Marte (región de Isidis y Syrtis Major).',
     uso_en: 'Maps and terrain of Mars (Isidis and Syrtis Major region).',
+    papel: 'texto',
   },
   neSyrtis: {
     nombre: 'NASA — NE Syrtis, uno de los 3 sitios finalistas de Mars 2020',
     url: 'https://astrobiology.nasa.gov/news/scientists-shortlist-three-landing-sites-for-mars-2020/',
     uso: 'Lugar de la base: meseta NE Syrtis, al borde de la cuenca Isidis.',
+    papel: 'texto',
   },
   topoJezero: {
     nombre: 'ESA / DLR (Mars Express HRSC) — Mapa topográfico del cráter Jezero y alrededores',
     url: 'https://www.esa.int/ESA_Multimedia/Images/2021/02/Topographic_map_of_Jezero_crater_and_surrounds',
     uso: 'Altura del terreno: el fondo de Jezero está ~2.600 m bajo el nivel de referencia de Marte.',
+    papel: 'texto',
   },
   neSyrtisGeologia: {
     nombre: 'Brown University (2017) — Mapa geológico de NE Syrtis: olivino, carbonatos y cuenca Isidis',
     url: 'https://www.brown.edu/news/2017-04-20/syrtis',
     uso: 'Edad de la cuenca Isidis (~3.960 millones de años) y rocas con olivino alterado por agua.',
+    papel: 'texto',
   },
   csaComida: {
     nombre: 'Agencia Espacial Canadiense — Producción de alimentos en la Luna',
@@ -55,6 +64,7 @@ export const FUENTES = {
     url: 'https://www.asc-csa.gc.ca/eng/youth-educators/',
     uso: 'Cómo se cultiva comida en el espacio.',
     uso_en: 'How food is grown in space.',
+    papel: 'texto',
   },
   moxie: {
     nombre: 'NASA — MOXIE (Perseverance) completa su misión',
@@ -62,6 +72,7 @@ export const FUENTES = {
     url: 'https://www.nasa.gov/missions/mars-2020-perseverance/perseverance-rover/nasas-oxygen-generating-experiment-moxie-completes-mars-mission/',
     uso: 'MOXIE fabricó 122 gramos de oxígeno con el aire de Marte.',
     uso_en: 'MOXIE made 122 grams of oxygen from the Martian air.',
+    papel: 'texto',
   },
   aguaISS: {
     nombre: 'NASA — La Estación Espacial recupera el 98% del agua',
@@ -69,6 +80,7 @@ export const FUENTES = {
     url: 'https://www.nasa.gov/missions/station/iss-research/nasa-achieves-water-recovery-milestone-on-international-space-station/',
     uso: 'Reciclaje de agua del soporte vital.',
     uso_en: 'Water recycling in the life support system.',
+    papel: 'texto',
   },
   opportunity: {
     nombre: 'NASA — Fin de la misión del rover Opportunity (tormenta de polvo de 2018)',
@@ -76,6 +88,7 @@ export const FUENTES = {
     url: 'https://science.nasa.gov/mission/mer-opportunity/',
     uso: 'Tormentas de polvo que tapan los paneles solares.',
     uso_en: 'Dust storms that cover solar panels.',
+    papel: 'texto',
   },
   fissionPower: {
     nombre: 'NASA — Fission Surface Power (reactores para la Luna y Marte)',
@@ -83,6 +96,7 @@ export const FUENTES = {
     url: 'https://www.nasa.gov/exploration-systems-development-mission-directorate/fission-surface-power/',
     uso: 'El mini reactor nuclear de la base.',
     uso_en: 'The base\'s mini nuclear reactor.',
+    papel: 'texto',
   },
   veggie: {
     nombre: 'NASA — Cultivar plantas en el espacio (Veggie)',
@@ -90,6 +104,7 @@ export const FUENTES = {
     url: 'https://www.nasa.gov/exploration-research-and-technology/growing-plants-in-space/',
     uso: 'El invernadero de la base.',
     uso_en: 'The base\'s greenhouse.',
+    papel: 'texto',
   },
   conjuncion: {
     nombre: 'NASA — ¿Qué es la conjunción solar de Marte?',
@@ -97,6 +112,7 @@ export const FUENTES = {
     url: 'https://www.nasa.gov/solar-system/whats-mars-solar-conjunction-and-why-does-it-matter/',
     uso: 'Los sols sin comunicación con la Tierra.',
     uso_en: 'The sols with no communication with Earth.',
+    papel: 'texto',
   },
   retraso: {
     nombre: 'NASA — Peligro: distancia de la Tierra (programa de investigación humana)',
@@ -104,6 +120,7 @@ export const FUENTES = {
     url: 'https://www.nasa.gov/hrp/hazard-distance-from-earth/',
     uso: 'Retraso de los mensajes Tierra-Marte (de unos 4 a 24 minutos).',
     uso_en: 'Delay of Earth-Mars messages (about 4 to 24 minutes).',
+    papel: 'texto',
   },
   mroCrateres: {
     nombre: 'NASA Mars Reconnaissance Orbiter — impactos nuevos en Marte',
@@ -111,6 +128,29 @@ export const FUENTES = {
     url: 'https://www.jpl.nasa.gov/news/nasa-probe-counts-space-rock-impacts-on-mars/',
     uso: 'Más de 200 cráteres nuevos por año: evento de micrometeorito.',
     uso_en: 'More than 200 new craters per year: the micrometeorite event.',
+    papel: 'texto',
+  },
+
+  perseverance: {
+    nombre: 'Rover Perseverance (Mars 2020)',
+    url: 'https://science.nasa.gov/mission/mars-2020-perseverance/',
+    uso: 'MOXIE, la máquina que fabricó oxígeno en Marte, y el estudio de las rocas cerca de tu base.',
+    uso_en: 'MOXIE, the machine that made oxygen on Mars, and the study of rocks near your base.',
+    papel: 'texto',
+  },
+  nasaMarte: {
+    nombre: 'NASA Ciencia — Marte',
+    url: 'https://science.nasa.gov/mars/facts/',
+    uso: 'Datos básicos de Marte: duración del sol, luz solar, retraso de las señales.',
+    uso_en: 'Basic Mars facts: length of a sol, sunlight, signal delay.',
+    papel: 'texto',
+  },
+  iss: {
+    nombre: 'NASA — Estación Espacial Internacional',
+    url: 'https://www.nasa.gov/international-space-station/',
+    uso: 'Cómo se recicla el agua y cómo se trabaja fuera de la nave.',
+    uso_en: 'How water is recycled and how astronauts work outside the station.',
+    papel: 'texto',
   },
 
   // ---- Estudios concretos de NASA OSDR (cada uno con su página) ----
@@ -120,6 +160,7 @@ export const FUENTES = {
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-342',
     uso: 'Ratones en la Estación Espacial perdieron músculo y hueso en 33 días.',
     uso_en: 'Mice on the Space Station lost muscle and bone in 33 days.',
+    papel: 'texto',
   },
   'OSD-566': {
     nombre: 'NASA OSDR · OSD-566 — Respuestas inmunes y hormonales a la radiación ionizante',
@@ -127,6 +168,7 @@ export const FUENTES = {
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-566',
     uso: 'Cómo la radiación espacial afecta las defensas del cuerpo.',
     uso_en: 'How space radiation affects the body\'s defenses.',
+    papel: 'texto',
   },
   'OSD-343': {
     nombre: 'NASA OSDR · OSD-343 — Estrés de las mitocondrias en el espacio (59 astronautas + Estudio de Gemelos)',
@@ -134,6 +176,7 @@ export const FUENTES = {
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-343',
     uso: 'El espacio estresa las "centrales de energía" de las células.',
     uso_en: 'Space stresses the "power plants" of the cells.',
+    papel: 'texto',
   },
   'OSD-766': {
     nombre: 'NASA OSDR · OSD-766 — VEG-05: tomates cultivados 101 días en la Estación Espacial',
@@ -141,6 +184,7 @@ export const FUENTES = {
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-766',
     uso: 'Cultivo de comida con luces LED rojas y azules.',
     uso_en: 'Growing food with red and blue LED lights.',
+    papel: 'texto',
   },
   'OSD-678': {
     nombre: 'NASA OSDR · OSD-678 — CARA: la luz guía a las plantas en el espacio',
@@ -148,6 +192,7 @@ export const FUENTES = {
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-678',
     uso: 'Plantas Arabidopsis cultivadas con luz y en oscuridad en la Estación Espacial.',
     uso_en: 'Arabidopsis plants grown in light and in darkness on the Space Station.',
+    papel: 'texto',
   },
   'OSD-177': {
     nombre: 'NASA OSDR · OSD-177 — Hongo Fusarium en las zinnias de la Estación Espacial',
@@ -155,6 +200,7 @@ export const FUENTES = {
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-177',
     uso: 'Las plantas también se enferman en el espacio (evento de plaga).',
     uso_en: 'Plants get sick in space too (the plant disease event).',
+    papel: 'texto',
   },
   'OSD-87': {
     nombre: 'NASA OSDR · OSD-87 — Efectos del vuelo espacial en la retina (STS-135)',
@@ -162,5 +208,6 @@ export const FUENTES = {
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-87',
     uso: 'El espacio también afecta los ojos.',
     uso_en: 'Space also affects the eyes.',
+    papel: 'texto',
   },
 };

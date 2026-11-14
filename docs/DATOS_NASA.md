@@ -24,7 +24,7 @@ dentro del juego (botón **📡 Datos NASA**, tarjetas "¿Sabías que…?" y "Lo
 | **Veggie / VEG-05** (ISS) | 📚 Guardado | Invernadero | Cultivar comida con luces LED es real. |
 | **Agua en la ISS (98 % reciclada)** | 📚 Guardado | Soporte vital / evento del reciclador | El agua se recicla casi por completo; una falla es una emergencia. |
 
-**En vivo vs. guardado:** solo DONKI se consulta en vivo. Si la API no responde (sin internet o límite de la clave),
+**En vivo vs. guardado:** solo DONKI se consulta en vivo (con caché de 6 h y un servidor de respaldo de CCMC que no necesita clave). Si la API no responde (sin internet o límite de la clave),
 el juego usa llamaradas **históricas reales** (p. ej. X9.0 del 3/10/2024) y lo dice claramente: "📚 Datos históricos",
 nunca "en vivo", tal como pide el reto.
 
@@ -43,7 +43,7 @@ nunca "en vivo", tal como pide el reto.
 |---|---|---|---|
 | Superficie de Marte | 0,67 mSv/día (cráter Gale, ago 2012 – jun 2013) | 0,7 mSv por sol | Hassler et al. 2014, *Science* 343 — https://ntrs.nasa.gov/citations/20180007641 |
 | Viaje a Marte | ~1,8 mSv/día | Dato educativo | Curiosity RAD (crucero) |
-| Estación Espacial | ~0,2–0,5 mSv/día | Dato educativo | RadLab — https://visualization.osdr.nasa.gov/radlab/ |
+| Estación Espacial | ~0,3 mGy/día (detector REM, módulo Columbus, 1–7 abril 2022) · rango típico 0,2–0,5 mSv/día | Panel "¿Qué es real?" (comparación) | API de RadLab — https://visualization.osdr.nasa.gov/radlab/ (consulta de Jorge) |
 | Límite de carrera NASA | 600 mSv | Dato educativo | Estándar NASA de protección radiológica |
 | **Límite de la misión del juego** | — | **60 mSv** (simplificado) | Diseño de juego |
 | Dosis extra por llamarada sin refugio | Muy variable en la realidad | X: 50 · M: 25 · C: 8 mSv × atmósfera 0,5 × blindaje 0,4 | **Simplificado**: solo respeta el orden X > M > C |
@@ -60,6 +60,14 @@ Buscados con la API de OSDR (`https://osdr.nasa.gov/osdr/data/search`). Cada tar
 | [OSD-342](https://osdr.nasa.gov/bio/repo/data/studies/OSD-342) | Rodent Research-19: pérdida de músculo y hueso en 33 días | Disponible (tema "ejercicio") |
 | [OSD-177](https://osdr.nasa.gov/bio/repo/data/studies/OSD-177) | Hongo *Fusarium* en las zinnias de Veggie | Disponible (tema "plaga") |
 | [OSD-87](https://osdr.nasa.gov/bio/repo/data/studies/OSD-87) | Cambios en la retina de ratones (STS-135) | Disponible (tema "ojos") |
+| [OSD-360](https://osdr.nasa.gov/bio/repo/data/studies/OSD-360) | Dosis bajas de radiación espacial cambian la química del bazo (ratones) | Radiación (aporte de Jorge) |
+| [OSD-334](https://osdr.nasa.gov/bio/repo/data/studies/OSD-334) | Partículas pesadas y daño al tejido del corazón | Radiación (aporte de Jorge) |
+| [OSD-146](https://osdr.nasa.gov/bio/repo/data/studies/OSD-146) | La radiación cambia las bacterias del intestino | Radiación (aporte de Jorge) |
+| [OSD-268](https://osdr.nasa.gov/bio/repo/data/studies/OSD-268) | Lechuga roja de Veggie: microbios y nutrientes | Comida (aporte de Jorge) |
+| [OSD-772](https://osdr.nasa.gov/bio/repo/data/studies/OSD-772) | PH-04: chiles cultivados en la Estación Espacial (2021) | Comida (aporte de Jorge) |
+| [OSD-615](https://osdr.nasa.gov/bio/repo/data/studies/OSD-615) | Sin gravedad cambian las paredes de las raíces | Comida (aporte de Jorge) |
+
+Los 13 hallazgos se mezclan al empezar cada partida. La **consola de la base** también muestra un estudio según el mayor riesgo del tripulante.
 
 ### 2.4 Otros datos verificados
 | Dato en el juego | Fuente |

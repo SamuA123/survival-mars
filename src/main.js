@@ -8,7 +8,7 @@ import { MISION } from './sim/config.js';
 import { mostrarHUDEVA, actualizarHUDEVA, avisoEVA, ocultarHUDEVA, tarjetaObjeto } from './ui/eva-hud.js';
 import { cargarClimaEspacial } from './data/donki.js';
 import { renderRecursos, renderEnergia, renderPanel, renderLog } from './ui/hud.js';
-import { pantallaInicio, mostrarEvento, mostrarResumen, mostrarResumenEVA, pantallaFinal, panelDatos, panelInventario } from './ui/modales.js';
+import { pantallaInicio, mostrarEvento, mostrarResumen, mostrarResumenEVA, pantallaFinal, panelDatos, panelTarea, refrescarClimaInicio } from './ui/modales.js';
 import { beep, audio } from './ui/sonido.js';
 import { iniciarTutorial, tutorialVisto } from './ui/tutorial.js';
 import { iniciarRegistro, registrarDecision, registrarSol, registrarEVA } from './sim/registro.js';
@@ -146,7 +146,14 @@ async function nuevaPartida() {
 
 $('#btnSol').onclick = terminarSol;
 $('#btnDatos').onclick = panelDatos;
-$('#btnInventario').onclick = () => { if (!S.enEVA) panelInventario(S); };
+$('#btnTarea').onclick = () => { if (!S.enEVA) panelTarea(S); };
+// Consola de la base: se abre completa ("base") o, tocando un edificio, con ese sistema resaltado.
+$('#btnBase').onclick = () => {
+  if (ocupado) return;
+  if (sel) return mundo.seleccionar(null);
+  mundo.seleccionar(null); sel = 'base'; beep(760, 0.05); refrescar();
+};
+addEventListener('keydown', e => { if (e.key === 'Escape' && sel && !ocupado) mundo.seleccionar(null); });
 $('#btnSonido').onclick = () => { audio.on = !audio.on; $('#btnSonido').textContent = audio.on ? '🔊' : '🔇'; };
 $('#btnAyudaTuto').onclick = () => { if (!ocupado && !tutorial?.activo()) tutorial = iniciarTutorial(() => ({ S, sel })); };
 $('#btnLog').onclick = () => $('#bitacoraBox').classList.toggle('abierta');
@@ -190,5 +197,5 @@ else if (leerLigero() === null) {
   else setTimeout(sugerir, 1500);
 }
 
-cargarClimaEspacial().then(c => { setClima(c); refrescar(); });
+cargarClimaEspacial().then(c => { setClima(c); refrescar(); refrescarClimaInicio(); });
 nuevaPartida();
