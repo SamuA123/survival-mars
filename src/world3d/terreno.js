@@ -17,6 +17,13 @@ export const RADIO_PLATAFORMA = 24.5;
 const MESAS = [[-52, -30, 11, 8], [-28, -62, 13, 10], [-66, 6, 10, 7], [6, -64, 12, 9],
   [-46, 46, 10, 7], [40, -50, 9, 6], [-98, -62, 18, 13], [-40, -105, 16, 11]];
 
+// 0 = llano, 1 = sobre una mesa (para pintar sus capas de roca)
+export function mesaFactor(x, z) {
+  let m = 0;
+  for (const [mx, mz, R] of MESAS) m = Math.max(m, 1 - THREE.MathUtils.smoothstep(Math.hypot(x - mx, z - mz), R - 2, R + 5));
+  return m;
+}
+
 export function altura(x, z) {
   const r = Math.hypot(x, z);
   const plano = THREE.MathUtils.smoothstep(r, 22, 36);
