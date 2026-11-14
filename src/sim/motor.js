@@ -463,6 +463,9 @@ export function simularSol(S, resultadoEvento, ev) {
   const habiaPolvo = S.polvoSols > 0;
   S.polvoSols = Math.max(0, S.polvoSols - 1);
   if (habiaPolvo && S.polvoSols === 0) lineas.push('🌤️ El polvo se asentó.' + (S.paneles ? '' : ' <b>¡Despliega los paneles!</b>'));
+  // Recordar cómo fue el día ANTES de reiniciar las banderas (lo usa el hallazgo de salud)
+  const encerrados = S.refugio || S.ocupados || habiaPolvo;
+  S.solsSinSalir = S.evaHecha ? 0 : (S.solsSinSalir || 0) + 1;
   S.refugio = false; S.ocupados = false; S.eva = false; S.expedicion = false; S.evaHecha = false;
 
   // Dato educativo y hallazgo de salud real (OSDR)
@@ -473,8 +476,8 @@ export function simularSol(S, resultadoEvento, ev) {
     dato = nuevos.length ? nuevos[Math.floor(Math.random() * nuevos.length)] : dato;
   }
   aprender(S, dato);
-  const tema = ev?.dato === 'llamarada' ? 'radiacion' : S.comida < 30 ? 'comida' : S.o2 < 50 ? 'oxigeno' : null;
-  const hallazgo = tema ? HALLAZGOS.find(h => h.tema === tema) : null;
+  const tema = temaDeSalud(S, ev, encerrados);
+  const hallazgo = tema ? elegirHallazgo(S, tema) : null;
 
   // Inventario del día para el resumen; luego se reinicia para el sol siguiente
   const recolectado = { ...S.inventario.hoy };
@@ -485,6 +488,35 @@ export function simularSol(S, resultadoEvento, ev) {
   S.historial.push({ sol: S.sol, ...foto(S) });
   lineas.forEach(l => log(S, l, l.includes('⚠️') || l.includes('Apagón') ? 'mal' : ''));
   return { lineas, dato, hallazgo, recolectado, plan };
+}
+
+// ---------------------------------------------------------------------
+//  HALLAZGOS DE SALUD (OSDR): qué tema corresponde a lo que pasó hoy
+//  Prioridad: llamarada > plaga > poca comida > poco oxígeno > encierro (ejercicio)
+// ---------------------------------------------------------------------
+function temaDeSalud(S, ev, encerrados) {
+  if (ev?.dato === 'llamarada') return 'radiacion';
+  if (S.ultimoEvento === 'plaga') return 'plaga';
+  if (S.comida < 30) return 'comida';
+  if (S.o2 < 50) return 'oxigeno';
+  if (encerrados || S.solsSinSalir >= 3) return 'ejercicio';
+  return null;
+}
+
+// Varía: primero los hallazgos del tema que aún no se mostraron; si ya se vieron todos, uno al azar.
+// Nunca repite el mismo hallazgo antes de NO_REPETIR sols (si no hay otro, ese día no se muestra).
+const NO_REPETIR = 4;
+function elegirHallazgo(S, tema) {
+  S.hallazgosVistos ||= [];
+  S.hallazgoSol ||= {};
+  const delTema = HALLAZGOS.filter(h => h.tema === tema && !(S.sol - (S.hallazgoSol[h.id] ?? -99) < NO_REPETIR));
+  if (!delTema.length) return null;
+  const nuevos = delTema.filter(h => !S.hallazgosVistos.includes(h.id));
+  const pool = nuevos.length ? nuevos : delTema;
+  const h = pool[Math.floor(Math.random() * pool.length)];
+  if (!S.hallazgosVistos.includes(h.id)) S.hallazgosVistos.push(h.id);
+  S.hallazgoSol[h.id] = S.sol;
+  return h;
 }
 
 export function finDePartida(S) {
