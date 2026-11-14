@@ -8,11 +8,13 @@ import { cargarClimaEspacial } from './data/donki.js';
 import { renderRecursos, renderEnergia, renderPanel, renderLog } from './ui/hud.js';
 import { pantallaInicio, mostrarEvento, mostrarResumen, pantallaFinal, panelDatos } from './ui/modales.js';
 import { beep, audio } from './ui/sonido.js';
+import { iniciarTutorial, tutorialVisto } from './ui/tutorial.js';
 
 const $ = s => document.querySelector(s);
 let S = crearPartida();
 let sel = null;
 let ocupado = false;
+let tutorial = null;
 
 const mundo = new Mundo($('#mundo'), { onSeleccion: id => { sel = id; if (id) beep(760, 0.05); refrescar(); } });
 mundo.setEstado(() => S);
@@ -39,6 +41,7 @@ document.addEventListener('click', e => {
 
 async function terminarSol() {
   if (ocupado) return;
+  if (tutorial?.activo()) tutorial.terminar();
   ocupado = true;
   mundo.seleccionar(null);
   refrescar();
@@ -83,11 +86,13 @@ async function nuevaPartida() {
   iniciarSol(S);
   ocupado = false;
   refrescar();
+  if (!tutorialVisto()) tutorial = iniciarTutorial(() => ({ S, sel }));
 }
 
 $('#btnSol').onclick = terminarSol;
 $('#btnDatos').onclick = panelDatos;
 $('#btnSonido').onclick = () => { audio.on = !audio.on; $('#btnSonido').textContent = audio.on ? '🔊' : '🔇'; };
+$('#btnAyudaTuto').onclick = () => { if (!ocupado && !tutorial?.activo()) tutorial = iniciarTutorial(() => ({ S, sel })); };
 $('#btnLog').onclick = () => $('#bitacoraBox').classList.toggle('abierta');
 
 refrescar();

@@ -47,6 +47,7 @@ export function consumo(S, niv = S.niveles, construir = S.construir) {
   let c = MISION.consumoBase;
   for (const id in SISTEMAS) c += niv[id] * SISTEMAS[id].costo;
   if (construir) c += 3;
+  if (enTormenta(S) && niv.vital > 0) c += MISION.frioTormenta;
   return c;
 }
 export function balance(S) {
@@ -377,9 +378,12 @@ export function finDePartida(S) {
   if (S.salud <= 0) return { gano: false, icono: '❤️', texto: 'La salud de la tripulación llegó a cero.' };
   if (S.rad >= MISION.radLimite) return { gano: false, icono: '☢️', texto: `La tripulación recibió demasiada radiación (${S.rad} mSv).` };
   if (S.sol >= MISION.maxSol) {
+    // ⭐ sobrevivir · ⭐ cumplir la meta de ciencia · ⭐ lograr la ciencia SIN arriesgar a la tripulación
     let estrellas = 1;
-    if (S.ciencia >= MISION.metaCiencia) estrellas++;
-    if (S.rad < MISION.radLimite / 2 && S.salud >= 70) estrellas++;
+    if (S.ciencia >= MISION.metaCiencia) {
+      estrellas++;
+      if (S.rad < MISION.radLimite / 2 && S.salud >= 70) estrellas++;
+    }
     return { gano: true, estrellas };
   }
   return null;

@@ -4,11 +4,12 @@ import { SITIO } from '../data/sitio.js';
 
 export const MISION = {
   maxSol: 15,
-  solarBase: 9,               // kWh por sol con paneles limpios (Marte recibe ~43% de la luz de la Tierra)
+  solarBase: 11,              // kWh por sol con paneles limpios (Marte recibe ~43% de la luz de la Tierra)
   nuclear: 3,                 // kWh constantes del mini reactor
   bateriaMax: 40,
-  bateriaInicial: 28,
+  bateriaInicial: 26,
   consumoBase: 1,             // computadoras y luces
+  frioTormenta: 2,            // kWh extra de calefacción en tormenta (el polvo tapa el Sol y enfría)
   delayMin: SITIO.retrasoMin,
   radDiaria: RADIACION.marteSuperficie.valor,
   radLimite: RADIACION.limiteMision,
@@ -16,7 +17,7 @@ export const MISION = {
   conjuncion: [10, 11],       // el Sol entre Marte y la Tierra: sin contacto
   repuestos: 2,
   botiquin: 1,
-  metaCiencia: 60,            // puntos de ciencia para la 2ª estrella
+  metaCiencia: 40,            // puntos de ciencia para la 2ª estrella
   guion: { 2: 'llamarada', 4: 'reciclador', 6: 'tormenta', 9: 'remolino', 12: 'llamarada' },
   avisos: {
     1: ['¡Bienvenida, tripulación! Cada mensaje tarda unos 12 minutos en llegar. En una emergencia, ustedes deciden.',

@@ -128,7 +128,8 @@ export function pantallaFinal(S, fin) {
           ? `Comandante <b>${escapar(S.nombre)}</b>: tu tripulación sobrevivió ${MISION.maxSol} sols en Marte.`
           : `${fin.texto} La tripulación volvió a la Tierra en el Sol ${S.sol}. ¡Los verdaderos planificadores de la NASA también aprenden de cada problema!`}</p>
         ${fin.gano ? `<div class="estrellas">${'⭐'.repeat(e)}${'☆'.repeat(3 - e)}</div>
-          <small class="criterios">⭐ Sobrevivir · ⭐ ${MISION.metaCiencia} de ciencia · ⭐ Radiación &lt; ${MISION.radLimite / 2} mSv y salud ≥ 70</small>` : ''}
+          <small class="criterios">⭐ Sobrevivir · ⭐ Lograr ${MISION.metaCiencia} de ciencia · ⭐ Lograrlo sin arriesgar a la tripulación (radiación &lt; ${MISION.radLimite / 2} mSv y salud ≥ 70)</small>
+          ${S.ciencia < MISION.metaCiencia ? `<p class="tranqui">Sobrevivieron, pero la misión vino a Marte a hacer ciencia. ¿Puedes conseguir ${MISION.metaCiencia} puntos sin arriesgar a nadie?</p>` : ''}` : ''}
         <div class="final-stats">🫁 ${S.o2}% · 🥔 ${S.comida}% · ☢️ ${S.rad} mSv · 🔬 ${S.ciencia} ciencia</div>
         <h3>🧠 Lo que aprendiste (${S.aprendidos.length})</h3>
         <ul class="aprendidos">${aprendidos}</ul>
