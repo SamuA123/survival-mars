@@ -81,6 +81,7 @@ export function renderEnergia(S) {
 
 export function renderPanel(S, sel) {
   const el = $('#panel');
+  el.classList.toggle('sin-sel', !sel);   // en celular: sin selección, el panel se reduce a una pista
   if (!sel) {
     el.innerHTML = `<h3>🛰️ Tu base en Marte</h3>
       <p class="pista">👆 Toca un edificio para controlarlo.</p>
