@@ -4,6 +4,8 @@
 //  Se engancha solo: agrega botones 🔈 a emergencias, resúmenes, datos,
 //  tarjetas de la caminata y el tutorial. Botón "🗣️" arriba = leer todo solo.
 // =====================================================================
+import { t, idioma, onIdioma } from './i18n.js';
+
 const CLAVE = 'survivalMars.narrador';
 const sintesis = window.speechSynthesis;
 let vozES = null;
@@ -16,21 +18,24 @@ const LEIBLES = [
   '.eva-tarjeta', '.tuto-txt', '.eva-aviso',
 ];
 
+// Elige una voz del idioma actual (español o inglés)
 function elegirVoz() {
   if (!sintesis) return;
   const voces = sintesis.getVoices();
-  vozES = voces.find(v => /es[-_](MX|US|419|CO|AR)/i.test(v.lang))
-       || voces.find(v => /^es/i.test(v.lang)) || null;
+  vozES = idioma === 'en'
+    ? (voces.find(v => /^en[-_]US/i.test(v.lang)) || voces.find(v => /^en/i.test(v.lang)) || null)
+    : (voces.find(v => /es[-_](MX|US|419|CO|AR)/i.test(v.lang)) || voces.find(v => /^es/i.test(v.lang)) || null);
 }
 
 // Texto limpio para hablar: sin emojis, con unidades dichas en palabras
-function limpiar(t) {
-  return t
+function limpiar(s) {
+  const en = idioma === 'en';
+  return s
     .replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}️‍]/gu, '')
-    .replace(/\bmSv\b/g, 'milisievert')
-    .replace(/\bkWh\b/g, 'kilovatios hora')
-    .replace(/\bEVA\b/g, 'caminata espacial')
-    .replace(/(\d+)\s*%/g, '$1 por ciento')
+    .replace(/\bmSv\b/g, en ? 'millisieverts' : 'milisievert')
+    .replace(/\bkWh\b/g, en ? 'kilowatt hours' : 'kilovatios hora')
+    .replace(/\bEVA\b/g, en ? 'spacewalk' : 'caminata espacial')
+    .replace(/(\d+)\s*%/g, en ? '$1 percent' : '$1 por ciento')
     .replace(/[▶▲▼＝·•→]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -40,7 +45,7 @@ export function hablar(texto) {
   if (!sintesis || !texto) return;
   sintesis.cancel();
   const u = new SpeechSynthesisUtterance(limpiar(texto));
-  u.lang = vozES?.lang || 'es-MX';
+  u.lang = vozES?.lang || (idioma === 'en' ? 'en-US' : 'es-MX');
   if (vozES) u.voice = vozES;
   u.rate = 0.95; u.pitch = 1.05;
   sintesis.speak(u);
@@ -59,7 +64,7 @@ function agregarBotones(raiz = document) {
       if (el.querySelector(':scope > .btn-voz') || !textoDe(el).trim()) return;
       const b = document.createElement('button');
       b.className = 'btn-voz'; b.type = 'button';
-      b.title = 'Escuchar'; b.setAttribute('aria-label', 'Escuchar este texto');
+      b.title = t('voz.escuchar'); b.setAttribute('aria-label', t('voz.aria'));
       b.textContent = '🔈';
       b.addEventListener('click', e => { e.stopPropagation(); hablar(textoDe(el)); });
       el.prepend(b);
@@ -83,14 +88,14 @@ function botonAuto() {
   if (!cont || cont.querySelector('#btnNarrador')) return;
   const b = document.createElement('button');
   b.id = 'btnNarrador'; b.className = 'chip-btn';
-  const pintar = () => { b.textContent = auto ? '🗣️ Narrador: sí' : '🗣️ Narrador'; b.classList.toggle('activo-voz', auto); };
-  b.title = 'Leer en voz alta las emergencias y mensajes automáticamente';
+  const pintar = () => { b.textContent = auto ? t('voz.on') : t('voz.off'); b.title = t('voz.t'); b.classList.toggle('activo-voz', auto); };
   b.onclick = () => {
     auto = !auto; pintar();
     try { localStorage.setItem(CLAVE, auto ? '1' : '0'); } catch { /* sin almacenamiento */ }
-    if (auto) hablar('Narrador activado. Leeré los mensajes de la misión en voz alta.'); else callar();
+    if (auto) hablar(t('voz.activado')); else callar();
   };
   pintar();
+  onIdioma(() => { pintar(); elegirVoz(); callar(); });
   cont.prepend(b);
 }
 

@@ -24,19 +24,21 @@
   <div id="mundo"></div>
 
   <header class="hud-top">
-    <div class="marca">🔴 <b>Survival Mars</b><small>Meseta NE Syrtis · Isidis Planitia</small></div>
+    <div class="marca">🔴 <b>Survival Mars</b><small data-i18n="top.crater">Meseta NE Syrtis · Isidis Planitia</small></div>
     <div class="sol" id="sol">Sol 1</div>
     <div class="recursos" id="recursos"></div>
     <div class="botones-top">
-      <button id="btnInventario" class="chip-btn" title="Lo que recolectaste en Marte">🎒<span class="btn-txt"> Inventario</span></button>
-      <button id="btnDatos" class="chip-btn" title="Datos de la NASA usados">📡<span class="btn-txt"> Datos NASA</span></button>
-      <button id="btnAyudaTuto" class="chip-btn" title="Ver el tutorial otra vez">❓</button>
-      <button id="btnSonido" class="chip-btn" title="Sonido">🔊</button>
+      <button id="btnInventario" class="chip-btn" data-i18n-title="top.inventario.t" title="Lo que recolectaste en Marte">🎒<span class="btn-txt" data-i18n="top.inventario"> Inventario</span></button>
+      <button id="btnDatos" class="chip-btn" data-i18n-title="top.datos.t" title="Datos de la NASA usados">📡<span class="btn-txt" data-i18n="top.datos"> Datos NASA</span></button>
+      <button id="btnIdioma" class="chip-btn" title="Change language to English">🌐 EN</button>
+      <button id="btnAyudaTuto" class="chip-btn" data-i18n-title="top.tuto.t" title="Ver el tutorial otra vez">❓</button>
+      <button id="btnLigero" class="chip-btn" title="Gráficos ligeros (para computadoras lentas)">🐢</button>
+      <button id="btnSonido" class="chip-btn" data-i18n-title="top.sonido.t" title="Sonido">🔊</button>
     </div>
   </header>
 
   <div class="sub-top">
-    <div class="clima" id="clima">☀️ Clima espacial: cargando…</div>
+    <div class="clima" id="clima" data-i18n="top.clima">☀️ Clima espacial: cargando…</div>
     <div class="tags" id="tags"></div>
     <div class="plan-sol" id="planSol"></div>
   </div>
@@ -44,13 +46,13 @@
   <aside class="panel" id="panel"></aside>
 
   <section class="bitacora" id="bitacoraBox">
-    <button class="bit-tit" id="btnLog">📓<span class="btn-txt"> Bitácora</span></button>
+    <button class="bit-tit" id="btnLog">📓<span class="btn-txt" data-i18n="top.bitacora"> Bitácora</span></button>
     <ul id="bitacora"></ul>
   </section>
 
   <footer class="hud-bottom">
     <div class="energia" id="energia"></div>
-    <button class="btn-sol" id="btnSol">Terminar<span class="btn-txt-m"> el</span> Sol 🌙</button>
+    <button class="btn-sol" id="btnSol" data-i18n-html="top.terminar">Terminar<span class="btn-txt-m"> el</span> Sol 🌙</button>
   </footer>
 
   <div id="modal" class="modal oculto"><div class="modal-caja" id="modalCaja"></div></div>

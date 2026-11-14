@@ -16,6 +16,7 @@ import { enTormenta } from './sim/motor.js';
 import './ui/dificultad-ui.js';   // selector Cadete / Comandante en la pantalla de inicio
 import './ui/voz.js';             // narrador por voz (botones 🔈 y 🗣️)
 import './ui/ubicacion.js';       // 📍 resumen del lugar de la base + mapas de NASA Mars Trek
+import { t, idioma, setIdioma, aplicarEstaticos } from './ui/i18n.js';
 
 const $ = s => document.querySelector(s);
 let S = crearPartida();
@@ -136,7 +137,7 @@ async function nuevaPartida() {
   const nombre = await pantallaInicio();
   S = crearPartida(nombre);
   iniciarRegistro(S);
-  S.log.unshift({ sol: 1, texto: `🚀 Comandante <b>${nombre.replace(/[<>&]/g, '')}</b> al mando de la base en la meseta NE Syrtis.`, tipo: 'tierra' });
+  S.log.unshift({ sol: 1, texto: t('log.inicio', { n: nombre.replace(/[<>&]/g, '') }), tipo: 'tierra' });
   iniciarSol(S);
   ocupado = false;
   refrescar();
@@ -149,7 +150,45 @@ $('#btnInventario').onclick = () => { if (!S.enEVA) panelInventario(S); };
 $('#btnSonido').onclick = () => { audio.on = !audio.on; $('#btnSonido').textContent = audio.on ? '🔊' : '🔇'; };
 $('#btnAyudaTuto').onclick = () => { if (!ocupado && !tutorial?.activo()) tutorial = iniciarTutorial(() => ({ S, sel })); };
 $('#btnLog').onclick = () => $('#bitacoraBox').classList.toggle('abierta');
+// Botón ES / EN (la elección se guarda en localStorage desde i18n.js)
+$('#btnIdioma').onclick = () => {
+  const enInicio = !$('#modal').classList.contains('oculto') && !!document.querySelector('#modalCaja .intro');
+  setIdioma(idioma === 'es' ? 'en' : 'es');
+  if (enInicio) { location.reload(); return; }   // la pantalla de inicio se vuelve a dibujar en el nuevo idioma
+  refrescar();
+};
+aplicarEstaticos();
 
 refrescar();
+// ---------------------------------------------------------------------
+//  GRÁFICOS LIGEROS: botón 🐢, ?ligero=1 en el link, o automático si va lento
+// ---------------------------------------------------------------------
+const CLAVE_LIGERO = 'survivalMars.ligero';
+const leerLigero = () => { try { return localStorage.getItem(CLAVE_LIGERO); } catch { return null; } };
+function ponerLigero(on, guardar = true) {
+  mundo.setLigero(on);
+  $('#btnLigero').classList.toggle('activo', on);
+  $('#btnLigero').classList.remove('sugerido');
+  $('#btnLigero').title = on ? 'Gráficos ligeros: ACTIVADOS (toca para volver a normales)' : 'Gráficos ligeros (para computadoras lentas)';
+  if (guardar) { try { localStorage.setItem(CLAVE_LIGERO, on ? '1' : '0'); } catch { /* sin almacenamiento */ } }
+}
+$('#btnLigero').onclick = () => ponerLigero(!mundo.ligero);
+const pideLigero = new URLSearchParams(location.search).get('ligero');
+if (pideLigero !== null) ponerLigero(pideLigero !== '0', false);
+else if (leerLigero() === '1') ponerLigero(true, false);
+else if (leerLigero() === null) {
+  // Primera visita: si se ve lento, SUGERIR el modo ligero (no se cambia solo, para evitar falsos avisos)
+  const sugerir = () => mundo.medirFPS().then(fps => {
+    if (fps === null) return;                       // pestaña oculta: medición no válida
+    if (fps < 28 && !mundo.ligero) {
+      $('#btnLigero').classList.add('sugerido');
+      S.log.unshift({ sol: S.sol, texto: `🐢 El juego va un poco lento en esta computadora. Prueba el botón 🐢 (gráficos ligeros).`, tipo: 'aviso' });
+      refrescar();
+    }
+  });
+  if (document.hidden) document.addEventListener('visibilitychange', sugerir, { once: true });
+  else setTimeout(sugerir, 1500);
+}
+
 cargarClimaEspacial().then(c => { setClima(c); refrescar(); });
 nuevaPartida();

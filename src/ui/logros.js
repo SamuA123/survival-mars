@@ -1,6 +1,7 @@
 // Insignias: se ganan jugando y se guardan entre partidas (rejugabilidad).
 // Cada una premia una estrategia distinta, y perder también enseña.
 import { MISION } from '../sim/config.js';
+import { t } from './i18n.js';
 
 const CLAVE = 'survivalMars.logros';
 
@@ -53,14 +54,18 @@ export function evaluarLogros(S, fin) {
 
 function safe(f) { try { return !!f(); } catch { return false; } }
 
+// Nombre y descripción traducidos (claves lg.<id>.n / lg.<id>.d en i18n.js)
+const nombreLg = l => t(`lg.${l.id}.n`);
+const descLg = l => t(`lg.${l.id}.d`, { r: MISION.radLimite / 2 });
+
 export function logrosHTML(nuevos = []) {
   const tengo = logrosGuardados();
   const lista = LOGROS.map(l => {
     const ok = tengo.has(l.id), nuevo = nuevos.includes(l.id);
-    return `<div class="logro ${ok ? 'ok' : 'bloq'} ${nuevo ? 'nuevo' : ''}" title="${l.desc}">
+    return `<div class="logro ${ok ? 'ok' : 'bloq'} ${nuevo ? 'nuevo' : ''}" title="${descLg(l)}">
       <span class="lg-ic">${ok ? l.icono : '🔒'}</span>
-      <b>${l.nombre}</b><small>${l.desc}</small>${nuevo ? '<em>¡NUEVA!</em>' : ''}</div>`;
+      <b>${nombreLg(l)}</b><small>${descLg(l)}</small>${nuevo ? `<em>${t('lg.nueva')}</em>` : ''}</div>`;
   }).join('');
-  return `<h3>🏅 Insignias (${tengo.size}/${LOGROS.length})${nuevos.length ? ` · ¡${nuevos.length} nueva${nuevos.length > 1 ? 's' : ''}!` : ''}</h3>
+  return `<h3>${t('lg.tit', { a: tengo.size, b: LOGROS.length })}${nuevos.length ? t('lg.nuevas', { n: nuevos.length }) : ''}</h3>
     <div class="logros">${lista}</div>`;
 }
