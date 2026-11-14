@@ -13,6 +13,8 @@ import { beep, audio } from './ui/sonido.js';
 import { iniciarTutorial, tutorialVisto } from './ui/tutorial.js';
 import { iniciarRegistro, registrarDecision, registrarSol, registrarEVA } from './sim/registro.js';
 import { enTormenta } from './sim/motor.js';
+import './ui/dificultad-ui.js';   // selector Cadete / Comandante en la pantalla de inicio
+import './ui/voz.js';             // narrador por voz (botones 🔈 y 🗣️)
 
 const $ = s => document.querySelector(s);
 let S = crearPartida();

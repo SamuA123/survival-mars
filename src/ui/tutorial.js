@@ -18,7 +18,7 @@ const PASOS = [
   { objetivo: '.control', texto: 'Pulsa <b>+</b> para encender los experimentos.',
     espera: c => c.S.niveles.lab > 0 },
   { objetivo: '#energia', texto: c => `¿Ves? Ahora gastas más energía (${balance(c.S).bal >= 0 ? 'te sobra menos' : '¡te falta!'}). <b>En Marte nada es gratis:</b> la ciencia cuesta energía, y la energía es para el oxígeno, la comida y el calor.` },
-  { objetivo: '#btnSol', texto: '🌙 Cuando termines de planear, pulsa <b>Terminar el Sol</b>. Si llega una emergencia, ¡tendrás 10 segundos para decidir! ¡Buena suerte!',
+  { objetivo: '#btnSol', texto: '🌙 Cuando termines de planear, pulsa <b>Terminar el Sol</b>. Si llega una emergencia, ¡tendrás muy pocos segundos para decidir! ¡Buena suerte!',
     final: true },
 ];
 

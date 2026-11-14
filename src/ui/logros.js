@@ -8,9 +8,9 @@ const suma = (lista, f) => lista.reduce((a, x) => a + f(x), 0);
 const reg = S => S.registro || { sols: [], decisiones: [], evas: [] };
 
 export const LOGROS = [
-  { id: 'cumplida', icono: '🏁', nombre: 'Misión cumplida', desc: `Sobrevive los ${MISION.maxSol} sols.`,
+  { id: 'cumplida', icono: '🏁', nombre: 'Misión cumplida', desc: 'Sobrevive hasta que llegue la nave de relevo.',
     ok: (S, fin) => fin.gano },
-  { id: 'cientifico', icono: '🔬', nombre: 'Científica/o de Marte', desc: `Consigue ${MISION.metaCiencia} puntos de ciencia.`,
+  { id: 'cientifico', icono: '🔬', nombre: 'Científica/o de Marte', desc: 'Cumple la meta de ciencia de la misión.',
     ok: S => S.ciencia >= MISION.metaCiencia },
   { id: 'protegidos', icono: '🛡️', nombre: 'Tripulación protegida', desc: `Gana con menos de ${MISION.radLimite / 2} mSv de radiación.`,
     ok: (S, fin) => fin.gano && S.rad < MISION.radLimite / 2 },
