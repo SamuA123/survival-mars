@@ -50,6 +50,25 @@ function guardarCache(flares, t) {
   try { localStorage.setItem(CACHE, JSON.stringify({ t, flares })); } catch { /* sin almacenamiento */ }
 }
 
+// Riesgo del juego a partir de una lista de llamaradas (misma fórmula que cargarClimaEspacial).
+export function riesgoDe(flares) {
+  const nX = flares.filter(f => f.clase[0] === 'X').length;
+  const nM = flares.filter(f => f.clase[0] === 'M').length;
+  return { riesgo: Math.max(0.6, Math.min(2.5, 0.6 + nM * 0.08 + nX * 0.4)), nX, nM };
+}
+
+// Consulta rápida de los últimos días, SIN caché, para vigilar el Sol durante la partida.
+// Primero CCMC (no gasta la clave), después api.nasa.gov. Devuelve null si ninguna responde.
+export async function consultarRecientes(dias = 2) {
+  const fmt = d => d.toISOString().slice(0, 10);
+  const fin = new Date(), ini = new Date(Date.now() - dias * 864e5);
+  const urls = fuentesURL(fmt(ini), fmt(fin)).reverse();
+  for (const url of urls) {
+    try { return await pedir(url); } catch (e) { console.warn('[DONKI vigilancia]', url.split('?')[0], e.message); }
+  }
+  return null;
+}
+
 export async function cargarClimaEspacial() {
   const fmt = d => d.toISOString().slice(0, 10);
   const fin = new Date();
