@@ -25,6 +25,9 @@ export function crearPartida(nombre = 'Comandante') {
     repuestos: MISION.repuestos, botiquin: MISION.botiquin,
     blindaje: 0, construir: false,
     polvoSols: 0, eva: false, expedicion: false, refugio: false, ocupados: false,
+    evaHecha: false, enEVA: false, regolito: 0,
+    inventario: { hoy: { regolito: 0, roca: 0, hielo: 0 }, total: { regolito: 0, roca: 0, hielo: 0 } },
+    plan: null, planesCumplidos: 0, planesEnviados: 0,
     energiaOk: true, pendientes: [], aprendidos: [], ultimoEvento: null,
     llamarada: null, evento: null, historial: [], log: [],
   };
@@ -47,6 +50,7 @@ export function consumo(S, niv = S.niveles, construir = S.construir) {
   let c = MISION.consumoBase;
   for (const id in SISTEMAS) c += niv[id] * SISTEMAS[id].costo;
   if (construir) c += 3;
+  if (enTormenta(S) && niv.vital > 0) c += MISION.frioTormenta;
   return c;
 }
 export function balance(S) {
@@ -80,15 +84,13 @@ export const ACCIONES = {
     visible: S => S.blindaje < 3, activo: () => true,
     hacer(S) { S.construir = !S.construir; },
   },
-  expedicion: {
-    edificio: 'rover',
-    texto: () => '🚙 Expedición científica con el rover',
-    detalle: S => enTormenta(S) ? 'No se puede salir en plena tormenta' : '+12 ciencia · cuesta 4 kWh y +2 mSv de radiación',
-    visible: () => true, activo: S => !enTormenta(S) && !S.expedicion && S.bateria >= 4,
-    hacer(S) {
-      S.expedicion = true; S.bateria = r1(S.bateria - 4); S.rad = r1(S.rad + 2); S.ciencia += 12;
-      aprender(S, 'eva'); log(S, '🚙 El rover salió de expedición: +12 ciencia (-4 kWh, +2 mSv).');
-    },
+  // La caminata la controla el jugador en 3D: main.js intercepta esta acción.
+  eva: {
+    edificio: 'habitat',
+    texto: () => '🧑‍🚀 ¡Salir a explorar! (caminata espacial)',
+    detalle: S => motivoNoEVA(S) || `Recoge hielo, rocas y más. Cuesta ${MISION.eva.costoO2Base} de oxígeno de la base; afuera recibes radiación.`,
+    visible: () => true, activo: S => !motivoNoEVA(S),
+    hacer() {},
   },
   reparar: {
     edificio: 'invernadero',
@@ -98,6 +100,103 @@ export const ACCIONES = {
     hacer(S) { S.repuestos--; S.invSalud = 1; log(S, '🔧 Invernadero reparado.'); },
   },
 };
+
+// ---------------------------------------------------------------------
+//  CAMINATA ESPACIAL (EVA) — el jugador controla a un astronauta en 3D
+// ---------------------------------------------------------------------
+export function motivoNoEVA(S) {
+  if (S.evaHecha) return 'Ya hiciste la caminata de hoy. ¡Mañana otra!';
+  if (enTormenta(S)) return 'No se puede salir en plena tormenta de polvo';
+  if (S.o2 < 20) return 'Hay muy poco oxígeno en la base para llenar el traje';
+  if (S.bateria < MISION.eva.costoBateria) return 'No hay energía para cargar el traje';
+  return '';
+}
+
+export function iniciarEVA(S) {
+  S.o2 -= MISION.eva.costoO2Base;
+  S.bateria = r1(S.bateria - MISION.eva.costoBateria);
+  S.evaHecha = true; S.enEVA = true;
+  aprender(S, 'eva');
+}
+
+// r = { items: {hielo, roca, regolito, pieza}, rad, rescate, limpio, segundos }
+export function terminarEVA(S, r) {
+  const V = MISION.eva.valores, lineas = [];
+  S.enEVA = false;
+  S.rad = r1(S.rad + r.rad);
+  lineas.push(`⏱️ Estuviste afuera ${Math.round(r.segundos)} segundos y recibiste <b>${r1(r.rad)} mSv</b> de radiación.`);
+  if (r.rescate) {
+    S.salud = clamp(S.salud - MISION.eva.saludRescate, 0, 100);
+    lineas.push(`🆘 ¡Se acabó el oxígeno del traje! Tus compañeros te rescataron, pero perdiste todo lo recolectado y la salud bajó (-${MISION.eva.saludRescate}).`);
+    log(S, '🆘 Rescate en la caminata: se acabó el oxígeno del traje.', 'mal');
+    return lineas;
+  }
+  const it = r.items;
+  if (it.regolito) {
+    S.regolito = (S.regolito || 0) + it.regolito;
+    while (S.regolito >= MISION.eva.regolitoPorNivel && S.blindaje < 3) { S.regolito -= MISION.eva.regolitoPorNivel; S.blindaje++; }
+    lineas.push(`🟫 <b>${it.regolito} de regolito</b> (la tierra roja y suelta de Marte) → cubre el hábitat: blindaje ${S.blindaje}/3.`); aprender(S, 'regolito');
+  }
+  if (it.roca) { S.ciencia += it.roca * V.roca; lineas.push(`🪨 <b>${it.roca} roca(s) marciana(s)</b> de basalto → el laboratorio las analiza: +${it.roca * V.roca} de ciencia.`); }
+  if (it.hielo) { S.o2 = clamp(S.o2 + it.hielo * V.hielo, 0, 100); lineas.push(`🧊 <b>${it.hielo} bloque(s) de hielo de agua</b> → el agua se separa en hidrógeno y oxígeno: +${it.hielo * V.hielo} de oxígeno.`); aprender(S, 'hielo'); }
+  if (it.pieza) { S.repuestos += it.pieza; lineas.push(`🔩 ${it.pieza} pieza(s) de una sonda vieja → +${it.pieza} repuesto(s).`); }
+  if (r.limpio) { S.eficiencia = Math.min(1, S.eficiencia + 0.3); lineas.push('🧹 Limpiaste los paneles solares: +30% de eficiencia.'); }
+  if (!it.hielo && !it.roca && !it.regolito && !it.pieza && !r.limpio) lineas.push('No recolectaste nada esta vez.');
+
+  // Inventario: lo recolectado hoy y en toda la misión
+  for (const k of TIPOS_RECOLECTABLES) {
+    S.inventario.hoy[k] += it[k] || 0;
+    S.inventario.total[k] += it[k] || 0;
+  }
+  const lp = revisarPlan(S);
+  if (lp) lineas.push(lp);
+
+  log(S, '🧑‍🚀 Caminata: ' + lineas.slice(1).map(l => l.split('→')[0]).join(' · ').replace(/<[^>]+>/g, ''));
+  return lineas;
+}
+
+// ---------------------------------------------------------------------
+//  INVENTARIO Y PLAN DEL SOL
+//  El plan es un objetivo OPCIONAL: cumplirlo da bono, no cumplirlo no castiga.
+//  Así la caminata sigue siendo una decisión (riesgo vs. recompensa).
+// ---------------------------------------------------------------------
+export const TIPOS_RECOLECTABLES = ['regolito', 'roca', 'hielo'];
+const inventarioVacio = () => ({ regolito: 0, roca: 0, hielo: 0 });
+
+// Elige qué pedir según lo que la base necesita (como un plan real de operaciones)
+export function generarPlan(S) {
+  S.plan = null;
+  if (enTormenta(S)) return { estado: 'tormenta' };
+  if (enConjuncion(S)) return { estado: 'conjuncion' };
+  if (S.niveles.radio === 0) return { estado: 'sinRadio' };
+  const pesos = {
+    hielo: S.o2 < 70 ? 3 : 1,
+    regolito: S.blindaje < 3 ? 2 : 0,
+    roca: S.ciencia < MISION.metaCiencia ? 2 : 1,
+  };
+  let r = Math.random() * Object.values(pesos).reduce((a, b) => a + b, 0), tipo = 'roca';
+  for (const [k, p] of Object.entries(pesos)) if ((r -= p) <= 0) { tipo = k; break; }
+  const motivo = {
+    hielo: S.o2 < 70 ? 'El oxígeno de la base está bajando.' : 'Siempre conviene tener reservas de agua.',
+    regolito: 'Necesitamos más protección contra la radiación.',
+    roca: 'Los científicos en la Tierra quieren estudiar más rocas de Jezero.',
+  }[tipo];
+  S.plan = { tipo, cantidad: MISION.plan.cantidad[tipo], cumplido: false, motivo };
+  return { estado: 'ok', plan: S.plan };
+}
+
+// Si ya se juntó lo pedido, da el bono (una sola vez)
+export function revisarPlan(S) {
+  const p = S.plan;
+  if (!p || p.cumplido || S.inventario.hoy[p.tipo] < p.cantidad) return null;
+  p.cumplido = true;
+  const B = MISION.plan.bono;
+  S.ciencia += B.ciencia;
+  S.salud = clamp(S.salud + B.salud, 0, 100);
+  S.planesCumplidos++;
+  log(S, '✅ <b>¡Plan del sol cumplido!</b> Control de Misión felicita a la tripulación.', 'tierra');
+  return `✅ <b>¡Plan del sol cumplido!</b> Bono: +${B.ciencia} de ciencia y +${B.salud} de salud (la tripulación está orgullosa).`;
+}
 
 export function cambiarNivel(S, id, d) {
   S.niveles[id] = clamp(S.niveles[id] + d, 0, SISTEMAS[id].max);
@@ -236,7 +335,7 @@ export function elegirEvento(S) {
   const pool = [
     ['meteorito', 1], ['reciclador', 0.7], ['plaga', 1], ['fiebre', 0.7],
     ['llamarada', CLIMA.riesgo], ['polvo', enTormenta(S) ? 0 : 1],
-    ['hielo', S.expedicion ? 1.5 : 0.3], ['remolino', S.eficiencia < 0.9 ? 1 : 0],
+    ['hielo', 0.3], ['remolino', S.eficiencia < 0.9 ? 1 : 0],
   ].filter(([id, p]) => p > 0 && id !== S.ultimoEvento);
   let r = Math.random() * pool.reduce((a, [, p]) => a + p, 0);
   for (const [id, p] of pool) if ((r -= p) <= 0) return id;
@@ -263,6 +362,16 @@ export function iniciarSol(S) {
     log(S, '📡 Había mensajes de la Tierra… pero las comunicaciones estaban <b>apagadas</b>. ¡No los recibiste!', 'mal');
   }
   if (S.sol === 1) aprender(S, 'sol');
+
+  // Plan del sol (solo llega si hay comunicación)
+  const g = generarPlan(S);
+  if (g.estado === 'ok') {
+    S.planesEnviados++;
+    const O = MISION.eva.objetos[g.plan.tipo];
+    log(S, `📋 <b>Plan del sol</b>: trae ${g.plan.cantidad} ${O.icono} ${O.nombre}. ${g.plan.motivo} <small>(opcional, da bono)</small>`, 'tierra');
+  } else if (g.estado === 'sinRadio') {
+    log(S, '📋 Control de Misión envió el plan del sol, pero las comunicaciones están apagadas.', 'mal');
+  }
 }
 
 // Pedir ayuda durante una emergencia: la respuesta llega TARDE (retraso real).
@@ -354,7 +463,7 @@ export function simularSol(S, resultadoEvento, ev) {
   const habiaPolvo = S.polvoSols > 0;
   S.polvoSols = Math.max(0, S.polvoSols - 1);
   if (habiaPolvo && S.polvoSols === 0) lineas.push('🌤️ El polvo se asentó.' + (S.paneles ? '' : ' <b>¡Despliega los paneles!</b>'));
-  S.refugio = false; S.ocupados = false; S.eva = false; S.expedicion = false;
+  S.refugio = false; S.ocupados = false; S.eva = false; S.expedicion = false; S.evaHecha = false;
 
   // Dato educativo y hallazgo de salud real (OSDR)
   let dato = ev?.dato;
@@ -367,9 +476,15 @@ export function simularSol(S, resultadoEvento, ev) {
   const tema = ev?.dato === 'llamarada' ? 'radiacion' : S.comida < 30 ? 'comida' : S.o2 < 50 ? 'oxigeno' : null;
   const hallazgo = tema ? HALLAZGOS.find(h => h.tema === tema) : null;
 
+  // Inventario del día para el resumen; luego se reinicia para el sol siguiente
+  const recolectado = { ...S.inventario.hoy };
+  const plan = S.plan ? { ...S.plan, logrado: S.inventario.hoy[S.plan.tipo] } : null;
+  S.inventario.hoy = inventarioVacio();
+  S.plan = null;
+
   S.historial.push({ sol: S.sol, ...foto(S) });
   lineas.forEach(l => log(S, l, l.includes('⚠️') || l.includes('Apagón') ? 'mal' : ''));
-  return { lineas, dato, hallazgo };
+  return { lineas, dato, hallazgo, recolectado, plan };
 }
 
 export function finDePartida(S) {
@@ -377,9 +492,12 @@ export function finDePartida(S) {
   if (S.salud <= 0) return { gano: false, icono: '❤️', texto: 'La salud de la tripulación llegó a cero.' };
   if (S.rad >= MISION.radLimite) return { gano: false, icono: '☢️', texto: `La tripulación recibió demasiada radiación (${S.rad} mSv).` };
   if (S.sol >= MISION.maxSol) {
+    // ⭐ sobrevivir · ⭐ cumplir la meta de ciencia · ⭐ lograr la ciencia SIN arriesgar a la tripulación
     let estrellas = 1;
-    if (S.ciencia >= MISION.metaCiencia) estrellas++;
-    if (S.rad < MISION.radLimite / 2 && S.salud >= 70) estrellas++;
+    if (S.ciencia >= MISION.metaCiencia) {
+      estrellas++;
+      if (S.rad < MISION.radLimite / 2 && S.salud >= 70) estrellas++;
+    }
     return { gano: true, estrellas };
   }
   return null;

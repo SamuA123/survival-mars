@@ -6,7 +6,7 @@ const $ = s => document.querySelector(s);
 
 // Información de cada edificio para el panel lateral
 export const EDIF = {
-  habitat: { nombre: 'Hábitat', icono: '🏠', sistema: 'vital', acciones: ['blindaje'],
+  habitat: { nombre: 'Hábitat', icono: '🏠', sistema: 'vital', acciones: ['eva', 'blindaje'],
     info: 'Aquí viven y duermen los 4 astronautas. Es el refugio cuando hay radiación peligrosa.' },
   invernadero: { nombre: 'Invernadero', icono: '🌱', sistema: 'invernadero', acciones: ['reparar'],
     info: 'Las plantas crecen con luces LED especiales. Cada sol la tripulación come 5 de comida.' },
@@ -20,8 +20,8 @@ export const EDIF = {
     info: 'Guardan la energía que sobra. Si la batería llega a 0 hay un apagón y los sistemas se apagan solos.' },
   reactor: { nombre: 'Mini reactor nuclear', icono: '⚛️', sistema: null, acciones: [],
     info: 'Da poca energía, pero siempre: de día, de noche y en tormentas. Está lejos de la base por seguridad.' },
-  rover: { nombre: 'Rover explorador', icono: '🚙', sistema: null, acciones: ['expedicion'],
-    info: 'Lleva a un astronauta a estudiar rocas lejanas. ¡Mucha ciencia, pero afuera hay más radiación!' },
+  rover: { nombre: 'Rover explorador', icono: '🚙', sistema: null, acciones: ['eva'],
+    info: 'Las rocas más valiosas están lejos de la base. ¡Pero cuanto más lejos vas, más oxígeno del traje gastas y más radiación recibes!' },
 };
 
 export function renderRecursos(S) {
@@ -43,6 +43,30 @@ export function renderRecursos(S) {
   if (!S.paneles) tags.push('🔽 Paneles plegados');
   $('#tags').innerHTML = tags.map(t => `<span>${t}</span>`).join('');
   $('#clima').innerHTML = `${CLIMA.real ? '🛰️' : '📚'} ${CLIMA.resumen}`;
+  renderPlan(S);
+}
+
+// Tarjeta "Plan del sol": objetivo opcional de recolección con su progreso
+export function renderPlan(S) {
+  const el = $('#planSol');
+  if (!el) return;
+  const p = S.plan;
+  if (!p) {
+    const motivo = enTormenta(S) ? '🌪️ Hoy no hay caminata: tormenta de polvo.'
+      : enConjuncion(S) ? '🌞 Sin plan: no hay contacto con la Tierra.'
+      : S.niveles.radio === 0 ? '📡 Sin plan: las comunicaciones están apagadas.' : '';
+    el.innerHTML = motivo ? `<div class="plan-tit">📋 Plan del sol</div><small>${motivo}</small>` : '';
+    el.classList.toggle('vacio', !motivo);
+    return;
+  }
+  const O = MISION.eva.objetos[p.tipo], hecho = Math.min(S.inventario.hoy[p.tipo], p.cantidad);
+  el.classList.remove('vacio');
+  el.classList.toggle('cumplido', p.cumplido);
+  el.innerHTML = `<div class="plan-tit">📋 Plan del sol ${p.cumplido ? '✅' : '<small>(opcional)</small>'}</div>
+    <div class="plan-obj">Trae <b>${p.cantidad} ${O.icono} ${O.nombre}</b></div>
+    <div class="plan-prog">${Array.from({ length: p.cantidad }, (_, i) => `<i class="${i < hecho ? 'on' : ''}">${O.icono}</i>`).join('')}
+      <span>${hecho}/${p.cantidad}</span></div>
+    <small>${p.cumplido ? '¡Cumplido! Bono recibido.' : `Bono: +${MISION.plan.bono.ciencia} ciencia y +${MISION.plan.bono.salud} salud · ${p.motivo}`}</small>`;
 }
 
 export function renderEnergia(S) {
@@ -57,6 +81,7 @@ export function renderEnergia(S) {
 
 export function renderPanel(S, sel) {
   const el = $('#panel');
+  el.classList.toggle('sin-sel', !sel);   // en celular: sin selección, el panel se reduce a una pista
   if (!sel) {
     el.innerHTML = `<h3>🛰️ Tu base en Marte</h3>
       <p class="pista">👆 Toca un edificio para controlarlo.</p>

@@ -2,8 +2,11 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Survival Mars</title>
+  <meta name="theme-color" content="#120a08">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="description" content="Entrenador de Misiones para Astronautas Junior — NASA Space Apps Challenge 2026">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -25,7 +28,9 @@
     <div class="sol" id="sol">Sol 1</div>
     <div class="recursos" id="recursos"></div>
     <div class="botones-top">
-      <button id="btnDatos" class="chip-btn" title="Datos de la NASA usados">📡 Datos NASA</button>
+      <button id="btnInventario" class="chip-btn" title="Lo que recolectaste en Marte">🎒<span class="btn-txt"> Inventario</span></button>
+      <button id="btnDatos" class="chip-btn" title="Datos de la NASA usados">📡<span class="btn-txt"> Datos NASA</span></button>
+      <button id="btnAyudaTuto" class="chip-btn" title="Ver el tutorial otra vez">❓</button>
       <button id="btnSonido" class="chip-btn" title="Sonido">🔊</button>
     </div>
   </header>
@@ -33,18 +38,19 @@
   <div class="sub-top">
     <div class="clima" id="clima">☀️ Clima espacial: cargando…</div>
     <div class="tags" id="tags"></div>
+    <div class="plan-sol" id="planSol"></div>
   </div>
 
   <aside class="panel" id="panel"></aside>
 
   <section class="bitacora" id="bitacoraBox">
-    <button class="bit-tit" id="btnLog">📓 Bitácora</button>
+    <button class="bit-tit" id="btnLog">📓<span class="btn-txt"> Bitácora</span></button>
     <ul id="bitacora"></ul>
   </section>
 
   <footer class="hud-bottom">
     <div class="energia" id="energia"></div>
-    <button class="btn-sol" id="btnSol">Terminar el Sol 🌙</button>
+    <button class="btn-sol" id="btnSol">Terminar<span class="btn-txt-m"> el</span> Sol 🌙</button>
   </footer>
 
   <div id="modal" class="modal oculto"><div class="modal-caja" id="modalCaja"></div></div>

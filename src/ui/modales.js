@@ -5,6 +5,8 @@ import { DATOS } from '../data/datos-curiosos.js';
 import { FUENTES } from '../data/fuentes.js';
 import { SITIO } from '../data/sitio.js';
 import { beep } from './sonido.js';
+import { evaluarLogros, logrosHTML } from './logros.js';
+import { informeHTML } from './informe.js';
 
 const $ = s => document.querySelector(s);
 export const escapar = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -108,6 +110,7 @@ export function mostrarResumen(S, antes, r, fin) {
       <h2>🌅 Amanece el Sol ${S.sol + (fin ? 0 : 1)} — resumen del Sol ${S.sol}</h2>
       <div class="deltas">${filas}</div>
       ${r.lineas.length ? `<ul class="lineas">${r.lineas.map(l => `<li>${l}</li>`).join('')}</ul>` : '<p class="tranqui">Un sol tranquilo. ¡Todo funcionó!</p>'}
+      ${bloqueRecolectado(r)}
       ${r.hallazgo ? `<div class="dato salud">🧬 <b>Lo que dice la ciencia real:</b> ${r.hallazgo.texto} ${fuenteChip(r.hallazgo.fuente)}</div>` : ''}
       ${dato ? `<div class="dato">💡 <b>¿Sabías que…?</b> ${dato.texto} ${fuenteChip(dato.fuente)}</div>` : ''}
       <button class="btn-grande" id="btnSig">${boton}</button>`);
@@ -116,10 +119,25 @@ export function mostrarResumen(S, antes, r, fin) {
 }
 
 // ------------------------------------------------------------------
+export function mostrarResumenEVA(res, lineas) {
+  return new Promise(ok => {
+    abrir(`
+      <div class="ev-cab"><div class="ev-icono">${res.rescate ? '🆘' : '🧑‍🚀'}</div>
+        <h2>${res.rescate ? '¡Rescate!' : '¡De vuelta en la base!'}</h2></div>
+      <ul class="lineas">${lineas.map(l => `<li>${l}</li>`).join('')}</ul>
+      <div class="dato">💡 <b>¿Sabías que…?</b> ${DATOS.eva.texto} En Marte, cada minuto afuera es una decisión:
+        más tiempo = más descubrimientos, pero también más radiación y menos oxígeno. ${fuenteChip(DATOS.eva.fuente)}</div>
+      <button class="btn-grande" id="btnEvaOk">Continuar ▶</button>`);
+    $('#btnEvaOk').onclick = () => { cerrar(); ok(); };
+  });
+}
+
+// ------------------------------------------------------------------
 export function pantallaFinal(S, fin) {
   return new Promise(res => {
     const aprendidos = S.aprendidos.map(k => `<li>${DATOS[k].texto}</li>`).join('');
     const e = fin.estrellas || 0;
+    const nuevos = evaluarLogros(S, fin);   // insignias (src/ui/logros.js)
     abrir(`
       <div class="final">
         <div class="logo">${fin.gano ? '🚀' : fin.icono}</div>
@@ -128,8 +146,13 @@ export function pantallaFinal(S, fin) {
           ? `Comandante <b>${escapar(S.nombre)}</b>: tu tripulación sobrevivió ${MISION.maxSol} sols en Marte.`
           : `${fin.texto} La tripulación volvió a la Tierra en el Sol ${S.sol}. ¡Los verdaderos planificadores de la NASA también aprenden de cada problema!`}</p>
         ${fin.gano ? `<div class="estrellas">${'⭐'.repeat(e)}${'☆'.repeat(3 - e)}</div>
-          <small class="criterios">⭐ Sobrevivir · ⭐ ${MISION.metaCiencia} de ciencia · ⭐ Radiación &lt; ${MISION.radLimite / 2} mSv y salud ≥ 70</small>` : ''}
+          <small class="criterios">⭐ Sobrevivir · ⭐ Lograr ${MISION.metaCiencia} de ciencia · ⭐ Lograrlo sin arriesgar a la tripulación (radiación &lt; ${MISION.radLimite / 2} mSv y salud ≥ 70)</small>
+          ${S.ciencia < MISION.metaCiencia ? `<p class="tranqui">Sobrevivieron, pero la misión vino a Marte a hacer ciencia. ¿Puedes conseguir ${MISION.metaCiencia} puntos sin arriesgar a nadie?</p>` : ''}` : ''}
         <div class="final-stats">🫁 ${S.o2}% · 🥔 ${S.comida}% · ☢️ ${S.rad} mSv · 🔬 ${S.ciencia} ciencia</div>
+        <div class="final-inv">🎒 Recolectaste en Marte: ${filasInventario(S.inventario.total)}
+          <br>📋 Planes del sol cumplidos: <b>${S.planesCumplidos}</b> de ${S.planesEnviados}</div>
+        ${logrosHTML(nuevos)}
+        ${informeHTML(S)}
         <h3>🧠 Lo que aprendiste (${S.aprendidos.length})</h3>
         <ul class="aprendidos">${aprendidos}</ul>
         <button class="btn-grande" id="btnOtra">Jugar otra vez 🔄</button>
@@ -140,6 +163,46 @@ export function pantallaFinal(S, fin) {
 }
 
 // ------------------------------------------------------------------
+// ------------------------------------------------------------------
+//  INVENTARIO de lo recolectado en Marte
+// ------------------------------------------------------------------
+const OBJ = MISION.eva.objetos;
+const filasInventario = inv => Object.entries(OBJ).map(([k, o]) => `<b>${inv[k]}</b> ${o.icono} ${o.nombre}`).join(' · ');
+
+function bloqueRecolectado(r) {
+  const total = Object.values(r.recolectado || {}).reduce((a, b) => a + b, 0);
+  const p = r.plan;
+  let plan = '';
+  if (p) {
+    const o = OBJ[p.tipo];
+    plan = p.cumplido
+      ? `<div class="plan-res ok">📋 Plan del sol: ${p.cantidad} ${o.icono} ${o.nombre} → ✅ <b>¡Cumplido!</b> Bono recibido.</div>`
+      : `<div class="plan-res">📋 Plan del sol: ${p.cantidad} ${o.icono} ${o.nombre} → trajiste ${p.logrado}. No pasa nada: mañana habrá otro plan. 🙂</div>`;
+  }
+  if (!total && !plan) return '';
+  return `<div class="recolectado"><b>🎒 Recolectado hoy:</b> ${total ? filasInventario(r.recolectado) : 'nada (no saliste o volviste con las manos vacías)'}${plan}</div>`;
+}
+
+export function panelInventario(S) {
+  const filas = Object.entries(OBJ).map(([k, o]) => `
+    <div class="inv-fila" style="--c:${o.color}">
+      <span class="inv-ic">${o.icono}</span>
+      <div class="inv-txt"><b>${o.nombre}</b><small>${o.que}</small><small class="inv-uso">✅ ${o.uso}</small></div>
+      <div class="inv-num"><b>${S.inventario.hoy[k]}</b><small>hoy</small></div>
+      <div class="inv-num"><b>${S.inventario.total[k]}</b><small>misión</small></div>
+    </div>`).join('');
+  const p = S.plan, o = p && OBJ[p.tipo];
+  abrir(`
+    <h2>🎒 Inventario de Marte</h2>
+    <p class="tranqui">Lo que tu tripulación recolectó en las caminatas espaciales. Cada cosa se usa enseguida en la base.</p>
+    <div class="inv-lista">${filas}</div>
+    <div class="inv-extra">🟫 Regolito guardado para el próximo nivel de blindaje: <b>${S.regolito}/${MISION.eva.regolitoPorNivel}</b> · Blindaje: <b>${S.blindaje}/3</b></div>
+    ${p ? `<div class="plan-res ${p.cumplido ? 'ok' : ''}">📋 <b>Plan de hoy:</b> trae ${p.cantidad} ${o.icono} ${o.nombre} (${Math.min(S.inventario.hoy[p.tipo], p.cantidad)}/${p.cantidad}) ${p.cumplido ? '✅' : '— opcional, da bono'}</div>` : ''}
+    <div class="inv-extra">📋 Planes del sol cumplidos: <b>${S.planesCumplidos}</b> de ${S.planesEnviados}</div>
+    <button class="btn-grande" id="btnCerrarInv">Volver a la base</button>`, 'ancho');
+  $('#btnCerrarInv').onclick = cerrar;
+}
+
 export function panelDatos() {
   const llamaradas = (CLIMA.flares || []).slice(0, 6).map(f => `<li><b>${f.clase}</b> — ${f.fecha}</li>`).join('');
   abrir(`

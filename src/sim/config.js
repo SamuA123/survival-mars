@@ -4,11 +4,12 @@ import { SITIO } from '../data/sitio.js';
 
 export const MISION = {
   maxSol: 15,
-  solarBase: 9,               // kWh por sol con paneles limpios (Marte recibe ~43% de la luz de la Tierra)
+  solarBase: 11,              // kWh por sol con paneles limpios (Marte recibe ~43% de la luz de la Tierra)
   nuclear: 3,                 // kWh constantes del mini reactor
   bateriaMax: 40,
-  bateriaInicial: 28,
+  bateriaInicial: 26,
   consumoBase: 1,             // computadoras y luces
+  frioTormenta: 2,            // kWh extra de calefacción en tormenta (el polvo tapa el Sol y enfría)
   delayMin: SITIO.retrasoMin,
   radDiaria: RADIACION.marteSuperficie.valor,
   radLimite: RADIACION.limiteMision,
@@ -16,7 +17,43 @@ export const MISION = {
   conjuncion: [10, 11],       // el Sol entre Marte y la Tierra: sin contacto
   repuestos: 2,
   botiquin: 1,
-  metaCiencia: 60,            // puntos de ciencia para la 2ª estrella
+  metaCiencia: 40,            // puntos de ciencia para la 2ª estrella
+  // Plan del sol: objetivo OPCIONAL de recolección que envía Control de Misión.
+  // Cumplirlo da un bono; no cumplirlo no castiga (solo se pierde el bono).
+  // Si las comunicaciones están apagadas o hay conjunción solar, el plan no llega.
+  plan: {
+    cantidad: { regolito: 2, roca: 2, hielo: 2 },
+    bono: { ciencia: 5, salud: 5 },
+  },
+  // Caminata espacial (EVA) controlada por el jugador: 1 por sol
+  eva: {
+    costoO2Base: 3,           // llenar el tanque del traje gasta oxígeno de la base
+    costoBateria: 1,          // cargar el traje
+    o2TrajePorSeg: 1.2,       // el tanque del traje dura ~80 s
+    radPorSeg: 0.04,          // mSv por segundo afuera (simplificado)
+    multLlamarada: 6,         // si llega una llamarada durante la caminata
+    saludRescate: 15,         // si se acaba el oxígeno del traje
+    valores: { hielo: 8, roca: 6, regolito: 1, pieza: 1 },  // +O2, +ciencia, +bolsas, +repuestos
+    regolitoPorNivel: 2,      // bolsas de regolito para subir 1 nivel de blindaje
+    // Lo que el jugador recoge: qué es (dato real) y para qué sirve en el juego
+    objetos: {
+      regolito: {
+        nombre: 'Regolito', icono: '🟫', color: '#ff8a3d',
+        que: 'Es la capa de polvo y piedritas sueltas que cubre Marte. Es rojo porque tiene óxido de hierro: ¡Marte está oxidado como un clavo viejo!',
+        uso: 'Blindaje: cada 2 bolsas cubren más el hábitat y lo protegen de la radiación.',
+      },
+      roca: {
+        nombre: 'Roca marciana', icono: '🪨', color: '#b06cff',
+        que: 'Muchas rocas de Marte son basalto, de volcanes antiguos. En el cráter Jezero, el rover Perseverance guarda muestras de rocas para buscar señales de vida antigua.',
+        uso: 'Ciencia: el laboratorio la analiza → +6 de ciencia.',
+      },
+      hielo: {
+        nombre: 'Hielo de agua', icono: '🧊', color: '#9be7ff',
+        que: 'En Marte hay hielo de agua escondido bajo el suelo, sobre todo lejos del ecuador. Derretido da agua; con electricidad se separa en hidrógeno y oxígeno.',
+        uso: 'Oxígeno: el soporte vital lo convierte en aire → +8 de oxígeno.',
+      },
+    },
+  },
   guion: { 2: 'llamarada', 4: 'reciclador', 6: 'tormenta', 9: 'remolino', 12: 'llamarada' },
   avisos: {
     1: ['¡Bienvenida, tripulación! Cada mensaje tarda unos 12 minutos en llegar. En una emergencia, ustedes deciden.',

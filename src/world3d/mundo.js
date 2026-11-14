@@ -8,23 +8,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-// ---------- ruido para el terreno ----------
-const hash = (x, z) => { const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453; return s - Math.floor(s); };
-function ruido(x, z) {
-  const xi = Math.floor(x), zi = Math.floor(z), xf = x - xi, zf = z - zi;
-  const u = xf * xf * (3 - 2 * xf), v = zf * zf * (3 - 2 * zf);
-  const a = hash(xi, zi), b = hash(xi + 1, zi), c = hash(xi, zi + 1), d = hash(xi + 1, zi + 1);
-  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
-}
-function fbm(x, z) { let s = 0, a = 1, f = 1; for (let i = 0; i < 4; i++) { s += a * ruido(x * f, z * f); a *= 0.5; f *= 2; } return s / 1.875; }
-export function altura(x, z) {
-  const r = Math.hypot(x, z);
-  const plano = THREE.MathUtils.smoothstep(r, 22, 36);
-  let h = (fbm(x * 0.05, z * 0.05) - 0.5) * 5 * plano + fbm(x * 0.3, z * 0.3) * 0.25;
-  // Borde del cráter Jezero en el horizonte
-  h += Math.exp(-((r - 85) ** 2) / (2 * 13 ** 2)) * 16 * (0.6 + 0.8 * fbm(x * 0.03 + 5, z * 0.03));
-  return h;
-}
+import { hash, fbm, altura } from './terreno.js';
+import { ControlEVA } from './eva.js';
 
 const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0.1, ...o });
 const C = {
@@ -32,7 +17,7 @@ const C = {
   regolito: 0x9a4524, vidrio: 0xbfe9ff, verde: 0x49c45e, oro: 0xe8a33a, rojo: 0xff3b3b,
 };
 
-const EDIFICIOS = {
+export const EDIFICIOS = {
   habitat:     { nombre: 'Hábitat', icono: '🏠', pos: [0, 0, 0] },
   invernadero: { nombre: 'Invernadero', icono: '🌱', pos: [10, 0, 1] },
   lab:         { nombre: 'Laboratorio', icono: '🔬', pos: [-3, 0, -9] },
@@ -64,6 +49,7 @@ export class Mundo {
     this._initAstronautas();
     this._initPolvo();
     this._initEntrada();
+    this.eva = new ControlEVA(this);
     window.addEventListener('resize', () => this._resize());
     this._resize();
     this.renderer.setAnimationLoop(() => this._cuadro());
@@ -74,7 +60,8 @@ export class Mundo {
   // ------------------------------------------------------------------
   _initRender() {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    this.movil = matchMedia('(pointer: coarse)').matches;   // celular o tablet: menos carga gráfica
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio, this.movil ? 1.5 : 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -105,6 +92,7 @@ export class Mundo {
     this.controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
     this.controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE };
     this.controls.addEventListener('change', () => {
+      if (this.eva?.activo) return;   // durante la caminata la cámara sigue al jugador
       const t = this.controls.target;
       const lim = 30;
       if (Math.abs(t.x) > lim || Math.abs(t.z) > lim) {
@@ -128,7 +116,7 @@ export class Mundo {
     this.scene.add(this.hemi);
     this.sol = new THREE.DirectionalLight(0xfff1dc, 2.4);
     this.sol.castShadow = true;
-    this.sol.shadow.mapSize.set(2048, 2048);
+    this.sol.shadow.mapSize.setScalar(this.movil ? 1024 : 2048);
     Object.assign(this.sol.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 200 });
     this.sol.shadow.bias = -0.0005;
     this.scene.add(this.sol, this.sol.target);
@@ -418,8 +406,26 @@ export class Mundo {
   // ------------------------------------------------------------------
   //  ASTRONAUTAS
   // ------------------------------------------------------------------
+  crearAstronauta(color) {
+    this._matAstro ||= { traje: std(0xf4f4f4), visor: std(C.oro, { metalness: 0.8, roughness: 0.2 }), mochila: std(0xbfc4cc) };
+    const { traje, visor, mochila } = this._matAstro;
+    const g = new THREE.Group();
+    const cuerpo = new THREE.Mesh(new THREE.CapsuleGeometry(0.38, 0.6, 4, 10), traje);
+    cuerpo.position.y = 0.75;
+    const casco = new THREE.Mesh(new THREE.SphereGeometry(0.36, 16, 12), traje);
+    casco.position.y = 1.55;
+    const v = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 12, -Math.PI / 2, Math.PI), visor);
+    v.position.set(0, 1.57, 0.1);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.6, 0.3), mochila);
+    m.position.set(0, 0.9, -0.38);
+    const banda = new THREE.Mesh(new THREE.TorusGeometry(0.39, 0.06, 6, 16), std(color));
+    banda.rotation.x = Math.PI / 2; banda.position.y = 1.0;
+    g.add(cuerpo, casco, v, m, banda);
+    this._sombra(g);
+    return g;
+  }
+
   _initAstronautas() {
-    const traje = std(0xf4f4f4), visor = std(C.oro, { metalness: 0.8, roughness: 0.2 }), mochila = std(0xbfc4cc);
     const colores = [0xe2673a, 0x2f7de1, 0x49c45e, 0xffc93c];
     this.puntos = {
       habitat: new THREE.Vector3(0, 0, 6), invernadero: new THREE.Vector3(10, 0, 5.5), lab: new THREE.Vector3(-3, 0, -6.2),
@@ -427,19 +433,7 @@ export class Mundo {
       rover: new THREE.Vector3(8, 0, 7.6),
     };
     this.astros = colores.map((c, i) => {
-      const g = new THREE.Group();
-      const cuerpo = new THREE.Mesh(new THREE.CapsuleGeometry(0.38, 0.6, 4, 10), traje);
-      cuerpo.position.y = 0.75;
-      const casco = new THREE.Mesh(new THREE.SphereGeometry(0.36, 16, 12), traje);
-      casco.position.y = 1.55;
-      const v = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 12, -Math.PI / 2, Math.PI), visor);
-      v.position.set(0, 1.57, 0.1);
-      const m = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.6, 0.3), mochila);
-      m.position.set(0, 0.9, -0.38);
-      const banda = new THREE.Mesh(new THREE.TorusGeometry(0.39, 0.06, 6, 16), std(c));
-      banda.rotation.x = Math.PI / 2; banda.position.y = 1.0;
-      g.add(cuerpo, casco, v, m, banda);
-      this._sombra(g);
+      const g = this.crearAstronauta(c);
       g.position.copy(Object.values(this.puntos)[i]);
       g.scale.setScalar(1.3);
       this.scene.add(g);
@@ -453,7 +447,7 @@ export class Mundo {
       let objetivo = null, ocultar = false;
       if (S?.refugio) { objetivo = new THREE.Vector3(0, 0, 0); }
       else if (i === 0 && S?.eva) objetivo = this.puntos.paneles.clone().add(new THREE.Vector3(Math.sin(this.t) * 3, 0, 1));
-      else if (i === 1 && S?.expedicion) ocultar = true;
+      else if (i === 0 && S?.enEVA) ocultar = true;   // ese astronauta lo controla el jugador
       a.g.visible = !ocultar;
       if (ocultar) { a.g.position.copy(this.ed.rover.g.position); return; }
       if (objetivo) a.destino.copy(objetivo);
@@ -609,6 +603,7 @@ export class Mundo {
     if (S) this._actualizarBase(S, dt, dia);
     this._moverAstronautas(dt, S);
     this._efectos(dt);
+    if (this.eva.activo) this.eva.update(dt);
 
     // Cámara
     this.controls.update();
