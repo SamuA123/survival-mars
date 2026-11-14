@@ -15,6 +15,7 @@ import { iniciarRegistro, registrarDecision, registrarSol, registrarEVA } from '
 import { enTormenta } from './sim/motor.js';
 import './ui/dificultad-ui.js';   // selector Cadete / Comandante en la pantalla de inicio
 import './ui/voz.js';             // narrador por voz (botones 🔈 y 🗣️)
+import './ui/ubicacion.js';       // 📍 resumen del lugar de la base + mapas de NASA Mars Trek
 
 const $ = s => document.querySelector(s);
 let S = crearPartida();

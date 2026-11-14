@@ -32,6 +32,11 @@ export const FUENTES = {
     url: 'https://astrobiology.nasa.gov/news/scientists-shortlist-three-landing-sites-for-mars-2020/',
     uso: 'Lugar de la base: meseta NE Syrtis, al borde de la cuenca Isidis.',
   },
+  topoJezero: {
+    nombre: 'ESA / DLR (Mars Express HRSC) — Mapa topográfico del cráter Jezero y alrededores',
+    url: 'https://www.esa.int/ESA_Multimedia/Images/2021/02/Topographic_map_of_Jezero_crater_and_surrounds',
+    uso: 'Altura del terreno: el fondo de Jezero está ~2.600 m bajo el nivel de referencia de Marte.',
+  },
   neSyrtisGeologia: {
     nombre: 'Brown University (2017) — Mapa geológico de NE Syrtis: olivino, carbonatos y cuenca Isidis',
     url: 'https://www.brown.edu/news/2017-04-20/syrtis',

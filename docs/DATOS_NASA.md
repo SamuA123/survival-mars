@@ -65,6 +65,8 @@ Buscados con la API de OSDR (`https://osdr.nasa.gov/osdr/data/search`). Cada tar
 | Dato en el juego | Fuente |
 |---|---|
 | NE Syrtis: finalista de Mars 2020 (con Jezero y Columbia Hills) | https://astrobiology.nasa.gov/news/scientists-shortlist-three-landing-sites-for-mars-2020/ |
+| Fondo de Jezero ~2.600 m bajo el nivel de referencia (Isidis, zona baja) | https://www.esa.int/ESA_Multimedia/Images/2021/02/Topographic_map_of_Jezero_crater_and_surrounds |
+| Mapa interactivo de la base (botón 📍 Ubicación) | NASA Mars Trek, centrado en ~18,2° N, 77,3° E |
 | Cuenca Isidis (~3.960 Ma), lavas de Syrtis (~3.700 Ma), olivino → carbonato | https://www.brown.edu/news/2017-04-20/syrtis |
 | Sol = 24 h 39 min | Día solar marciano (24 h 39 min 35 s) |
 | MOXIE: 122 g de oxígeno | https://www.nasa.gov/missions/mars-2020-perseverance/perseverance-rover/nasas-oxygen-generating-experiment-moxie-completes-mars-mission/ |
