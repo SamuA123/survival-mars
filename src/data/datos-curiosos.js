@@ -1,0 +1,20 @@
+// "¿Sabías que…?" — se desbloquean jugando. { texto, fuente }
+export const DATOS = {
+  sol: { texto: 'Un día en Marte se llama "sol" y dura 24 horas y 37 minutos.', fuente: 'marsTrek' },
+  oxigeno: { texto: 'El rover Perseverance llevó un aparato llamado MOXIE que fabricó oxígeno con el aire de Marte, que es casi todo dióxido de carbono.', fuente: 'marsTrek' },
+  agua: { texto: 'La Estación Espacial recicla cerca del 98% del agua… ¡incluidos el sudor y la orina!', fuente: 'osdr' },
+  polvo: { texto: 'En 2018 una tormenta de polvo cubrió todo Marte. Los paneles del rover Opportunity quedaron tapados y la NASA perdió contacto con él.', fuente: 'marsTrek' },
+  remolino: { texto: 'Los remolinos de polvo de Marte a veces limpiaban los paneles de los rovers Spirit y Opportunity.', fuente: 'marsTrek' },
+  llamarada: { texto: 'La luz de una llamarada llega a Marte en unos 13 minutos; las partículas peligrosas pueden tardar minutos u horas. ¡Por eso se vigila el Sol!', fuente: 'donki' },
+  radiacion: { texto: 'Marte tiene una atmósfera delgada y no tiene campo magnético global, así que protege poco de la radiación.', fuente: 'curiosityRAD' },
+  regolito: { texto: 'Cubrir el hábitat con regolito (la "tierra" de Marte) es una idea real para protegerse de la radiación.', fuente: 'curiosityRAD' },
+  retraso: { texto: 'Un mensaje tarda entre 3 y 22 minutos en viajar de la Tierra a Marte. ¡En una emergencia, la tripulación decide sola!', fuente: 'marsTrek' },
+  conjuncion: { texto: 'Cada 2 años el Sol se pone entre la Tierra y Marte y casi no se puede hablar con los rovers durante unas 2 semanas.', fuente: 'marsTrek' },
+  invernadero: { texto: 'En la Estación Espacial el experimento Veggie ya cultivó lechugas y hasta flores.', fuente: 'csaComida' },
+  nuclear: { texto: 'La NASA estudia pequeños reactores nucleares para dar energía de día, de noche y en tormentas de polvo.', fuente: 'marsTrek' },
+  solar: { texto: 'Marte recibe menos de la mitad de la luz solar que la Tierra. ¡Cada rayo cuenta!', fuente: 'marsTrek' },
+  meteorito: { texto: 'Los micrometeoritos viajan a más de 10 km por segundo: un granito de arena puede agujerear el metal.', fuente: 'osdr' },
+  bateria: { texto: 'Las baterías guardan energía para la noche y las tormentas. Planear antes de que falte es clave.', fuente: 'marsTrek' },
+  hielo: { texto: 'Hay hielo de agua bajo el suelo de Marte. ¡Se podría usar para beber y fabricar oxígeno!', fuente: 'marsTrek' },
+  eva: { texto: 'Salir del hábitat se llama EVA o caminata espacial. Afuera, el traje es la única protección.', fuente: 'osdr' },
+};

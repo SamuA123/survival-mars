@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Survival Mars</title>
+  <meta name="description" content="Entrenador de Misiones para Astronautas Junior — NASA Space Apps Challenge">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="top">
+      <div class="brand">🔴 <b>Survival Mars</b><span>Entrenador de Astronautas Junior</span></div>
+      <div class="sol-badge" id="solBadge">Sol 1 / 20</div>
+      <div class="clima" id="climaBadge" title="Datos de la base de datos DONKI de la NASA">☀️ Clima espacial: cargando…</div>
+      <button id="btnSonido" class="icon-btn" title="Sonido">🔊</button>
+    </header>
+
+    <main class="layout">
+      <section class="col-izq">
+        <div class="escena-wrap">
+          <canvas id="escena" width="800" height="360" aria-label="Vista de la base"></canvas>
+          <div class="escena-tags" id="escenaTags"></div>
+        </div>
+        <div class="recursos" id="recursos"></div>
+        <div class="panel bitacora">
+          <h3>📓 Bitácora de la misión</h3>
+          <ul id="bitacora"></ul>
+        </div>
+      </section>
+
+      <section class="col-der">
+        <div class="panel">
+          <h3>⚡ Presupuesto de energía</h3>
+          <div id="energia"></div>
+        </div>
+        <div class="panel">
+          <h3>🎛️ Sistemas de la base</h3>
+          <div id="sistemas"></div>
+        </div>
+        <div class="panel">
+          <h3>🧑‍🚀 Acciones</h3>
+          <div id="acciones" class="acciones"></div>
+        </div>
+        <button id="btnAvanzar" class="btn-grande">Terminar el Sol ▶</button>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal" class="modal oculto"><div class="modal-caja" id="modalCaja"></div></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/donki.js"></script>
+  <script src="js/escena.js"></script>
+  <script src="js/juego.js"></script>
+</body>
+</html>
