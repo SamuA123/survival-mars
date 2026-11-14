@@ -59,6 +59,14 @@ export const MISION = {
       },
     },
   },
+  // Tripulación: cada astronauta lleva su propio dosímetro. Colores = los de los astronautas 3D
+  // (src/world3d/mundo.js _initAstronautas). El límite de radiación se aplica por persona.
+  tripulacion: [
+    { id: 'lia', nombre: 'Lía', color: 0xe2673a },
+    { id: 'kofi', nombre: 'Kofi', color: 0x2f7de1 },
+    { id: 'mei', nombre: 'Mei', color: 0x49c45e },
+    { id: 'teo', nombre: 'Teo', color: 0xffc93c },
+  ],
   // Modo construcción (tecla B): el blindaje del hábitat se arma por SECCIONES que gastan regolito.
   // Con todas las secciones entra el 40 % de la radiación (= RADIACION.atenuacionBlindaje): 4 × 15 % = 60 % menos.
   construccion: {

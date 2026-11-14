@@ -5,6 +5,7 @@ import { MISION, SISTEMAS, RECURSOS } from '../sim/config.js';
 import { ACCIONES, balance, preverSol, r1, clamp, enTormenta, enConjuncion, seccionesHechas } from '../sim/motor.js';
 import { HALLAZGOS } from '../data/salud.js';
 import { t, tr, txt, esEN } from './i18n.js';
+import { dosimetrosHTML } from './tripulacion.js';
 
 const $ = s => document.querySelector(s);
 const L = (es, en) => esEN() ? en : es;
@@ -124,7 +125,7 @@ export function renderPanel(S, sel) {
       <button data-sel="tripulacion"><span>🧑‍🚀</span><b>${L('Tripulación', 'Crew')}</b><small>${L('Salud y radiación', 'Health and radiation')}</small></button>
       <button data-sel="inventario"><span>🎒</span><b>${L('Inventario', 'Inventory')}</b><small>${L('Qué recogiste y para qué sirve', 'What you collected and how to use it')}</small></button>
     </nav>${resumenEnergia(S)}`;
-  else if (sel === 'tripulacion') contenido = `${colTripulante(S)}<p class="estado-numeros">🫁 ${S.o2}% · 🥔 ${S.comida}% · ❤️ ${S.salud}% · ☢️ ${S.rad} mSv</p><p>${L('La comida baja reduce la salud. La radiación se acumula: el refugio y el blindaje ayudan a protegerte.', 'Low food reduces health. Radiation builds up: shelter and shielding help protect you.')}</p>`;
+  else if (sel === 'tripulacion') contenido = `${colTripulante(S)}<p class="estado-numeros">🫁 ${S.o2}% · 🥔 ${S.comida}% · ❤️ ${S.salud}% · ☢️ ${L('máx.', 'max.')} ${S.rad} mSv</p><p>${L('La comida baja reduce la salud. La radiación se acumula: el refugio y el blindaje ayudan a protegerte.', 'Low food reduces health. Radiation builds up: shelter and shielding help protect you.')}</p>${dosimetrosHTML(S)}`;
   else if (sel === 'inventario') contenido = `${colRecoleccion(S)}<div class="inventario-explica">${Object.values(MISION.eva.objetos).map(o => `<details><summary>${o.icono} ${tr(o.nombre)}</summary><p>${tr(o.que)}</p><p>${tr(o.uso)}</p></details>`).join('')}</div>`;
   else contenido = contenidoEdificio(S, sel);
   el.innerHTML = `<div class="pantalla">
@@ -222,7 +223,7 @@ function colTripulante(S) {
   return `<h3>🧑‍🚀 ${L('Tripulante', 'Crew member')}</h3>
     <div class="cuerpo">
       ${SVG_ASTRONAUTA}
-      <div class="dosimetro" title="${L('Radiación acumulada', 'Total radiation')}: ${S.rad} ${L('de', 'of')} ${MISION.radLimite} mSv">
+      <div class="dosimetro" title="${L('Dosis más alta de la tripulación', 'Highest crew dose')}: ${S.rad} ${L('de', 'of')} ${MISION.radLimite} mSv">
         <div style="height:${rad}%"></div><i></i>
         <small>☢️<br>${r1(S.rad)}<br>mSv</small></div>
     </div>

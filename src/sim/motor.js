@@ -24,6 +24,7 @@ export function crearPartida(nombre = 'Comandante') {
     paneles: true, eficiencia: 1, invSalud: 1,
     repuestos: MISION.repuestos, botiquin: MISION.botiquin,
     blindaje: 0, construir: false,
+    tripulacion: MISION.tripulacion.map(t => ({ ...t, dosis: 0 })), evaAstronauta: null,
     secciones: Object.fromEntries(Object.keys(MISION.construccion.secciones).map(id => [id, false])),
     polvoSols: 0, eva: false, expedicion: false, refugio: false, ocupados: false,
     evaHecha: false, enEVA: false, regolito: 0,
@@ -102,7 +103,7 @@ export const ACCIONES = {
     texto: () => '🧹 Salir a limpiar los paneles',
     detalle: S => enTormenta(S) ? 'No se puede salir en plena tormenta' : '+30% eficiencia · cuesta +1,5 mSv de radiación',
     visible: S => S.eficiencia < 1, activo: S => !enTormenta(S) && !S.eva,
-    hacer(S) { S.eva = true; S.rad = r1(S.rad + 1.5); S.eficiencia = Math.min(1, S.eficiencia + 0.3); aprender(S, 'eva'); log(S, '🧑‍🚀 Una astronauta salió a limpiar los paneles (+1,5 mSv).'); },
+    hacer(S) { S.eva = true; dosisA(S, menorDosis(S)?.id, 1.5); S.eficiencia = Math.min(1, S.eficiencia + 0.3); aprender(S, 'eva'); log(S, '🧑‍🚀 Una astronauta salió a limpiar los paneles (+1,5 mSv).'); },
   },
   // El blindaje ahora se construye por secciones en el modo construcción (src/ui/construccion.js, tecla B).
   // Esta acción queda oculta para no tener dos formas distintas de construir.
@@ -129,6 +130,27 @@ export const ACCIONES = {
     hacer(S) { S.repuestos--; S.invSalud = 1; log(S, '🔧 Invernadero reparado.'); },
   },
 };
+
+// ---------------------------------------------------------------------
+//  TRIPULACIÓN CON DOSÍMETROS
+//  Fondo diario y llamaradas: a TODOS. Caminata: solo a quien sale.
+//  S.rad = la dosis más alta (el límite de la misión aplica por persona). Repartir las
+//  caminatas mantiene a todos más seguros: es lo que hace la NASA de verdad.
+// ---------------------------------------------------------------------
+const recalcularRad = S => { if (S.tripulacion?.length) S.rad = r1(Math.max(...S.tripulacion.map(a => a.dosis))); };
+export function dosisATodos(S, d) {
+  if (!S.tripulacion?.length) { S.rad += d; return; }
+  for (const a of S.tripulacion) a.dosis = Math.round((a.dosis + d) * 100) / 100;
+  recalcularRad(S);
+}
+export function dosisA(S, id, d) {
+  const a = S.tripulacion?.find(x => x.id === id) || menorDosis(S);
+  if (!a) { S.rad += d; return; }
+  a.dosis = Math.round((a.dosis + d) * 100) / 100;
+  recalcularRad(S);
+}
+export const menorDosis = S => S.tripulacion?.reduce((m, a) => (!m || a.dosis < m.dosis ? a : m), null) || null;
+export const astronauta = (S, id) => S.tripulacion?.find(a => a.id === id) || null;
 
 // ---------------------------------------------------------------------
 //  BLINDAJE POR SECCIONES (modo construcción, tecla B)
@@ -194,7 +216,7 @@ export function iniciarEVA(S) {
 export function terminarEVA(S, r) {
   const V = MISION.eva.valores, lineas = [];
   S.enEVA = false;
-  S.rad = r1(S.rad + r.rad);
+  dosisA(S, S.evaAstronauta, r.rad);   // la caminata solo irradia a quien salió
   lineas.push(`⏱️ Estuviste afuera ${Math.round(r.segundos)} segundos y recibiste <b>${r1(r.rad)} mSv</b> de radiación.`);
   if (r.rescate) {
     S.salud = clamp(S.salud - MISION.eva.saludRescate, 0, 100);
@@ -331,11 +353,11 @@ export const EVENTOS = {
     inicio(S) { S.llamarada = elegirLlamarada(); },
     opciones: [
       { texto: '🛡️ ¡Todos al refugio!', detalle: 'Nadie trabaja hoy: sin ciencia y menos cosecha',
-        efecto(S) { S.refugio = true; S.rad += 0.3; return 'La tripulación se protegió en el refugio. Hoy no hubo ciencia y se cosechó menos, pero todos están a salvo.'; } },
+        efecto(S) { S.refugio = true; dosisATodos(S, 0.3); return 'La tripulación se protegió en el refugio. Hoy no hubo ciencia y se cosechó menos, pero todos están a salvo.'; } },
       { texto: '🔬 Seguir con los experimentos', detalle: '+10 ciencia… pero mucha radiación',
-        efecto(S) { const d = dosisLlamarada(S, S.llamarada.clase); S.rad += d; S.ciencia += 10; return `Siguieron trabajando: +10 ciencia, pero recibieron <b>${d} mSv</b> extra de radiación.`; } },
+        efecto(S) { const d = dosisLlamarada(S, S.llamarada.clase); dosisATodos(S, d); S.ciencia += 10; return `Siguieron trabajando: +10 ciencia, pero recibieron <b>${d} mSv</b> extra de radiación.`; } },
     ],
-    alAgotarse(S) { const d = dosisLlamarada(S, S.llamarada.clase); S.rad += d; return `Nadie dio la orden y la tripulación recibió <b>${d} mSv</b> de radiación.`; },
+    alAgotarse(S) { const d = dosisLlamarada(S, S.llamarada.clase); dosisATodos(S, d); return `Nadie dio la orden y la tripulación recibió <b>${d} mSv</b> de radiación.`; },
   },
   meteorito: {
     icono: '☄️', titulo: '¡Impacto de micrometeorito!', fx: 'meteorito', tiempo: 10, dato: 'meteorito',
@@ -503,7 +525,7 @@ export function simularSol(S, resultadoEvento, ev) {
   }
 
   // 6) Radiación de fondo (en Marte siempre hay un poco)
-  S.rad += MISION.radDiaria * factorBlindaje(S);
+  dosisATodos(S, MISION.radDiaria * factorBlindaje(S));   // fondo diario: a toda la tripulación
 
   // 7) Polvo
   if (enTormenta(S) && S.paneles) {

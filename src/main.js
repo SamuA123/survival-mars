@@ -17,6 +17,7 @@ import './ui/dificultad-ui.js';   // selector Cadete / Comandante en la pantalla
 import './ui/voz.js';             // narrador por voz (botones 🔈 y 🗣️)
 import './ui/ubicacion.js';       // 📍 resumen del lugar de la base + mapas de NASA Mars Trek
 import './ui/alerta-solar.js';    // ☀️ estado del Sol y alerta solar en vivo (NASA DONKI)
+import { elegirAstronauta } from './ui/tripulacion.js';   // 🧑‍🚀 quién sale a caminar (dosímetros)
 import './ui/construccion.js';    // 🧱 modo construcción del blindaje por secciones (tecla B)
 import { t, idioma, setIdioma, aplicarEstaticos, onIdioma } from './ui/i18n.js';
 import { esDemo, aplicarDemo } from './sim/demostracion.js';
@@ -116,10 +117,14 @@ async function terminarSol() {
 // ---------------------------------------------------------------------
 //  CAMINATA ESPACIAL: el jugador controla a un astronauta
 // ---------------------------------------------------------------------
-function salirAExplorar() {
+async function salirAExplorar() {
   if (ocupado || motivoNoEVA(S)) return;
   if (tutorial?.activo()) tutorial.terminar();
-  ocupado = true;
+  // Elegir quién sale (por defecto, quien tiene menos dosis): la caminata solo irradia a esa persona
+  ocupado = true; refrescar();
+  const quien = await elegirAstronauta(S);
+  if (!quien) { ocupado = false; refrescar(); return; }
+  S.evaAstronauta = quien;
   iniciarEVA(S);
   beep(600, 0.15, 'triangle');
   refrescar();
