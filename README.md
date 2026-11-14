@@ -8,7 +8,7 @@ Gratis, en el navegador, sin descargas ni cuentas. Funciona en computadoras, tab
 ---
 
 ## ¿De qué se trata?
-Niños y niñas de **7 a 12 años** son comandantes de una base en el **cráter Jezero, en Marte** (donde aterrizó Perseverance).
+Niños y niñas de **7 a 12 años** son comandantes de una base en la **meseta NE Syrtis, al borde de la cuenca Isidis (Marte)**: uno de los 3 sitios finalistas que la NASA estudió para el rover Perseverance.
 Tienen que mantener viva a su tripulación hasta que llegue la nave de relevo, tomando las mismas decisiones difíciles
 que enfrentan los planificadores de misiones de la NASA. **Ninguna decisión es gratis.**
 
@@ -31,7 +31,7 @@ que enfrentan los planificadores de misiones de la NASA. **Ninguna decisión es 
 
 ## Datos de la NASA
 DONKI (llamaradas, **en vivo**) · Curiosity RAD · OSDR (OSD-566, 343, 766, 678, 342, 177, 87) · RadLab ·
-Mars 2020 / Mars Trek · MOXIE · Opportunity · MRO · Conjunción solar · Retraso de comunicaciones.
+NE Syrtis (finalista Mars 2020) / Mars Trek · MOXIE · Opportunity · MRO · Conjunción solar · Retraso de comunicaciones.
 Detalle completo y simplificaciones: **[docs/DATOS_NASA.md](docs/DATOS_NASA.md)**.
 
 ## Documentación

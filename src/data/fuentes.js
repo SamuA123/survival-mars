@@ -25,7 +25,22 @@ export const FUENTES = {
   marsTrek: {
     nombre: 'NASA Mars Trek',
     url: 'https://trek.nasa.gov/mars/',
-    uso: 'Datos del lugar de la base (cráter Jezero).',
+    uso: 'Mapas y relieve de Marte (región de Isidis y Syrtis Major).',
+  },
+  neSyrtis: {
+    nombre: 'NASA — NE Syrtis, uno de los 3 sitios finalistas de Mars 2020',
+    url: 'https://astrobiology.nasa.gov/news/scientists-shortlist-three-landing-sites-for-mars-2020/',
+    uso: 'Lugar de la base: meseta NE Syrtis, al borde de la cuenca Isidis.',
+  },
+  topoJezero: {
+    nombre: 'ESA / DLR (Mars Express HRSC) — Mapa topográfico del cráter Jezero y alrededores',
+    url: 'https://www.esa.int/ESA_Multimedia/Images/2021/02/Topographic_map_of_Jezero_crater_and_surrounds',
+    uso: 'Altura del terreno: el fondo de Jezero está ~2.600 m bajo el nivel de referencia de Marte.',
+  },
+  neSyrtisGeologia: {
+    nombre: 'Brown University (2017) — Mapa geológico de NE Syrtis: olivino, carbonatos y cuenca Isidis',
+    url: 'https://www.brown.edu/news/2017-04-20/syrtis',
+    uso: 'Edad de la cuenca Isidis (~3.960 millones de años) y rocas con olivino alterado por agua.',
   },
   csaComida: {
     nombre: 'Agencia Espacial Canadiense — Producción de alimentos en la Luna',

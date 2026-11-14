@@ -1,6 +1,6 @@
 # Survival Mars — NASA Space Apps 2026 (Junior Astronaut Mission Trainer)
 
-Juego isométrico 3D en el navegador para niños de 7 a 12 años: dirigir una base en Marte (cráter Jezero)
+Juego isométrico 3D en el navegador para niños de 7 a 12 años: dirigir una base en Marte (meseta NE Syrtis · Isidis Planitia)
 balanceando energía, soporte vital, comida, blindaje contra radiación y retraso de comunicaciones.
 **Entrega: 15/11/2026.** Prioridad: que funcione y enseñe trade-offs reales con datos de la NASA.
 

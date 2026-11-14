@@ -44,7 +44,7 @@ equilibrando necesidades que compiten entre sí, para que vivan las decisiones q
 | DONKI (llamaradas, CME, tormentas geomagnéticas) | https://kauai.ccmc.gsfc.nasa.gov/DONKI/ | ✅ Llamaradas reales de los últimos 30 días → evento de llamarada y riesgo |
 | OSDR (salud de astronautas, biología espacial) | https://osdr.nasa.gov/bio/ | Hallazgos reales mostrados como consecuencia (`src/data/salud.js`) |
 | RadLab (dosimetría de la ISS, dentro de OSDR) | https://visualization.osdr.nasa.gov/radlab/ | Dosis reales para comparar (`src/data/radiacion.js`) |
-| Mars Trek (imágenes/relieve de Marte) | https://trek.nasa.gov/mars/ | Sitio de la base: cráter Jezero (`src/data/sitio.js`) |
+| Mars Trek (imágenes/relieve de Marte) | https://trek.nasa.gov/mars/ | Sitio de la base: meseta NE Syrtis · Isidis Planitia (`src/data/sitio.js`) |
 | CSA – recursos STEM y producción de comida en la Luna | https://www.asc-csa.gc.ca/eng/youth-educators/ | Base del invernadero |
 
 ## Entregables

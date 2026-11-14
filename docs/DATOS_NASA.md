@@ -1,6 +1,6 @@
 # Datos de la NASA usados en Survival Mars
 
-**Survival Mars** es un juego de navegador para niños de 7 a 12 años: dirigen una base en el **cráter Jezero (Marte)**
+**Survival Mars** es un juego de navegador para niños de 7 a 12 años: dirigen una base en la **meseta NE Syrtis · Isidis Planitia (Marte)**
 durante 15 sols. Cada mecánica del juego está anclada en datos o hallazgos reales de la NASA, y el jugador puede verlos
 dentro del juego (botón **📡 Datos NASA**, tarjetas "¿Sabías que…?" y "Lo que dice la ciencia real", cada una con su fuente).
 
@@ -14,7 +14,7 @@ dentro del juego (botón **📡 Datos NASA**, tarjetas "¿Sabías que…?" y "Lo
 | **Curiosity RAD** (Hassler et al. 2014) | 📚 Guardado | Radiación de fondo por sol, límite de la misión, blindaje | 0,67 mSv/día medidos en la superficie de Marte. Cada sol la tripulación suma radiación; las caminatas y las llamaradas suman más. |
 | **OSDR – RadLab** (dosimetría de la ISS) | 📚 Guardado | Comparación ISS vs. Marte | En la ISS se reciben ~0,2–0,5 mSv/día; en Marte, más. Explica por qué Marte es más peligroso que la Estación. |
 | **OSDR – estudios de biología espacial** | 📚 Guardado | Tarjeta "Lo que dice la ciencia real" tras cada sol | Cuando pasa algo (llamarada, poca comida, poco oxígeno), el juego muestra el hallazgo de un estudio real con su ID OSD-xxx. |
-| **Mars 2020 / Mars Trek** | 📚 Guardado | Lugar de la base, duración del sol, luz solar | Jezero (18,4° N, 77,5° E), sol de 24 h 39 min, ~43 % de la luz solar de la Tierra. |
+| **NE Syrtis — sitio finalista de Mars 2020** / Mars Trek | 📚 Guardado | Lugar de la base, relieve (mesas y borde de Isidis), duración del sol, luz solar | NE Syrtis (~18° N, 77° E) fue uno de los 3 finalistas de la NASA para Perseverance. Cuenca Isidis de ~3.960 millones de años; rocas con olivino alterado a carbonato por agua. Sol de 24 h 39 min, ~43 % de la luz solar. |
 | **MOXIE** (Perseverance) | 📚 Guardado | Hielo de agua → oxígeno; soporte vital | MOXIE fabricó 122 g de O₂ con el aire de Marte: producir oxígeno in situ es real. |
 | **Opportunity** (fin de misión 2018) | 📚 Guardado | Tormenta global de polvo (sols 6–8) | El polvo tapó sus paneles y se quedó sin energía. En el juego: retraer paneles o arriesgarlos. |
 | **MRO / HiRISE** (impactos nuevos) | 📚 Guardado | Evento de micrometeorito | Más de 200 cráteres nuevos por año: la atmósfera delgada no frena las rocas pequeñas. |
@@ -64,6 +64,10 @@ Buscados con la API de OSDR (`https://osdr.nasa.gov/osdr/data/search`). Cada tar
 ### 2.4 Otros datos verificados
 | Dato en el juego | Fuente |
 |---|---|
+| NE Syrtis: finalista de Mars 2020 (con Jezero y Columbia Hills) | https://astrobiology.nasa.gov/news/scientists-shortlist-three-landing-sites-for-mars-2020/ |
+| Fondo de Jezero ~2.600 m bajo el nivel de referencia (Isidis, zona baja) | https://www.esa.int/ESA_Multimedia/Images/2021/02/Topographic_map_of_Jezero_crater_and_surrounds |
+| Mapa interactivo de la base (botón 📍 Ubicación) | NASA Mars Trek, centrado en ~18,2° N, 77,3° E |
+| Cuenca Isidis (~3.960 Ma), lavas de Syrtis (~3.700 Ma), olivino → carbonato | https://www.brown.edu/news/2017-04-20/syrtis |
 | Sol = 24 h 39 min | Día solar marciano (24 h 39 min 35 s) |
 | MOXIE: 122 g de oxígeno | https://www.nasa.gov/missions/mars-2020-perseverance/perseverance-rover/nasas-oxygen-generating-experiment-moxie-completes-mars-mission/ |
 | ISS recicla el 98 % del agua | https://www.nasa.gov/missions/station/iss-research/nasa-achieves-water-recovery-milestone-on-international-space-station/ |
@@ -83,5 +87,5 @@ Para que un niño de 7 años entienda el trade-off, algunos números son simplif
 - **Límite de la misión: 60 mSv** (el límite real de carrera de la NASA es 600 mSv). Se baja para que la radiación importe en 15 sols.
 - **Dosis por llamarada**: las tormentas de partículas reales varían en órdenes de magnitud; el juego solo respeta que X > M > C
   y que refugiarse y el blindaje de regolito reducen la dosis.
-- **Hielo en Jezero**: en el Marte real, el hielo superficial abunda más lejos del ecuador; el juego lo coloca cerca de la base para jugar.
+- **Hielo en NE Syrtis**: en el Marte real, el hielo superficial abunda más lejos del ecuador; el juego lo coloca cerca de la base para jugar.
   La tarjeta del hielo lo aclara ("sobre todo lejos del ecuador").

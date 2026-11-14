@@ -1,4 +1,5 @@
-// Relieve del cráter Jezero (procedural). Compartido por el mundo y la caminata.
+// Relieve de la meseta NE Syrtis, en el borde de la cuenca Isidis (procedural).
+// Compartido por el mundo y la caminata.
 import * as THREE from 'three';
 
 export const hash = (x, z) => { const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453; return s - Math.floor(s); };
@@ -12,11 +13,20 @@ export function fbm(x, z) { let s = 0, a = 1, f = 1; for (let i = 0; i < 4; i++)
 
 export const RADIO_PLATAFORMA = 24.5;
 
+// Mesas: colinas de cima plana, típicas del terreno en capas de NE Syrtis. [x, z, radio, alto]
+const MESAS = [[-52, -30, 11, 8], [-28, -62, 13, 10], [-66, 6, 10, 7], [6, -64, 12, 9],
+  [-46, 46, 10, 7], [40, -50, 9, 6], [-98, -62, 18, 13], [-40, -105, 16, 11]];
+
 export function altura(x, z) {
   const r = Math.hypot(x, z);
   const plano = THREE.MathUtils.smoothstep(r, 22, 36);
   let h = (fbm(x * 0.05, z * 0.05) - 0.5) * 5 * plano + fbm(x * 0.3, z * 0.3) * 0.25;
-  h += Math.exp(-((r - 85) ** 2) / (2 * 13 ** 2)) * 16 * (0.6 + 0.8 * fbm(x * 0.03 + 5, z * 0.03));
+  for (const [mx, mz, R, H] of MESAS) {
+    const d = Math.hypot(x - mx, z - mz);
+    h += H * (1 - THREE.MathUtils.smoothstep(d, R, R + 5)) * (0.92 + 0.16 * fbm(x * 0.1, z * 0.1));
+  }
+  // Borde de la cuenca Isidis: hacia el este el terreno baja a la llanura (Isidis Planitia)
+  h -= THREE.MathUtils.smoothstep(x + z * 0.3, 55, 120) * 10;
   return h;
 }
 

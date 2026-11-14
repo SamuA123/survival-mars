@@ -179,7 +179,7 @@ export function generarPlan(S) {
   const motivo = {
     hielo: S.o2 < 70 ? 'El oxígeno de la base está bajando.' : 'Siempre conviene tener reservas de agua.',
     regolito: 'Necesitamos más protección contra la radiación.',
-    roca: 'Los científicos en la Tierra quieren estudiar más rocas de Jezero.',
+    roca: 'Los científicos en la Tierra quieren estudiar más rocas de NE Syrtis.',
   }[tipo];
   S.plan = { tipo, cantidad: MISION.plan.cantidad[tipo], cumplido: false, motivo };
   return { estado: 'ok', plan: S.plan };

@@ -17,5 +17,7 @@ export const DATOS = {
   meteorito: { texto: 'Marte tiene una atmósfera tan delgada que muchas rocas espaciales pequeñas llegan al suelo. ¡Los satélites de la NASA ven más de 200 cráteres nuevos cada año!', fuente: 'mroCrateres' },
   bateria: { texto: 'Las baterías guardan energía para la noche y las tormentas. Opportunity dejó de funcionar cuando el polvo no dejó recargarlas: planear la energía es clave.', fuente: 'opportunity' },
   hielo: { texto: 'Hay hielo de agua escondido bajo el suelo de Marte, sobre todo lejos del ecuador. ¡Se podría usar para beber y para fabricar oxígeno!', fuente: 'marsTrek' },
+  isidis: { texto: 'La cuenca Isidis, junto a tu base, la formó el choque de un asteroide gigante hace unos 3.960 millones de años. ¡Es tan grande que se ve desde el espacio como una enorme llanura redonda!', fuente: 'neSyrtisGeologia' },
+  olivino: { texto: 'En NE Syrtis hay rocas verdes de olivino que el agua transformó en carbonato hace miles de millones de años. En la Tierra, esa misma reacción da energía a algunos microbios. ¡Por eso los científicos quieren estudiarlas!', fuente: 'neSyrtisGeologia' },
   eva: { texto: 'Salir del hábitat se llama EVA o caminata espacial. Afuera, el traje es la única protección contra el frío, el vacío y la radiación.', fuente: 'osdr' },
 };

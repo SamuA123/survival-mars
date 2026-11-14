@@ -15,6 +15,7 @@ import { iniciarRegistro, registrarDecision, registrarSol, registrarEVA } from '
 import { enTormenta } from './sim/motor.js';
 import './ui/dificultad-ui.js';   // selector Cadete / Comandante en la pantalla de inicio
 import './ui/voz.js';             // narrador por voz (botones 🔈 y 🗣️)
+import './ui/ubicacion.js';       // 📍 resumen del lugar de la base + mapas de NASA Mars Trek
 
 const $ = s => document.querySelector(s);
 let S = crearPartida();
@@ -135,7 +136,7 @@ async function nuevaPartida() {
   const nombre = await pantallaInicio();
   S = crearPartida(nombre);
   iniciarRegistro(S);
-  S.log.unshift({ sol: 1, texto: `🚀 Comandante <b>${nombre.replace(/[<>&]/g, '')}</b> al mando de la base en el cráter Jezero.`, tipo: 'tierra' });
+  S.log.unshift({ sol: 1, texto: `🚀 Comandante <b>${nombre.replace(/[<>&]/g, '')}</b> al mando de la base en la meseta NE Syrtis.`, tipo: 'tierra' });
   iniciarSol(S);
   ocupado = false;
   refrescar();
