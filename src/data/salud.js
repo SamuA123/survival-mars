@@ -3,11 +3,11 @@
 // Formato: { id, tema, texto (para niños de 7-12), fuente (clave en fuentes.js), estudio, url }
 //
 // Temas que usa el simulador hoy: 'radiacion' (tras una llamarada), 'comida' (comida < 30),
-// 'oxigeno' (oxígeno < 50). El simulador muestra el PRIMERO de cada tema: el orden importa.
+// 'oxigeno' (oxígeno < 50). La lista se mezcla en cada partida.
 // Temas extra disponibles para nuevas mecánicas: 'ejercicio', 'plaga', 'ojos'.
 //
 // Verificado el 14/11/2026 con la API de búsqueda de OSDR (https://osdr.nasa.gov/osdr/data/search).
-export const HALLAZGOS = [
+const LISTA = [
   // ---------- Radiación ----------
   { id: 'radiacion-defensas', tema: 'radiacion', fuente: 'OSD-566', estudio: 'OSD-566',
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-566',
@@ -47,4 +47,31 @@ export const HALLAZGOS = [
     url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-87',
     texto: 'Ratones que viajaron en el último vuelo del transbordador espacial (STS-135) mostraron cambios en la retina, la parte del ojo que capta la luz. Algunos astronautas también notan cambios en la vista después de misiones largas.',
     texto_en: 'Mice that flew on the last Space Shuttle flight (STS-135) showed changes in the retina, the part of the eye that catches light. Some astronauts also notice changes in their eyesight after long missions.' },
+
+  // ---------- Estudios OSDR aportados por Jorge ----------
+  { id: 'bazo', tema: 'radiacion', fuente: 'osdr', estudio: 'OSD-360', url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-360',
+    texto: 'Científicos expusieron ratones a dosis pequeñas de radiación espacial y vieron que cambia la química del bazo, un órgano que ayuda a defenderse de las enfermedades.',
+    texto_en: 'Scientists exposed mice to small doses of space radiation and saw that it changes the chemistry of the spleen, an organ that helps fight disease.' },
+  { id: 'corazon', tema: 'radiacion', fuente: 'osdr', estudio: 'OSD-334', url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-334',
+    texto: 'Las partículas más pesadas de la radiación espacial pueden dañar tejidos como el del corazón. La NASA estudia medicinas para protegerlos.',
+    texto_en: 'The heaviest particles in space radiation can damage tissues like the heart. NASA is studying medicines to protect them.' },
+  { id: 'intestino', tema: 'radiacion', fuente: 'osdr', estudio: 'OSD-146', url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-146',
+    texto: 'La radiación espacial cambia hasta las bacterias buenas que viven en el intestino. Por eso no basta con mirar la piel: afecta a todo el cuerpo.',
+    texto_en: 'Space radiation even changes the good bacteria that live in the gut. That is why looking at the skin is not enough: it affects the whole body.' },
+  { id: 'lechuga', tema: 'comida', fuente: 'osdr', estudio: 'OSD-268', url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-268',
+    texto: 'Los astronautas cultivaron lechuga roja en la Estación Espacial (experimento Veggie) y los científicos revisaron sus microbios y nutrientes para ver si era buena para comer.',
+    texto_en: 'Astronauts grew red lettuce on the Space Station (the Veggie experiment) and scientists checked its microbes and nutrients to see if it was good to eat.' },
+  { id: 'chiles', tema: 'comida', fuente: 'osdr', estudio: 'OSD-772', url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-772',
+    texto: 'En 2021 crecieron chiles en la Estación Espacial (experimento PH-04). ¡La tripulación los probó en tacos!',
+    texto_en: 'In 2021 chile peppers grew on the Space Station (the PH-04 experiment). The crew tried them in tacos!' },
+  { id: 'raices', tema: 'comida', fuente: 'osdr', estudio: 'OSD-615', url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-615',
+    texto: 'Sin gravedad, las raíces de las plantas cambian por dentro: sus paredes se construyen distinto. Cultivar en el espacio no es igual que en la Tierra.',
+    texto_en: 'Without gravity, plant roots change on the inside: their walls are built differently. Growing plants in space is not the same as on Earth.' },
 ];
+
+// Se mezclan al cargar para que cada partida muestre hallazgos distintos (idea de Jorge).
+function mezclar(a) {
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+export const HALLAZGOS = mezclar(LISTA);

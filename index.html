@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="description" content="Entrenador de Misiones para Astronautas Junior — NASA Space Apps Challenge 2026">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lilita+One&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script type="importmap">
     {
@@ -24,24 +24,22 @@
   <div id="mundo"></div>
 
   <header class="hud-top">
-    <div class="marca">🔴 <b>Survival Mars</b><small data-i18n="top.crater">Meseta NE Syrtis · Isidis Planitia</small></div>
-    <div class="sol" id="sol">Sol 1</div>
-    <div class="recursos" id="recursos"></div>
-    <div class="botones-top">
-      <button id="btnInventario" class="chip-btn" data-i18n-title="top.inventario.t" title="Lo que recolectaste en Marte">🎒<span class="btn-txt" data-i18n="top.inventario"> Inventario</span></button>
-      <button id="btnDatos" class="chip-btn" data-i18n-title="top.datos.t" title="Datos de la NASA usados">📡<span class="btn-txt" data-i18n="top.datos"> Datos NASA</span></button>
-      <button id="btnIdioma" class="chip-btn" title="Change language to English">🌐 EN</button>
-      <button id="btnAyudaTuto" class="chip-btn" data-i18n-title="top.tuto.t" title="Ver el tutorial otra vez">❓</button>
-      <button id="btnLigero" class="chip-btn" title="Gráficos ligeros (para computadoras lentas)">🐢</button>
-      <button id="btnSonido" class="chip-btn" data-i18n-title="top.sonido.t" title="Sonido">🔊</button>
+    <div class="tablero">
+      <div class="mision" id="sol"></div>
+      <div class="recursos" id="recursos"></div>
     </div>
   </header>
 
-  <div class="sub-top">
-    <div class="clima" id="clima" data-i18n="top.clima">☀️ Clima espacial: cargando…</div>
-    <div class="tags" id="tags"></div>
-    <div class="plan-sol" id="planSol"></div>
-  </div>
+  <nav class="botones-top">
+    <button id="btnTarea" class="tarea-btn" data-i18n-title="top.tarea.t" title="Lo que pide hoy Control de Misión"></button>
+    <button id="btnDatos" class="chip-btn nasa" data-i18n-title="top.nasa.t" title="¿Qué es real en este juego?">NASA</button>
+    <button id="btnIdioma" class="chip-btn" title="Change language to English">🌐 EN</button>
+    <button id="btnAyudaTuto" class="chip-btn" data-i18n-title="top.tuto.t" title="Ver el tutorial otra vez" aria-label="Tutorial">❓</button>
+    <button id="btnLigero" class="chip-btn" title="Gráficos ligeros (para computadoras lentas)">🐢</button>
+    <button id="btnSonido" class="chip-btn" data-i18n-title="top.sonido.t" title="Sonido" aria-label="Sonido">🔊</button>
+  </nav>
+
+  <div class="tags" id="tags"></div>
 
   <aside class="panel" id="panel"></aside>
 
@@ -51,6 +49,7 @@
   </section>
 
   <footer class="hud-bottom">
+    <button class="btn-base" id="btnBase" data-i18n="top.base">🖥️ Control base</button>
     <div class="energia" id="energia"></div>
     <button class="btn-sol" id="btnSol" data-i18n-html="top.terminar">Terminar<span class="btn-txt-m"> el</span> Sol 🌙</button>
   </footer>

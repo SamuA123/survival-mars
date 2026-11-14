@@ -19,19 +19,19 @@
 .g-dot { fill: var(--azul); stroke: #2a1510; stroke-width: 2; }
 .g-hit { fill: transparent; cursor: help; }
 .g-pt:hover .g-dot { r: 5; }
-.g-eje { stroke: rgba(255, 255, 255, .25); stroke-width: 1; }
+.g-eje { stroke: rgba(43, 20, 8, .25); stroke-width: 1; }
 .g-tick { fill: var(--suave); font-size: 10px; }
 .g-final { fill: var(--texto); font-size: 12px; font-weight: 900; }
 .g-peligro { fill: rgba(255, 90, 90, .14); }
 .g-limite { stroke: var(--rojo); stroke-width: 1.5; stroke-dasharray: 4 3; }
-.g-zona-txt { fill: #ffb0b0; font-size: 9px; }
+.g-zona-txt { fill: #c62828; font-size: 9px; }
 .g-tormenta { fill: rgba(200, 130, 80, .18); }
 .g-apagon { font-size: 11px; }
 
 .tabla-informe { margin: 8px 0; font-size: 13px; }
 .tabla-informe summary { cursor: pointer; color: var(--azul); }
 .tabla-informe table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-.tabla-informe th, .tabla-informe td { padding: 3px 6px; text-align: right; border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.tabla-informe th, .tabla-informe td { padding: 3px 6px; text-align: right; border-bottom: 1px solid rgba(43, 20, 8, .12); }
 .tabla-informe th:first-child, .tabla-informe td:first-child { text-align: left; }
 
 /* Comparador de radiación */

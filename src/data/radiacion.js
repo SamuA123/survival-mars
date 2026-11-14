@@ -5,7 +5,7 @@ export const RADIACION = {
     // Hassler et al. 2014, Science 343: dosis equivalente media de rayos cósmicos
     // en el cráter Gale = 0,67 mSv/día (ago 2012 – jun 2013). En el juego se redondea a 0,7.
     valor: 0.7, unidad: 'mSv por sol', fuente: 'curiosityRAD',
-    texto: 'En la superficie de Marte, el rover Curiosity midió unos 0,67 mSv de radiación por día.',
+    texto: 'En el suelo de Marte, Curiosity midió unos 0,67 mSv de radiación al día. ¡Es como 100 días de radiación en la Tierra!',
   },
   viajeMarte: {
     // Mismo instrumento RAD durante el viaje (crucero) Tierra-Marte.
@@ -13,9 +13,10 @@ export const RADIACION = {
     texto: 'Durante el viaje hacia Marte, dentro de la nave, la radiación es casi 3 veces mayor: unos 1,8 mSv por día.',
   },
   estacionEspacial: {
-    // Dosis efectiva típica en la ISS: ~0,2 a 0,5 mSv/día (40-90 mSv en 6 meses).
-    valor: 0.35, min: 0.2, max: 0.5, unidad: 'mSv por día', fuente: 'radlab',
-    texto: 'En la Estación Espacial, los astronautas reciben entre 0,2 y 0,5 mSv por día, porque el campo magnético de la Tierra todavía los protege un poco.',
+    // RadLab API: spacecraft=ISS, 2022-04-01 a 2022-04-08. Medias: REM-Lid 0,32 · Lidal 0,13 mGy/día (medición de Jorge).
+    valor: 0.3, unidad: 'mGy por día (dosis absorbida)', fuente: 'radlab',
+    texto: 'En la Estación Espacial, el detector REM del módulo Columbus midió unos 0,3 mGy al día (1–7 abril 2022). En Marte, Curiosity midió 0,21 mGy al día: la atmósfera marciana, aunque delgada, ayuda un poquito.',
+    texto_en: 'On the Space Station, the REM detector in the Columbus module measured about 0.3 mGy per day (April 1–7, 2022). On Mars, Curiosity measured 0.21 mGy per day: the Martian atmosphere, though thin, helps a little.',
   },
   tierra: {
     // Promedio mundial de radiación natural: ~2,4 mSv por año (UNSCEAR).

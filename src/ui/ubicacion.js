@@ -65,21 +65,21 @@ function insertarEnInicio() {
 const css = document.createElement('style');
 css.textContent = `
   .ubic-capa { position: fixed; inset: 0; z-index: 30; background: rgba(10,4,2,.6); display: grid; place-items: center; padding: 14px; backdrop-filter: blur(3px); }
-  .ubic-caja { position: relative; width: min(680px, 100%); max-height: 92vh; overflow-y: auto; background: rgba(36,18,13,.97);
-    border: 2px solid var(--borde); border-radius: 22px; padding: 20px 22px; color: var(--texto); animation: entra .25s ease-out; }
+  .ubic-caja { position: relative; width: min(680px, 100%); max-height: 92vh; overflow-y: auto; background: var(--papel);
+    border: 3px solid var(--tinta); box-shadow: var(--sombra); border-radius: 22px; padding: 20px 22px; color: var(--texto); animation: entra .25s ease-out; }
   .ubic-cerrar { position: absolute; top: 10px; right: 12px; background: none; border: 0; color: var(--suave); font-size: 20px; }
   .ubic-cab { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
   .ubic-cab > span { font-size: 40px; }
   .ubic-cab small { display: block; color: var(--suave); }
   .ubic-cab b { font-size: 20px; }
-  .ubic-sec { background: var(--vidrio2); border-radius: 14px; padding: 10px 14px; margin: 10px 0; }
-  .ubic-sec h3 { margin: 4px 0 6px; font-size: 16px; color: var(--acento); }
+  .ubic-sec { background: var(--papel2); border: 2px solid var(--tinta); border-radius: 14px; padding: 10px 14px; margin: 10px 0; }
+  .ubic-sec h3 { margin: 4px 0 6px; font-size: 16px; color: var(--marte-osc); }
   .ubic-sec ul { margin: 0; padding-left: 20px; font-size: 14px; }
   .ubic-sec li { margin: 5px 0; }
   .ubic-mapas { display: grid; gap: 8px; margin-top: 14px; }
   .ubic-mapa { display: block; text-align: center; padding: 12px; border-radius: 14px; font-weight: 900; text-decoration: none;
     color: #fff; background: linear-gradient(180deg, #4cb8f0, #1f7fc0); box-shadow: 0 4px 0 #0f4f7a; }
-  .ubic-mapa.sec { background: var(--vidrio2); color: var(--azul); box-shadow: none; border: 1px solid rgba(92,200,255,.4); font-weight: 700; }
+  .ubic-mapa.sec { background: var(--papel2); color: var(--ciencia); box-shadow: none; border: 2px solid var(--tinta); font-weight: 700; }
   .ubic-link { display: block; margin: 4px auto 8px; background: none; border: 1px dashed var(--azul); color: var(--azul);
     border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 14px; cursor: pointer; }
   .ubic-link:hover { background: rgba(92,200,255,.1); }`;
