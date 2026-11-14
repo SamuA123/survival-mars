@@ -37,9 +37,13 @@ balanceando energía, soporte vital, comida, blindaje contra radiación y retras
 - Atribuir fuentes dentro del juego; los datos guardados NUNCA se presentan como "en vivo".
 - Explicar términos (sol, mSv, radiación) en el momento.
 
-## Git
-- `main` estable; se trabaja en `samuel` o `jorge` y se integra por Pull Request.
+## Git y publicación
+- `main` estable; se trabaja en una rama propia y se integra por Pull Request.
 - Hacer commit solo de las carpetas propias.
+- **Publicación automática:** Cloudflare Pages está conectado a GitHub.
+  - Todo lo que entra a `main` se publica solo en https://survival-mars.pages.dev (tarda ~1 minuto).
+  - Cada otra rama tiene su vista previa en `https://<rama>.survival-mars.pages.dev` (p. ej. `samuel-qa.survival-mars.pages.dev`).
+  - No hace falta subir zips a mano.
 
 ## Prototipo anterior
 `prototipo-v1/` = versión 2D (referencia de balance y eventos). No editar.

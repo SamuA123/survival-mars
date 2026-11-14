@@ -46,7 +46,7 @@ Regla: no editar las carpetas del otro. Si necesitas algo del otro lado, pídelo
 2. [ ] Probar tormenta, expedición y una partida completa; ajustar el balance (`src/sim/config.js`).
 3. [ ] Aplicar el feedback de `docs/FEEDBACK.md`.
 4. [ ] Versión en inglés (opcional, para los jueces).
-5. [ ] Publicación: GitHub Pages en un repo privado requiere GitHub Pro. Alternativas: hacer el repo público al final, o Netlify / Vercel (arrastrar la carpeta).
+5. [x] Publicación: Cloudflare Pages conectado a GitHub. `main` → https://survival-mars.pages.dev (automático); cada rama → `https://<rama>.survival-mars.pages.dev`.
 
 ## Flujo de git
 ```
