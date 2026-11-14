@@ -66,7 +66,9 @@ export class ControlEVA {
     this.items = { regolito: 0, roca: 0, hielo: 0 };   // lo que va en la mochila (se deposita al entrar)
     this.cercano = null;                                // objeto que se puede recoger ahora
     const S0 = m.getEstado?.();
-    this.radBase = S0?.rad ?? 0;                        // dosis acumulada antes de salir
+    // Tripulación con dosímetros (idea 4): si existe, usa al astronauta elegido para salir
+    this.astronauta = S0?.tripulacion?.find(a => a.id === S0.evaAstronauta) || null;
+    this.radBase = this.astronauta?.dosis ?? S0?.rad ?? 0;   // dosis acumulada antes de salir
     this.blindajeBase = S0?.blindaje ?? 0;
     try { this.entraHabitat = S0 ? proteccionHabitat(S0) : 1; } catch { this.entraHabitat = 1; }   // fracción de radiación que entra al hábitat
     this.huellas = []; this.ultHuella = null;
@@ -75,7 +77,7 @@ export class ControlEVA {
     this.llamarada = { en: 18 + Math.random() * 30, activa: false, va: Math.random() < 0.22 * (cfg.riesgo || 1) };
 
     // Jugador
-    this.jugador = m.crearAstronauta(0xe2673a);
+    this.jugador = m.crearAstronauta(this.astronauta?.color ?? 0xe2673a);
     this.jugador.scale.setScalar(1.45);
     this.jugador.position.copy(PUERTA);
     const flecha = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.7, 4), new THREE.MeshBasicMaterial({ color: 0xffd25c }));

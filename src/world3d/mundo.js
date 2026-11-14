@@ -514,11 +514,14 @@ export class Mundo {
 
   _moverAstronautas(dt, S) {
     const lista = Object.keys(this.puntos);
+    // Quién está en la caminata: el elegido de la tripulación (idea 4) o, si no hay tripulación, el primero
+    const idx = S?.tripulacion ? S.tripulacion.findIndex(x => x.id === S.evaAstronauta) : -1;
+    const enCaminata = idx >= 0 ? idx : 0;
     this.astros.forEach((a, i) => {
       let objetivo = null, ocultar = false;
       if (S?.refugio) { objetivo = new THREE.Vector3(0, 0, 0); }
       else if (i === 0 && S?.eva) objetivo = this.puntos.paneles.clone().add(new THREE.Vector3(Math.sin(this.t) * 3, 0, 1));
-      else if (i === 0 && S?.enEVA) ocultar = true;   // ese astronauta lo controla el jugador
+      else if (i === enCaminata && S?.enEVA) ocultar = true;   // ese astronauta lo controla el jugador
       a.g.visible = !ocultar;
       if (ocultar) { a.g.position.copy(this.ed.rover.g.position); return; }
       if (objetivo) a.destino.copy(objetivo);
