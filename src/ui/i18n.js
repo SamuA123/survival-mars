@@ -511,7 +511,11 @@ export function aplicarEstaticos() {
   document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
   const b = document.querySelector('#btnIdioma');
-  if (b) { b.textContent = idioma === 'es' ? '🌐 EN' : '🌐 ES'; b.title = t('top.idioma.t'); }
+  if (b) {
+    b.innerHTML = `<span class="idioma-icono" aria-hidden="true">🌐</span><span class="idioma-codigo" aria-hidden="true">${idioma === 'es' ? 'EN' : 'ES'}</span>`;
+    b.title = t('top.idioma.t');
+    b.setAttribute('aria-label', b.title);
+  }
 }
 
 // Etiquetas del mundo 3D (las crea src/world3d): se traducen al aparecer, sin tocar ese código.
