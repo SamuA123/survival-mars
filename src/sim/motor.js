@@ -24,6 +24,7 @@ export function crearPartida(nombre = 'Comandante') {
     paneles: true, eficiencia: 1, invSalud: 1,
     repuestos: MISION.repuestos, botiquin: MISION.botiquin,
     blindaje: 0, construir: false,
+    secciones: Object.fromEntries(Object.keys(MISION.construccion.secciones).map(id => [id, false])),
     polvoSols: 0, eva: false, expedicion: false, refugio: false, ocupados: false,
     evaHecha: false, enEVA: false, regolito: 0,
     inventario: { hoy: { regolito: 0, roca: 0, hielo: 0 }, total: { regolito: 0, roca: 0, hielo: 0 } },
@@ -103,12 +104,14 @@ export const ACCIONES = {
     visible: S => S.eficiencia < 1, activo: S => !enTormenta(S) && !S.eva,
     hacer(S) { S.eva = true; S.rad = r1(S.rad + 1.5); S.eficiencia = Math.min(1, S.eficiencia + 0.3); aprender(S, 'eva'); log(S, '🧑‍🚀 Una astronauta salió a limpiar los paneles (+1,5 mSv).'); },
   },
+  // El blindaje ahora se construye por secciones en el modo construcción (src/ui/construccion.js, tecla B).
+  // Esta acción queda oculta para no tener dos formas distintas de construir.
   blindaje: {
     edificio: 'habitat',
-    texto: S => S.construir ? '⏸️ Pausar construcción del blindaje' : `🧱 Construir blindaje de regolito (${S.blindaje}/3)`,
-    detalle: () => 'Cubrir el hábitat con tierra marciana: –60% de radiación. Cuesta +3 kWh por sol durante 3 sols.',
-    visible: S => S.blindaje < 3, activo: () => true,
-    hacer(S) { S.construir = !S.construir; },
+    texto: S => `🧱 Construir blindaje de regolito (${S.blindaje}/3)`,
+    detalle: () => '',
+    visible: () => false, activo: () => true,
+    hacer() {},
   },
   // La caminata la controla el jugador en 3D: main.js intercepta esta acción.
   eva: {
@@ -126,6 +129,48 @@ export const ACCIONES = {
     hacer(S) { S.repuestos--; S.invSalud = 1; log(S, '🔧 Invernadero reparado.'); },
   },
 };
+
+// ---------------------------------------------------------------------
+//  BLINDAJE POR SECCIONES (modo construcción, tecla B)
+//  Cada sección gasta regolito de la base y reduce DE VERDAD la radiación interior
+//  (dosis diaria y llamaradas). S.blindaje (0..3) se deriva para el resto del código.
+// ---------------------------------------------------------------------
+const SECCIONES = () => MISION.construccion.secciones;
+
+// Parte de la radiación que entra al hábitat: 1 = sin blindaje, 0.4 = completo
+export function factorBlindaje(S) {
+  const p = Object.entries(SECCIONES()).reduce((a, [id, s]) => a + (S.secciones?.[id] ? s.proteccion : 0), 0);
+  return r1(Math.max(0, 1 - p) * 100) / 100;
+}
+// Fracción de radiación que ENTRA al hábitat (0..1). La usa el panel de radiación de la caminata (eva-hud.js).
+export const proteccionHabitat = S => factorBlindaje(S);
+export const seccionesHechas = S => Object.keys(SECCIONES()).filter(id => S.secciones?.[id]).length;
+const nivelBlindaje = S => Math.round(seccionesHechas(S) * 3 / Object.keys(SECCIONES()).length);
+
+// Radiación interior de un sol tranquilo y de una llamarada de ejemplo (para mostrar el antes/después)
+export function radiacionInterior(S, claseEjemplo = 'X1.0') {
+  return { diaria: Math.round(MISION.radDiaria * factorBlindaje(S) * 100) / 100, llamarada: dosisLlamarada(S, claseEjemplo) };
+}
+
+// '' si se puede; si no, el motivo (código): 'construida' | 'faltaRegolito' | 'noExiste'
+export function motivoNoConstruir(S, id) {
+  const s = SECCIONES()[id];
+  if (!s) return 'noExiste';
+  if (S.secciones?.[id]) return 'construida';
+  if ((S.regolito || 0) < s.costo) return 'faltaRegolito';
+  return '';
+}
+
+export function construirSeccion(S, id) {
+  const motivo = motivoNoConstruir(S, id);
+  if (motivo) return { ok: false, motivo };
+  const antes = radiacionInterior(S);
+  S.regolito -= SECCIONES()[id].costo;
+  S.secciones[id] = true;
+  S.blindaje = nivelBlindaje(S);
+  aprender(S, 'regolito');
+  return { ok: true, antes, despues: radiacionInterior(S) };
+}
 
 // ---------------------------------------------------------------------
 //  CAMINATA ESPACIAL (EVA) — el jugador controla a un astronauta en 3D
@@ -159,9 +204,9 @@ export function terminarEVA(S, r) {
   }
   const it = r.items;
   if (it.regolito) {
+    // Se guarda en la base; el jugador decide qué sección construir (modo construcción, tecla B)
     S.regolito = (S.regolito || 0) + it.regolito;
-    while (S.regolito >= MISION.eva.regolitoPorNivel && S.blindaje < 3) { S.regolito -= MISION.eva.regolitoPorNivel; S.blindaje++; }
-    lineas.push(`🟫 <b>${it.regolito} de regolito</b> (la tierra roja y suelta de Marte) → cubre el hábitat: blindaje ${S.blindaje}/3.`); aprender(S, 'regolito');
+    lineas.push(`🟫 <b>${it.regolito} de regolito</b> (la tierra roja y suelta de Marte) → guardado en la base: ${S.regolito} bolsas para construir el blindaje (tecla B).`); aprender(S, 'regolito');
   }
   if (it.roca) { S.ciencia += it.roca * V.roca; lineas.push(`🪨 <b>${it.roca} roca(s) marciana(s)</b> de basalto → el laboratorio las analiza: +${it.roca * V.roca} de ciencia.`); }
   if (it.hielo) { S.o2 = clamp(S.o2 + it.hielo * V.hielo, 0, 100); lineas.push(`🧊 <b>${it.hielo} bloque(s) de hielo de agua</b> → el agua se separa en hidrógeno y oxígeno: +${it.hielo * V.hielo} de oxígeno.`); aprender(S, 'hielo'); }
@@ -240,7 +285,7 @@ function elegirLlamarada() {
 export function dosisLlamarada(S, clase) {
   const base = RADIACION.llamarada[clase[0]] ?? 8;
   const mag = Math.min(parseFloat(clase.slice(1)) || 1, 5);
-  const escudo = S.blindaje >= 3 ? RADIACION.atenuacionBlindaje : 1;
+  const escudo = factorBlindaje(S);   // cada sección construida protege desde ya
   return Math.round(base * (0.8 + mag / 10) * RADIACION.atenuacionAtmosfera * escudo);
 }
 
@@ -458,7 +503,7 @@ export function simularSol(S, resultadoEvento, ev) {
   }
 
   // 6) Radiación de fondo (en Marte siempre hay un poco)
-  S.rad += MISION.radDiaria * (S.blindaje >= 3 ? RADIACION.atenuacionBlindaje : 1);
+  S.rad += MISION.radDiaria * factorBlindaje(S);
 
   // 7) Polvo
   if (enTormenta(S) && S.paneles) {
@@ -466,12 +511,7 @@ export function simularSol(S, resultadoEvento, ev) {
     lineas.push('🌪️ El polvo rayó y cubrió los paneles: ahora generan menos.');
   }
 
-  // 8) Blindaje
-  if (construir) {
-    S.blindaje++;
-    if (S.blindaje >= 3) { S.construir = false; lineas.push('🧱 <b>¡Blindaje terminado!</b> La radiación ahora les afecta mucho menos.'); aprender(S, 'regolito'); }
-    else lineas.push(`🧱 Construcción del blindaje: ${S.blindaje}/3.`);
-  }
+  // 8) Blindaje: se construye por secciones en el modo construcción (construirSeccion), no aquí.
 
   // 9) Salud según recursos
   let sano = niv.vital >= 2;

@@ -59,6 +59,16 @@ export const MISION = {
       },
     },
   },
+  // Modo construcción (tecla B): el blindaje del hábitat se arma por SECCIONES que gastan regolito.
+  // Con todas las secciones entra el 40 % de la radiación (= RADIACION.atenuacionBlindaje): 4 × 15 % = 60 % menos.
+  construccion: {
+    secciones: {
+      norte: { nombre: 'Pared norte', nombre_en: 'North wall', icono: '⬆️', costo: 3, proteccion: 0.15 },
+      sur:   { nombre: 'Pared sur', nombre_en: 'South wall', icono: '⬇️', costo: 3, proteccion: 0.15 },
+      lados: { nombre: 'Paredes este y oeste', nombre_en: 'East and west walls', icono: '↔️', costo: 4, proteccion: 0.15 },
+      techo: { nombre: 'Techo', nombre_en: 'Roof', icono: '🔼', costo: 4, proteccion: 0.15 },
+    },
+  },
   guion: { 2: 'llamarada', 4: 'reciclador', 6: 'tormenta', 9: 'remolino', 12: 'llamarada' },
   avisos: {
     1: ['¡Bienvenida, tripulación! Cada mensaje tarda unos 12 minutos en llegar. En una emergencia, ustedes deciden.',
