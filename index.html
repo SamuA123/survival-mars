@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Survival Mars</title>
+  <meta name="description" content="Entrenador de Misiones para Astronautas Junior — NASA Space Apps Challenge 2026">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="mundo"></div>
+
+  <header class="hud-top">
+    <div class="marca">🔴 <b>Survival Mars</b><small>Cráter Jezero</small></div>
+    <div class="sol" id="sol">Sol 1</div>
+    <div class="recursos" id="recursos"></div>
+    <div class="botones-top">
+      <button id="btnDatos" class="chip-btn" title="Datos de la NASA usados">📡 Datos NASA</button>
+      <button id="btnSonido" class="chip-btn" title="Sonido">🔊</button>
+    </div>
+  </header>
+
+  <div class="sub-top">
+    <div class="clima" id="clima">☀️ Clima espacial: cargando…</div>
+    <div class="tags" id="tags"></div>
+  </div>
+
+  <aside class="panel" id="panel"></aside>
+
+  <section class="bitacora" id="bitacoraBox">
+    <button class="bit-tit" id="btnLog">📓 Bitácora</button>
+    <ul id="bitacora"></ul>
+  </section>
+
+  <footer class="hud-bottom">
+    <div class="energia" id="energia"></div>
+    <button class="btn-sol" id="btnSol">Terminar el Sol 🌙</button>
+  </footer>
+
+  <div id="modal" class="modal oculto"><div class="modal-caja" id="modalCaja"></div></div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

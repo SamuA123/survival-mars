@@ -1,0 +1,62 @@
+// Configuración y balance de la misión. Cambien números aquí, no en el motor.
+import { RADIACION } from '../data/radiacion.js';
+import { SITIO } from '../data/sitio.js';
+
+export const MISION = {
+  maxSol: 15,
+  solarBase: 9,               // kWh por sol con paneles limpios (Marte recibe ~43% de la luz de la Tierra)
+  nuclear: 3,                 // kWh constantes del mini reactor
+  bateriaMax: 40,
+  bateriaInicial: 28,
+  consumoBase: 1,             // computadoras y luces
+  delayMin: SITIO.retrasoMin,
+  radDiaria: RADIACION.marteSuperficie.valor,
+  radLimite: RADIACION.limiteMision,
+  tormenta: [6, 7, 8],        // tormenta global de polvo (aviso en el sol 4)
+  conjuncion: [10, 11],       // el Sol entre Marte y la Tierra: sin contacto
+  repuestos: 2,
+  botiquin: 1,
+  metaCiencia: 60,            // puntos de ciencia para la 2ª estrella
+  guion: { 2: 'llamarada', 4: 'reciclador', 6: 'tormenta', 9: 'remolino', 12: 'llamarada' },
+  avisos: {
+    1: ['¡Bienvenida, tripulación! Cada mensaje tarda unos 12 minutos en llegar. En una emergencia, ustedes deciden.',
+        'Misión científica: exploren con el rover y hagan experimentos, pero sin arriesgar a la tripulación.'],
+    4: ['⚠️ El satélite MRO ve una gran tormenta de polvo. Llegará en 2 sols y durará 3. ¡Carguen las baterías!'],
+    5: ['La tormenta llega mañana. Ahorren energía.'],
+    9: ['⚠️ En los sols 10 y 11 el Sol quedará entre Marte y la Tierra (conjunción solar). No podremos hablar. ¡Estarán solos!'],
+    12: ['¡Volvimos a escucharlos! Buen trabajo durante la conjunción.'],
+    14: ['La nave de relevo ya está en órbita. ¡Aguanten un sol más!'],
+  },
+};
+
+// Sistemas que consumen energía. Cada uno vive en un edificio del mapa 3D.
+export const SISTEMAS = {
+  vital: {
+    nombre: 'Soporte vital', icono: '🫁', edificio: 'habitat', costo: 2.5, max: 3,
+    desc: 'Fabrica oxígeno, recicla el agua y mantiene la base calentita (afuera hay -60 °C).',
+    niveles: ['¡Apagado! El oxígeno baja muy rápido y hace frío', 'Bajo: el oxígeno baja', 'Normal: oxígeno estable', 'Alto: el oxígeno sube'],
+  },
+  invernadero: {
+    nombre: 'Invernadero', icono: '🌱', edificio: 'invernadero', costo: 2, max: 3,
+    desc: 'Luces especiales y agua para cultivar papas, lechugas y frijoles.',
+    niveles: ['Apagado: no crece nada', 'Poca cosecha', 'Cosecha normal', '¡Cosecha grande!'],
+  },
+  radio: {
+    nombre: 'Comunicaciones', icono: '📡', edificio: 'antena', costo: 1, max: 2,
+    desc: 'Recibe avisos de Control de Misión en la Tierra (con 12 minutos de retraso).',
+    niveles: ['Apagadas: no recibes avisos', 'Normal: recibes avisos', 'Videollamadas: la tripulación se anima'],
+  },
+  lab: {
+    nombre: 'Laboratorio', icono: '🔬', edificio: 'lab', costo: 2, max: 2,
+    desc: 'Analiza rocas y suelo marciano. Da puntos de ciencia… pero gasta energía.',
+    niveles: ['Apagado: sin experimentos', 'Experimentos: +4 ciencia por sol', 'A toda máquina: +8 ciencia por sol'],
+  },
+};
+
+export const RECURSOS = [
+  { id: 'bateria', nombre: 'Energía', icono: '⚡', unidad: 'kWh', max: () => MISION.bateriaMax, ayuda: 'La batería guarda energía para la noche y las tormentas.' },
+  { id: 'o2', nombre: 'Oxígeno', icono: '🫁', unidad: '%', max: () => 100, ayuda: 'Lo fabrica el soporte vital. ¡Sin oxígeno no se respira!' },
+  { id: 'comida', nombre: 'Comida', icono: '🥔', unidad: '%', max: () => 100, ayuda: 'La tripulación come cada sol. El invernadero produce más.' },
+  { id: 'rad', nombre: 'Radiación', icono: '☢️', unidad: 'mSv', max: () => MISION.radLimite, inverso: true, ayuda: 'Radiación acumulada (mSv = milisievert, la unidad para medir radiación). Si llega al límite, la misión vuelve a la Tierra.' },
+  { id: 'salud', nombre: 'Tripulación', icono: '❤️', unidad: '%', max: () => 100, ayuda: 'Baja si falta oxígeno, comida o calor.' },
+];
