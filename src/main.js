@@ -11,6 +11,8 @@ import { renderRecursos, renderEnergia, renderPanel, renderLog } from './ui/hud.
 import { pantallaInicio, mostrarEvento, mostrarResumen, mostrarResumenEVA, pantallaFinal, panelDatos, panelInventario } from './ui/modales.js';
 import { beep, audio } from './ui/sonido.js';
 import { iniciarTutorial, tutorialVisto } from './ui/tutorial.js';
+import { iniciarRegistro, registrarDecision, registrarSol, registrarEVA } from './sim/registro.js';
+import { enTormenta } from './sim/motor.js';
 
 const $ = s => document.querySelector(s);
 let S = crearPartida();
@@ -60,13 +62,24 @@ async function terminarSol() {
     ev.inicio?.(S);
     if (ev.fx) mundo.efecto(ev.fx);
     refrescar();
+    // Medir cuánto tarda en elegir una opción (para el registro e insignias)
+    const t0 = performance.now(); let tDecision = null;
+    const medir = e => {
+      if (tDecision == null && e.target.closest('.opcion')) tDecision = (performance.now() - t0) / 1000;
+      if (e.target.closest('#btnAyuda') && S.registro) S.registro.pidioAyuda = true;
+    };
+    document.addEventListener('click', medir, true);
     res = await mostrarEvento(S, ev);
+    document.removeEventListener('click', medir, true);
+    if (ev.tiempo) registrarDecision(S, id, tDecision, String(res).includes('Se acabó el tiempo'));
     aprender(S, ev.dato);
     refrescar();
   }
 
   await mundo.pasarSol();
+  const tormentaHoy = enTormenta(S);
   const r = simularSol(S, res, ev);
+  registrarSol(S, id, tormentaHoy);
   const fin = finDePartida(S);
   refrescar();
   await mostrarResumen(S, antes, r, fin);
@@ -102,6 +115,7 @@ function salirAExplorar() {
     onFin: async res => {
       ocultarHUDEVA();
       const lineas = terminarEVA(S, res);
+      registrarEVA(S, res, E.o2TrajePorSeg);
       refrescar();
       await mostrarResumenEVA(res, lineas);
       const fin = finDePartida(S);   // ¿la radiación o la salud llegaron al límite?
@@ -118,6 +132,7 @@ async function nuevaPartida() {
   refrescar();
   const nombre = await pantallaInicio();
   S = crearPartida(nombre);
+  iniciarRegistro(S);
   S.log.unshift({ sol: 1, texto: `🚀 Comandante <b>${nombre.replace(/[<>&]/g, '')}</b> al mando de la base en el cráter Jezero.`, tipo: 'tierra' });
   iniciarSol(S);
   ocupado = false;

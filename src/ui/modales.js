@@ -5,6 +5,8 @@ import { DATOS } from '../data/datos-curiosos.js';
 import { FUENTES } from '../data/fuentes.js';
 import { SITIO } from '../data/sitio.js';
 import { beep } from './sonido.js';
+import { evaluarLogros, logrosHTML } from './logros.js';
+import { informeHTML } from './informe.js';
 
 const $ = s => document.querySelector(s);
 export const escapar = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -135,6 +137,7 @@ export function pantallaFinal(S, fin) {
   return new Promise(res => {
     const aprendidos = S.aprendidos.map(k => `<li>${DATOS[k].texto}</li>`).join('');
     const e = fin.estrellas || 0;
+    const nuevos = evaluarLogros(S, fin);   // insignias (src/ui/logros.js)
     abrir(`
       <div class="final">
         <div class="logo">${fin.gano ? '🚀' : fin.icono}</div>
@@ -148,6 +151,8 @@ export function pantallaFinal(S, fin) {
         <div class="final-stats">🫁 ${S.o2}% · 🥔 ${S.comida}% · ☢️ ${S.rad} mSv · 🔬 ${S.ciencia} ciencia</div>
         <div class="final-inv">🎒 Recolectaste en Marte: ${filasInventario(S.inventario.total)}
           <br>📋 Planes del sol cumplidos: <b>${S.planesCumplidos}</b> de ${S.planesEnviados}</div>
+        ${logrosHTML(nuevos)}
+        ${informeHTML(S)}
         <h3>🧠 Lo que aprendiste (${S.aprendidos.length})</h3>
         <ul class="aprendidos">${aprendidos}</ul>
         <button class="btn-grande" id="btnOtra">Jugar otra vez 🔄</button>

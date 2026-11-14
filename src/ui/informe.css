@@ -1,0 +1,62 @@
+/* Informe de misión e insignias (pantalla final) */
+.informe { text-align: left; margin: 18px 0; }
+.informe h3 { text-align: center; }
+
+/* Línea de tiempo */
+.linea-tiempo { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; margin: 8px 0 2px; }
+.lt-sol { background: var(--vidrio2); border-radius: 8px; padding: 4px 0 2px; text-align: center; cursor: help; min-width: 0; }
+.lt-sol.tormenta { background: rgba(160, 100, 60, .45); }
+.lt-ics { font-size: 14px; line-height: 1.3; min-height: 18px; word-break: break-all; }
+.lt-sol small { color: var(--suave); font-size: 10px; }
+.lt-ayuda { font-size: 12px; color: var(--suave); margin: 2px 0 10px; text-align: center; }
+
+/* Gráficas pequeñas */
+.graficas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grafica { margin: 0; background: var(--vidrio2); border-radius: 12px; padding: 8px 8px 2px; }
+.grafica figcaption { font-weight: 900; font-size: 14px; margin-bottom: 2px; }
+.grafica svg { width: 100%; height: auto; display: block; overflow: visible; }
+.g-linea { fill: none; stroke: var(--azul); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.g-dot { fill: var(--azul); stroke: #2a1510; stroke-width: 2; }
+.g-hit { fill: transparent; cursor: help; }
+.g-pt:hover .g-dot { r: 5; }
+.g-eje { stroke: rgba(255, 255, 255, .25); stroke-width: 1; }
+.g-tick { fill: var(--suave); font-size: 10px; }
+.g-final { fill: var(--texto); font-size: 12px; font-weight: 900; }
+.g-peligro { fill: rgba(255, 90, 90, .14); }
+.g-limite { stroke: var(--rojo); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.g-zona-txt { fill: #ffb0b0; font-size: 9px; }
+.g-tormenta { fill: rgba(200, 130, 80, .18); }
+.g-apagon { font-size: 11px; }
+
+.tabla-informe { margin: 8px 0; font-size: 13px; }
+.tabla-informe summary { cursor: pointer; color: var(--azul); }
+.tabla-informe table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+.tabla-informe th, .tabla-informe td { padding: 3px 6px; text-align: right; border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.tabla-informe th:first-child, .tabla-informe td:first-child { text-align: left; }
+
+/* Comparador de radiación */
+.comparador { margin-top: 12px; background: rgba(92, 200, 255, .08); border: 1px solid rgba(92, 200, 255, .35); border-radius: 14px; padding: 12px; }
+.comparador h4 { margin: 0 0 4px; }
+.comparador .tranqui { margin: 0 0 8px; font-size: 13px; }
+.cmp-filas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.cmp-filas div { background: var(--vidrio2); border-radius: 12px; padding: 8px 4px; text-align: center; }
+.cmp-filas span { display: block; font-size: 26px; }
+.cmp-filas b { display: block; font-size: 18px; }
+.cmp-filas small { color: var(--suave); font-size: 12px; }
+.fuente-txt { display: block; margin-top: 8px; color: var(--suave); font-size: 11px; }
+
+/* Insignias */
+.logros { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; text-align: left; }
+.logro { position: relative; background: var(--vidrio2); border: 1px solid var(--borde); border-radius: 12px; padding: 8px; }
+.logro.bloq { opacity: .45; }
+.logro.nuevo { border-color: var(--acento); box-shadow: 0 0 14px rgba(255, 179, 71, .55); animation: entra .4s ease-out; }
+.lg-ic { font-size: 26px; display: block; }
+.logro b { display: block; font-size: 13px; }
+.logro small { display: block; color: var(--suave); font-size: 11px; }
+.logro em { position: absolute; top: 6px; right: 8px; font-style: normal; font-size: 10px; font-weight: 900;
+  background: var(--acento); color: #2b140c; padding: 1px 6px; border-radius: 999px; }
+
+@media (max-width: 600px) {
+  .graficas { grid-template-columns: 1fr; }
+  .cmp-filas { grid-template-columns: 1fr 1fr; }
+}
