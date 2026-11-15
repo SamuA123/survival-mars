@@ -191,7 +191,11 @@ def grabar_escenas(tiempos: dict[str, float]) -> None:
         hacer("(() => { const e = juego.mundo.eva; e.jugador.position.set(0, e.jugador.position.y, 7.2); })()", 400)
         hacer("juego.mundo.eva.terminar(false)", 1300)             # entrar a la base: se depositan las bolsas
         g.corte(); g.grabar(0.9)
-        hacer("document.querySelector('#modalCaja .btn-grande')?.click()", 700)
+        # Cerrar el resumen y elegir el invento del laboratorio si aparece (hasta que no quede ninguna ventana)
+        for _ in range(4):
+            if page.evaluate("document.querySelector('#modal').classList.contains('oculto')"):
+                break
+            hacer("(document.querySelector('#modalCaja .opcion:not(:disabled)') || document.querySelector('#modalCaja .btn-grande'))?.click()", 700)
         page.keyboard.press("b"); page.wait_for_timeout(900)       # modo construcción
         g.corte(); g.grabar(0.6)
         hacer("[...document.querySelectorAll('.cons-btn')].find(b => !b.disabled)?.click()")
@@ -200,14 +204,14 @@ def grabar_escenas(tiempos: dict[str, float]) -> None:
         page.keyboard.press("Escape"); page.wait_for_timeout(400)
 
         # 4) Datos reales: llegar SIN grabar a la emergencia de llamarada del Sol 2 (dato histórico de DONKI)
-        for _ in range(3):
-            if page.evaluate("!!document.querySelector('#modalCaja .opcion')"):
+        LLAMARADA = "/Solar flare alert/.test(document.querySelector('#modalCaja')?.textContent || '') && !!document.querySelector('#modalCaja .opcion:not(:disabled)')"
+        for _ in range(20):
+            if page.evaluate(LLAMARADA):
                 break
-            hacer("document.querySelector('#btnSol')?.click()", 3500)
-            for _ in range(6):
-                if page.evaluate("!!document.querySelector('#modalCaja .opcion') || document.querySelector('#modal').classList.contains('oculto')"):
-                    break
-                hacer("document.querySelector('#modalCaja .btn-grande')?.click()", 1200)
+            if page.evaluate("document.querySelector('#modal').classList.contains('oculto')"):
+                hacer("document.querySelector('#btnSol')?.click()", 3500)
+            else:   # otras ventanas (resumen, inventos, oportunidades): continuar con la primera opción
+                hacer("(document.querySelector('#modalCaja .opcion:not(:disabled)') || document.querySelector('#modalCaja .btn-grande'))?.click()", 1200)
         g = Grabador(page, TRABAJO / "datos")
         g.grabar(tiempos["datos"] + 0.3)
         g.a_video(TRABAJO / "datos.mp4", tiempos["datos"] + AIRE)
