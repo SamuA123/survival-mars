@@ -1,4 +1,4 @@
-// Run: node --experimental-default-type=module --test tests/regresiones.mjs
+// Run: node --test tests/regresiones.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { cargarClimaEspacial } from '../src/data/donki.js';
@@ -42,23 +42,51 @@ test('DONKI: invalid cache and invalid payloads fall back to an honest historica
   let calls = 0;
   globalThis.fetch = async () => { calls++; return { ok: true, json: async () => ({ error: 'bad data' }) }; };
   const result = await cargarClimaEspacial();
-  assert.equal(calls, 2);
+  assert.equal(calls, 3);   // FLR, notificaciones y CCMC
   assert.equal(result.real, false);
   assert.equal(result.origen, 'historico');
   assert.equal(result.consultadoEn, null);
   assert.ok(result.flares.length > 0);
 });
 
-test('DONKI: a failed primary endpoint can use the secondary endpoint', async () => {
+test('DONKI: when the FLR list and notifications fail, the CCMC server is used', async () => {
   cache.clear(); let calls = 0;
-  globalThis.fetch = async () => ++calls === 1
-    ? { ok: false, status: 429 }
-    : { ok: true, json: async () => [{ classType: 'X1.1', peakTime: '2026-11-10T12:00Z' }] };
+  globalThis.fetch = async url => (++calls, url.includes('kauai.ccmc')
+    ? { ok: true, json: async () => [{ classType: 'X1.1', peakTime: '2026-11-10T12:00Z' }] }
+    : { ok: false, status: 404 });
   const result = await cargarClimaEspacial();
   assert.equal(result.real, true);
   assert.equal(result.origen, 'consulta');
-  assert.equal(calls, 2);
+  assert.equal(result.soloFuertes, false);
+  assert.equal(calls, 3);
   assert.deepEqual(result.flares, [{ clase: 'X1.1', fecha: '2026-11-10' }]);
+});
+
+test('DONKI: if the FLR list fails, flare notifications give the strong flares (one per activity, highest update)', async () => {
+  cache.clear();
+  const aviso = (clase, id) => ({ messageType: 'FLR', messageBody:
+    `## Summary:\nSignificant flare detected by GOES.\nFlare peak time: 2026-11-10T12:04Z.\nFlare intensity: ${clase} class.\nActivity ID: ${id}.\n## Notes:` });
+  globalThis.fetch = async url => url.includes('notifications')
+    ? { ok: true, json: async () => [
+        { messageType: 'FLR', messageBody: 'Flare intensity has crossed the threshold of M5.0.' },   // cruce de umbral: se ignora
+        aviso('M8.5', '2026-11-10T11:26:00-FLR-001'), aviso('X1.2', '2026-11-10T11:26:00-FLR-001'),
+        aviso('M5.4', '2026-11-11T02:00:00-FLR-001'),
+      ] }
+    : { ok: false, status: 404 };
+  const result = await cargarClimaEspacial();
+  assert.equal(result.real, true);
+  assert.equal(result.soloFuertes, true);
+  assert.deepEqual(result.flares, [{ clase: 'X1.2', fecha: '2026-11-10' }, { clase: 'M5.4', fecha: '2026-11-10' }]);
+  assert.match(result.resumen, /fuertes \(M5 o más\)/);
+});
+
+test('DONKI: no strong flare notifications means a quiet Sun, said honestly', async () => {
+  cache.clear();
+  globalThis.fetch = async url => url.includes('notifications') ? { ok: true, json: async () => [] } : { ok: false, status: 404 };
+  const result = await cargarClimaEspacial();
+  assert.equal(result.tranquilo, true);
+  assert.equal(result.soloFuertes, true);
+  assert.match(result.resumen, /no anunció llamaradas fuertes/);
 });
 
 test('Power preview is pure and matches actual battery, oxygen, food and science for 864 plans', () => {

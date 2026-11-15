@@ -32,7 +32,8 @@ nunca "en vivo", tal como pide el reto.
 
 ### 2.1 DONKI – llamaradas solares y procedencia
 - Endpoint: `https://api.nasa.gov/DONKI/FLR?startDate=…&endDate=…&api_key=…` (últimos 30 días). Código: `src/data/donki.js`.
-- Segunda fuente si falla la primera: `https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR`.
+- Segunda fuente si falla la primera: notificaciones de DONKI, `https://api.nasa.gov/DONKI/notifications?type=FLR&…`. Solo incluyen las llamaradas **fuertes** que la NASA anunció (clase M5 o más); el juego lo dice en pantalla ("llamaradas fuertes (M5 o más)"). Se toma la clase y la hora pico de cada llamarada (una por *Activity ID*). Se añadió porque el 15/11/2026 la ruta `DONKI/FLR` de api.nasa.gov respondía 404 aunque el resto de DONKI funcionaba.
+- Tercera fuente: `https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR` (sin clave). Algunas redes, como la de la universidad desde donde probamos, cortan la conexión con este servidor.
 - **Consulta reciente:** respuesta obtenida en esta carga. **Consulta guardada:** caché de hasta seis horas. Ambas muestran la hora original de consulta. **Archivo histórico:** respaldo si no se puede consultar NASA.
 - Si la consulta devuelve cero eventos, se conserva la lista vacía. Un ejercicio guionado puede usar un ejemplo histórico, identificado como tal; esos ejemplos no se mezclan con los resultados de la consulta.
 - Cálculo de riesgo: `riesgo = 0,6 + 0,08 × (llamaradas M) + 0,4 × (llamaradas X)`, limitado a [0,6 – 2,5].
@@ -40,7 +41,7 @@ nunca "en vivo", tal como pide el reto.
 - Cada evento de llamarada usa una **llamarada real** de la lista (clase y fecha) y lo muestra:
   *"Basada en una llamarada real que la NASA detectó el …"*. La llegada de partículas y la dosis del escenario son simuladas: no se deducen científicamente de la clase de la llamarada.
 - **Vigilancia durante la partida** (`src/ui/alerta-solar.js`): un minuto después de empezar y luego cada 10 minutos consulta DONKI
-  de los últimos 2 días, **sin caché** (primero el servidor CCMC, que no gasta la clave; después api.nasa.gov). Si aparece una llamarada
+  de los últimos 2 días, **sin caché** (mismo orden de fuentes: lista FLR, notificaciones y servidor CCMC). Si aparece una llamarada
   **M o X** que no estaba en la carga inicial, muestra la alerta 🚨 *"NASA DONKI detectó una llamarada clase …"*, sube el riesgo del juego
   con la misma fórmula y pregunta si la tripulación sigue trabajando o vuelve al refugio. Si DONKI no responde, no pasa nada: el juego sigue.
   No consulta en el modo demo (`?demo=1`).
