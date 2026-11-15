@@ -1,115 +1,118 @@
-# 🔴 Survival Mars — Entrenador de Misiones para Astronautas Junior
+# Survival Mars: Junior Astronaut Mission Trainer
 
-**NASA Space Apps Challenge 2026 · Reto: *Build a Junior Astronaut Mission Trainer***
+**NASA Space Apps Challenge 2026 · Challenge: *Build a Junior Astronaut Mission Trainer***
 
-### ▶️ Jugar ahora: **https://survival-mars.pages.dev**
-Gratis, en el navegador, sin descargas ni cuentas. Funciona en computadoras, tabletas y celulares.
+### Play now: **https://survival-mars.pages.dev**
+Free, in the browser, with no downloads or accounts. Works on computers, tablets and phones.
 
 - **English:** https://survival-mars.pages.dev/?lang=en
-- **Demo para presentar (3 sols):** https://survival-mars.pages.dev/?demo=1&lang=es
-- **Judge demo (English):** https://survival-mars.pages.dev/?demo=1&lang=en
-- **Simulacro de alerta solar (para mostrar la alerta):** https://survival-mars.pages.dev/?alerta=1 — se identifica en pantalla como *SIMULACRO*
+- **Judge demo (3 sols, English):** https://survival-mars.pages.dev/?demo=1&lang=en
+- **Presentation demo (Spanish):** https://survival-mars.pages.dev/?demo=1&lang=es
+- **Solar alert drill (to show the alert):** https://survival-mars.pages.dev/?alerta=1, labelled on screen as a *drill*
 
-El modo demo se identifica en pantalla, usa un ejemplo histórico de DONKI, da 30 segundos por emergencia y no guarda insignias.
-La partida normal conserva los rangos Cadete (10 sols) y Comandante (15 sols). El idioma se puede cambiar sin reiniciar.
+Demo mode is labelled on screen, uses a historical DONKI example, gives 30 seconds per emergency and does not save badges.
+A normal game offers two ranks, Cadet (10 sols) and Commander (15 sols). The language can be switched at any time without restarting.
 
-![Base en la meseta NE Syrtis: tanques de recursos, ruta de la misión, indicador del Sol y edificios](docs/img/01-base.png)
+![Base on the NE Syrtis plateau: resource tanks, mission route, Sun indicator and buildings](docs/img/01-base.png)
 
 | | |
 |---|---|
-| ![Selector de tripulación con dosímetros](docs/img/02-tripulacion.png) | ![Caminata espacial con mochila y panel de radiación](docs/img/03-caminata-mochila.png) |
-| **¿Quién sale?** Cada astronauta tiene su dosímetro | **Caminata:** mochila de 4 objetos y panel de radiación |
-| ![Modo construcción: blindaje por secciones](docs/img/04-construccion.png) | ![Simulacro de alerta solar](docs/img/05-alerta-solar.png) |
-| **Modo construcción (B):** cada sección baja la radiación | **Alerta solar** (simulacro con `?alerta=1`) |
-| ![Pantalla final con estrellas e insignias](docs/img/06-final.png) | |
-| **Final:** estrellas, insignias e informe de misión | |
+| ![Crew picker with dosimeters](docs/img/02-tripulacion.png) | ![Spacewalk with backpack and radiation meter](docs/img/03-caminata-mochila.png) |
+| **Who goes out?** Every astronaut has a dosimeter | **Spacewalk:** suit air, radiation meter and a 4-item backpack |
+| ![Build mode: shielding by sections](docs/img/04-construccion.png) | ![Solar alert drill](docs/img/05-alerta-solar.png) |
+| **Build mode (B):** every section lowers the radiation | **Solar alert** (drill with `?alerta=1`) |
+| ![Final screen with stars and badges](docs/img/06-final.png) | |
+| **End:** stars, badges and mission report | |
 
 ---
 
-## ¿De qué se trata?
-Niños y niñas de **7 a 12 años** son comandantes de una base en la **meseta NE Syrtis, al borde de la cuenca Isidis (Marte)**: uno de los 3 sitios finalistas que la NASA estudió para el rover Perseverance.
-Tienen que mantener viva a su tripulación hasta que llegue la nave de relevo, tomando las mismas decisiones difíciles
-que enfrentan los planificadores de misiones de la NASA. **Ninguna decisión es gratis.**
+## What is it about?
+Kids aged **7 to 12** command a base on the **NE Syrtis plateau, at the edge of the Isidis basin on Mars**, one of the three finalist landing sites NASA studied for the Perseverance rover.
+They must keep their crew alive until the relief ship arrives, making the same kind of hard choices NASA mission planners face. **No decision is free.**
 
-| Lo que deciden | Lo que aprenden |
+| What players decide | What they learn |
 |---|---|
-| ⚡ Repartir la energía entre oxígeno, invernadero, comunicaciones y laboratorio | No hay energía ilimitada en el espacio |
-| 🌪️ ¿Retraer los paneles en una tormenta de polvo? | El polvo reduce la energía solar; Opportunity sufrió una gran tormenta en 2018. Los paneles retráctiles son una regla del juego. |
-| ☢️ ¿Refugiarse o seguir trabajando en un escenario inspirado en una llamarada **real** (NASA DONKI)? | Radiación y protección con regolito; el escenario y las dosis son simplificados |
-| 🧑‍🚀 ¿Hasta dónde caminar para recoger regolito, hielo de agua o rocas marcianas? | Cada segundo afuera gasta oxígeno y suma radiación |
-| 🎒 ¿Volver a depositar con la mochila llena (4 objetos) o soltar algo y seguir? | Más viajes = más tiempo afuera = más radiación |
-| 🧱 ¿Qué sección del blindaje construir con el regolito (tecla B)? | Cada sección gasta bolsas y reduce de verdad la radiación dentro del hábitat |
-| 🧑‍🚀 ¿Quién de la tripulación sale a caminar? | Cada astronauta lleva su dosímetro: repartir las salidas reparte la dosis |
-| 🚨 Llega una alerta solar: ¿seguir trabajando o volver al refugio? | El riesgo depende de la actividad real del Sol (NASA DONKI) |
-| 📡 Pedir ayuda a la Tierra… que responde tarde | Los mensajes tardan minutos: la tripulación decide sola |
+| How to split power between life support, greenhouse, communications and the lab | Power in space is limited |
+| Retract the solar panels during a dust storm? | Dust cuts solar power; the Opportunity rover was lost to a global dust storm in 2018. Retractable panels are a game rule. |
+| Take shelter or keep working during a scenario based on a **real** solar flare (NASA DONKI)? | Radiation and shielding with regolith; the scenario and doses are simplified |
+| How far to walk to collect regolith, water ice or Martian rocks? | Every second outside uses suit air and adds radiation |
+| Go back with a full backpack (4 items) or drop something and keep going? | More trips mean more time outside and more radiation |
+| Which shielding section to build with the regolith (B key)? | Each section costs bags of regolith and really lowers the radiation inside the habitat |
+| Which crew member goes outside? | Each astronaut carries a dosimeter: sharing the walks shares the dose |
+| A solar alert arrives: keep working or return to the shelter? | The risk depends on real solar activity (NASA DONKI) |
+| Ask Earth for help, which answers late | Messages take minutes to travel: the crew decides on its own |
 
-## Características
-- 🌍 **Mundo 3D isométrico** (Three.js) con día y noche, tormentas, astronautas y rover
-- 🎓 **Tutorial guiado** y dos rangos: 🧒 **Cadete** (7–9 años) y 🧑‍🚀 **Comandante** (10–12 años)
-- 🧑‍🚀 **Caminata espacial jugable** (teclado o joystick táctil): mochila de 4 objetos, recoger y soltar, depositar al entrar por la puerta
-- ☢️ **Panel de radiación en la caminata:** nivel actual (bajo, moderado, alto o extremo), exposición, tiempo afuera y protección del lugar
-- 🧱 **Modo construcción (tecla B):** blindaje del hábitat por secciones — pared norte, pared sur, paredes este y oeste, techo
-- 👩‍🚀 **Tripulación con dosímetros:** Lía, Kofi, Mei y Teo; se elige quién sale y cada uno acumula su propia dosis
-- 🚨 **Alerta solar:** indicador del Sol siempre visible y vigilancia de NASA DONKI cada 10 minutos durante la partida
-- 🏔️ **Mundo de NE Syrtis:** mesetas con capas de roca, olivino, dron tipo Ingenuity y remolinos de polvo; modo gráficos ligeros 🐢
-- ⏱️ **Emergencias** con cuenta regresiva: tormentas, llamaradas, micrometeoritos, fallas y plagas
-- 🛰️ **Consultas recientes de NASA DONKI**, caché identificada con fecha y respaldo histórico; estudios reales de **NASA OSDR** con su fuente
-- ⚖️ Pronóstico del plan: oxígeno, comida, ciencia y sistemas que perderán energía, antes de nuevas emergencias
-- 🧠 Repaso opcional de tres preguntas, con explicación y referencias a las decisiones de la misión
-- 🔊 **Narrador por voz**, 📋 informe de misión con gráficas e 🏅 insignias
-- 📱 Funciona en celular (vertical y horizontal)
+## Features
+- **Isometric 3D world** (Three.js) with day and night, dust storms, astronauts and a rover
+- **Guided tutorial** and two ranks: **Cadet** (ages 7 to 9) and **Commander** (ages 10 to 12)
+- **Different every game:** the dust storm, solar flares, dust devil and recycler failure fall on different sols each time; the storm is always announced two sols ahead and never overlaps the solar conjunction
+- **Science goal that requires risk:** the second and third stars need more power for the lab or spacewalks for rocks; playing it safe only earns one star
+- **Playable spacewalk** (keyboard or touch joystick): 4-item backpack, pick up and drop, deposit at the door
+- **Simple spacewalk display:** seconds of suit air left, a single colour radiation meter, backpack slots and the request from Earth; a red screen edge and Geiger-counter clicks warn without reading
+- **Build mode (B key):** habitat shielding by sections: north wall, south wall, east and west walls, roof
+- **Crew with dosimeters:** Lía, Kofi, Mei and Teo; players choose who goes outside and each one builds up their own dose
+- **Solar alert:** Sun indicator always visible and NASA DONKI checked every 10 minutes during the game
+- **NE Syrtis world:** layered mesas, olivine, an Ingenuity-style drone and dust devils; light graphics mode for slow computers
+- **Countdown emergencies:** dust storms, solar flares, micrometeorites, equipment failures and plant disease
+- **Recent NASA DONKI queries**, a cache labelled with its time and a historical fallback; real **NASA OSDR** studies with their source
+- **Plan preview:** oxygen, food, science and systems that will lose power, before any new emergency
+- Optional three-question review with explanations linked to the player's mission decisions
+- **Voice narrator**, mission report with charts and badges
+- Works on phones, in portrait and landscape
 
-## Controles
-| Acción | Teclado | Celular |
+## Controls
+| Action | Keyboard | Phone |
 |---|---|---|
-| Mover al astronauta (caminata) | WASD o flechas | joystick táctil |
-| Recoger el objeto cercano | E o Q | botón ✋ Recoger |
-| Soltar un objeto de la mochila | R | botón ↩️ Soltar |
-| Depositar y entrar a la base (en la puerta) | E | botón 📦 Depositar |
-| Abrir el modo construcción | B | botón 🧱 en el panel del hábitat |
-| Cerrar / cancelar | Esc | ✕ |
+| Move the astronaut (spacewalk) | WASD or arrow keys | touch joystick |
+| Pick up the nearest item | E or Q | Pick up button |
+| Drop an item from the backpack | R | Drop button |
+| Deposit and enter the base (at the door) | E | Deposit button |
+| Open build mode | B | build button in the habitat panel |
+| Close or cancel | Esc | close (X) button |
 
-## Datos de la NASA
-DONKI (llamaradas: **consulta reciente, caché o archivo histórico**, identificados; más vigilancia cada 10 min durante la partida) · Curiosity RAD · OSDR (13 estudios: OSD-87, 146, 177, 268, 334, 342, 343, 360, 566, 615, 678, 766, 772) · RadLab ·
-NE Syrtis (finalista Mars 2020) / Mars Trek · MOXIE · Opportunity · MRO · Conjunción solar · Retraso de comunicaciones.
-Detalle completo y simplificaciones: **[docs/DATOS_NASA.md](docs/DATOS_NASA.md)**.
+## NASA data
+DONKI solar flares (**recent query, cache or historical archive**, always labelled; plus a check every 10 minutes during the game) · Curiosity RAD · OSDR (13 studies: OSD-87, 146, 177, 268, 334, 342, 343, 360, 566, 615, 678, 766, 772) · RadLab ·
+NE Syrtis (Mars 2020 finalist site) / Mars Trek · MOXIE · Opportunity · MRO · Solar conjunction · Communication delay.
+Full details and simplifications (in Spanish): **[docs/DATOS_NASA.md](docs/DATOS_NASA.md)**.
 
-## Documentación
-| Documento | Para quién |
+## Documentation
+The team documents are written in Spanish.
+
+| Document | Audience |
 |---|---|
-| [docs/DATOS_NASA.md](docs/DATOS_NASA.md) | Jueces: qué dato de la NASA alimenta cada mecánica y por qué |
-| [docs/GUIA_DOCENTE.md](docs/GUIA_DOCENTE.md) | Docentes: plan de clase, preguntas y bitácora imprimible |
-| [docs/PITCH.md](docs/PITCH.md) | Equipo: guion del video y texto de envío |
-| [docs/VALIDACION.md](docs/VALIDACION.md) | Pruebas técnicas y protocolo pendiente con niños |
-| [docs/RETO.md](docs/RETO.md) · [docs/PLAN.md](docs/PLAN.md) | Equipo: análisis del reto y decisiones |
-| [CLAUDE.md](CLAUDE.md) | Desarrolladores: estructura del código |
+| [docs/DATOS_NASA.md](docs/DATOS_NASA.md) | Judges: which NASA data drives each mechanic, and why |
+| [docs/GUIA_DOCENTE.md](docs/GUIA_DOCENTE.md) | Teachers: lesson plan, questions and a printable log |
+| [docs/PITCH.md](docs/PITCH.md) | Team: video script and submission text |
+| [docs/VALIDACION.md](docs/VALIDACION.md) | Technical tests and the pending protocol for testing with children |
+| [docs/RETO.md](docs/RETO.md) · [docs/PLAN.md](docs/PLAN.md) | Team: challenge analysis and decisions |
+| [CLAUDE.md](CLAUDE.md) | Developers: code structure |
 
-## Correr localmente
-No hay que instalar nada:
+## Run locally
+Nothing to install:
 ```bash
 python -m http.server 5500 --bind 127.0.0.1
-# abrir http://localhost:5500
+# open http://localhost:5500
 ```
-Se consulta DONKI a través de NASA Open APIs y, si falla, NASA CCMC. Una clave propia de https://api.nasa.gov aumenta el límite de consultas de la primera fuente. La caché dura hasta seis horas y conserva la hora de consulta original. Si ambas fuentes fallan se identifica el archivo histórico. No se predice el clima espacial de Marte.
+Solar flares come from DONKI in this order: the NASA Open APIs flare list, then NASA Open APIs flare notifications (strong flares only, class M5 and above, and the game says so), then the NASA CCMC server, which needs no key. A personal key from https://api.nasa.gov raises the query limit. The cache lasts up to six hours and keeps the original query time. If every source fails, the historical archive is used and labelled as such. The game does not forecast space weather on Mars.
 
-## Verificación
+## Testing
 
-Sin instalar dependencias del juego (Node 22+):
+No game dependencies to install (Node 22 or later):
 
 ```bash
-node --experimental-default-type=module --test tests/regresiones.mjs
+node --test tests/regresiones.mjs tests/mecanicas.mjs
 ```
 
-Para la verificación visual reproducible con Chrome, consultar [docs/VALIDACION.md](docs/VALIDACION.md).
+For the reproducible visual check with Chrome, see [docs/VALIDACION.md](docs/VALIDACION.md).
 
 ## For judges
 
-Survival Mars translates NASA data into decisions for ages 7–12: spend limited power on life support or science, shelter at the cost of work, and act while waiting for Earth’s reply. Open `?demo=1&lang=en` for the three-sol presentation mode. NASA observations inspire the scenarios; the difficulty formula, radiation doses and shielding factors are educational game rules, not a forecast for Mars. The optional final review gives feedback on three trade-offs. User learning gains have not yet been measured.
+Survival Mars translates NASA data into decisions for ages 7 to 12: spend limited power on life support or science, shelter at the cost of work, and act while waiting for Earth's reply. Open `?demo=1&lang=en` for the three-sol presentation mode. NASA observations inspire the scenarios; the difficulty formula, radiation doses and shielding factors are educational game rules, not a forecast for Mars. The optional final review gives feedback on three trade-offs. Learning gains with real players have not been measured yet.
 
-## Tecnología
-JavaScript (ES modules, sin compilación) · Three.js (WebGL) · HTML/CSS · Web Speech API (narrador) · Cloudflare Pages.
+## Technology
+JavaScript (ES modules, no build step) · Three.js (WebGL) · HTML/CSS · Web Speech API (narrator) · Cloudflare Pages.
 
 ```
-src/sim/      simulación (reglas, eventos, balance)    src/data/   datos NASA con fuentes
-src/world3d/  mundo 3D y caminata espacial             src/ui/     interfaz, tutorial, informe, voz
+src/sim/      simulation (rules, events, balance)    src/data/   NASA data with sources
+src/world3d/  3D world and spacewalk                 src/ui/     interface, tutorial, report, voice
 ```
