@@ -8,7 +8,7 @@ import { MISION } from './sim/config.js';
 import { mostrarHUDEVA, actualizarHUDEVA, avisoEVA, ocultarHUDEVA, tarjetaObjeto } from './ui/eva-hud.js';
 import { cargarClimaEspacial } from './data/donki.js';
 import { renderRecursos, renderEnergia, renderPanel, renderLog } from './ui/hud.js';
-import { pantallaInicio, mostrarEvento, mostrarResumen, mostrarResumenEVA, pantallaFinal, panelDatos, panelTarea, refrescarClimaInicio } from './ui/modales.js';
+import { pantallaInicio, mostrarEvento, mostrarResumen, mostrarResumenEVA, pantallaFinal, panelDatos, panelTarea, refrescarClimaInicio, nombrePorDefecto } from './ui/modales.js';
 import { beep, audio } from './ui/sonido.js';
 import { iniciarTutorial } from './ui/tutorial.js';
 import { iniciarRegistro, registrarDecision, registrarSol, registrarEVA } from './sim/registro.js';
@@ -158,7 +158,11 @@ async function nuevaPartida() {
   S = crearPartida(nombre);
   S.demo = esDemo;
   iniciarRegistro(S);
-  S.log.unshift({ sol: 1, texto: `🚀 Comandante <b>${nombre.replace(/[<>&]/g, '')}</b> al mando de la base en la meseta NE Syrtis.`, tipo: 'tierra' });
+  const limpio = nombre.replace(/[<>&]/g, '');
+  const sinNombre = nombrePorDefecto(nombre);   // evita "Comandante Comandante"
+  S.log.unshift({ sol: 1, tipo: 'tierra',
+    texto: sinNombre ? '🚀 <b>Comandante</b> al mando de la base en la meseta NE Syrtis.' : `🚀 Comandante <b>${limpio}</b> al mando de la base en la meseta NE Syrtis.`,
+    texto_en: sinNombre ? '🚀 <b>Commander</b> in charge of the base on the NE Syrtis plateau.' : `🚀 Commander <b>${limpio}</b> in charge of the base on the NE Syrtis plateau.` });
   iniciarSol(S);
   ocupado = false;
   refrescar();
