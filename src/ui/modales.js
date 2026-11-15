@@ -24,6 +24,8 @@ onIdioma(() => {
   }
 });
 const L = (es, en) => esEN() ? en : es;
+// Nombre que se pone solo si el jugador no escribe nada (en cualquiera de los dos idiomas)
+export const nombrePorDefecto = n => !n || ['comandante', 'commander'].includes(String(n).trim().toLowerCase());
 export const escapar = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 export function abrir(html, clase = '') {
@@ -198,7 +200,9 @@ export function pantallaFinal(S, fin) {
           <div class="logo">${fin.gano ? '🚀' : fin.icono}</div>
           <h1>${fin.gano ? t('fin.cumplida') : t('fin.abortada')}</h1>
           <p>${fin.gano
-            ? t('fin.gano', { n: escapar(S.nombre), s: MISION.maxSol })
+            ? (nombrePorDefecto(S.nombre)   // sin nombre: "Comandante: tu tripulación…" (no "Comandante Comandante")
+              ? t('fin.ganoSinNombre', { s: MISION.maxSol })
+              : t('fin.gano', { n: escapar(S.nombre), s: MISION.maxSol }))
             : t('fin.perdio', { t: tr(fin.texto), s: S.sol })}</p>
           ${fin.gano ? `<div class="estrellas">${'⭐'.repeat(e)}${'☆'.repeat(3 - e)}</div>
             <small class="criterios">${t('fin.criterios', { c: MISION.metaCiencia, r: MISION.radLimite / 2 })}</small>

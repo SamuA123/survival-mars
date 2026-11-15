@@ -11,8 +11,10 @@
 import { CLIMA, setClima } from '../sim/motor.js';
 import { consultarRecientes, riesgoDe, fuerza } from '../data/donki.js';
 import { beep } from './sonido.js';
+import { esEN, onIdioma } from './i18n.js';
 
-const L = (es, en) => document.documentElement.lang === 'en' ? en : es;
+const L = (es, en) => esEN() ? en : es;
+let ultimaAlerta = null;           // { f, esSimulacro } para repintar al cambiar de idioma
 const PARAMS = new URLSearchParams(location.search);
 const DEMO = PARAMS.get('demo') === '1';
 const CADA_MIN = 10;
@@ -65,6 +67,16 @@ function ubicar(el) {
 function alertar(f, esSimulacro = false) {
   let b = document.querySelector('#alertaSolar');
   if (!b) { b = document.createElement('div'); b.id = 'alertaSolar'; b.setAttribute('role', 'alert'); document.body.appendChild(b); }
+  ultimaAlerta = { f, esSimulacro };
+  pintarAlerta(b, f, esSimulacro);
+  b.classList.add('visible');
+  clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('visible'), 12000);
+  beep(330, 0.25, 'sawtooth'); setTimeout(() => beep(330, 0.25, 'sawtooth'), 300);
+  try { window.juego?.mundo?.efecto('llamarada'); } catch { /* solo visual */ }
+}
+
+// Solo el contenido (sin sonido ni efecto): lo usa también el botón ES/EN
+function pintarAlerta(b, f, esSimulacro) {
   const hora = f.hora ? ` · ${f.hora} UTC` : '';
   b.innerHTML = `
     <div class="as-cab">🚨 ${L('ALERTA SOLAR', 'SOLAR ALERT')}${esSimulacro ? ` <small>${L('SIMULACRO', 'DRILL')}</small>` : ''}</div>
@@ -74,12 +86,14 @@ function alertar(f, esSimulacro = false) {
       ${L('El riesgo de radiación aumentó: los astronautas que estén afuera reciben más dosis.', 'Radiation risk went up: astronauts outside get a higher dose.')}</p>
     <p class="as-dec">${L('¿Siguen trabajando o vuelven al refugio?', 'Keep working, or go back to the shelter?')}</p>
     <button type="button" class="as-ok">${L('Entendido', 'Got it')}</button>`;
-  b.classList.add('visible');
   b.querySelector('.as-ok').onclick = () => b.classList.remove('visible');
-  clearTimeout(b._t); b._t = setTimeout(() => b.classList.remove('visible'), 12000);
-  beep(330, 0.25, 'sawtooth'); setTimeout(() => beep(330, 0.25, 'sawtooth'), 300);
-  try { window.juego?.mundo?.efecto('llamarada'); } catch { /* solo visual */ }
 }
+
+onIdioma(() => {
+  pintarIndicador();
+  const b = document.querySelector('#alertaSolar');
+  if (b && ultimaAlerta) pintarAlerta(b, ultimaAlerta.f, ultimaAlerta.esSimulacro);
+});
 
 // Sube el riesgo del juego con las llamaradas nuevas (regla del juego: la misma fórmula de DONKI)
 function sumarLlamaradas(nuevas) {
