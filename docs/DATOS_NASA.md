@@ -10,8 +10,8 @@ dentro del juego (botón **📡 Datos NASA**, tarjetas "¿Sabías que…?" y "Lo
 
 | Dataset / fuente NASA | Tipo | Mecánica del juego | Por qué |
 |---|---|---|---|
-| **DONKI – Solar Flares (FLR)** | Consulta reciente / caché / archivo, identificado en pantalla | Dificultad de los ejercicios y clase/fecha de las llamaradas utilizadas | Observaciones reales inspiran escenarios educativos para elegir entre **refugiarse o seguir trabajando**. No es un pronóstico de partículas ni de dosis en Marte. |
-| **Curiosity RAD** (Hassler et al. 2014) | 📚 Guardado | Radiación de fondo por sol, límite de la misión, blindaje | 0,67 mSv/día medidos en la superficie de Marte. Cada sol la tripulación suma radiación; las caminatas y las llamaradas suman más. |
+| **DONKI – Solar Flares (FLR)** | Consulta reciente / caché / archivo, identificado en pantalla; **más una consulta en vivo cada 10 min durante la partida** | Dificultad de los ejercicios, clase/fecha de las llamaradas utilizadas, indicador "☀️ Actividad solar" y alerta 🚨 | Observaciones reales inspiran escenarios educativos para elegir entre **refugiarse o seguir trabajando**. No es un pronóstico de partículas ni de dosis en Marte. |
+| **Curiosity RAD** (Hassler et al. 2014) | 📚 Guardado | Radiación de fondo por sol, límite de la misión, blindaje por secciones, dosímetros de la tripulación | 0,67 mSv/día medidos en la superficie de Marte. Cada sol la tripulación suma radiación; las caminatas y las llamaradas suman más. |
 | **OSDR – RadLab** (dosimetría de la ISS) | 📚 Guardado | Comparación ISS vs. Marte | En la ISS se reciben ~0,2–0,5 mSv/día; en Marte, más. Explica por qué Marte es más peligroso que la Estación. |
 | **OSDR – estudios de biología espacial** | 📚 Guardado | Tarjeta "Lo que dice la ciencia real" tras cada sol | Cuando pasa algo (llamarada, poca comida, poco oxígeno), el juego muestra el hallazgo de un estudio real con su ID OSD-xxx. |
 | **NE Syrtis — sitio finalista de Mars 2020** / Mars Trek | 📚 Guardado | Lugar de la base, relieve (mesas y borde de Isidis), duración del sol, luz solar | NE Syrtis (~18° N, 77° E) fue uno de los 3 finalistas de la NASA para Perseverance. Cuenca Isidis de ~3.960 millones de años; rocas con olivino alterado a carbonato por agua. Sol de 24 h 39 min, ~43 % de la luz solar. |
@@ -24,7 +24,7 @@ dentro del juego (botón **📡 Datos NASA**, tarjetas "¿Sabías que…?" y "Lo
 | **Veggie / VEG-05** (ISS) | 📚 Guardado | Invernadero | Cultivar comida con luces LED es real. |
 | **Agua en la ISS (98 % reciclada)** | 📚 Guardado | Soporte vital / evento del reciclador | El agua se recicla casi por completo; una falla es una emergencia. |
 
-**En vivo vs. guardado:** solo DONKI se consulta en vivo (con caché de 6 h y un servidor de respaldo de CCMC que no necesita clave). Si la API no responde (sin internet o límite de la clave),
+**En vivo vs. guardado:** solo DONKI se consulta en vivo: al cargar (últimos 30 días, con caché de 6 h y un servidor de respaldo de CCMC que no necesita clave) y luego **cada 10 minutos durante la partida** (últimos 2 días, sin caché). Todo lo demás —dosis de Curiosity, RadLab, estudios OSDR, datos del sitio— está **guardado** en el código con su fuente. Si la API no responde (sin internet o límite de la clave),
 el juego usa llamaradas **históricas reales** (p. ej. X9.0 del 3/10/2024) y lo dice claramente: "📚 Datos históricos",
 nunca "en vivo", tal como pide el reto.
 
@@ -39,6 +39,17 @@ nunca "en vivo", tal como pide el reto.
   Es una fórmula de **dificultad del juego**, no un modelo científico de riesgo para Marte. Afecta los eventos aleatorios y la caminata; los eventos guionados siguen su calendario de entrenamiento.
 - Cada evento de llamarada usa una **llamarada real** de la lista (clase y fecha) y lo muestra:
   *"Basada en una llamarada real que la NASA detectó el …"*. La llegada de partículas y la dosis del escenario son simuladas: no se deducen científicamente de la clase de la llamarada.
+- **Vigilancia durante la partida** (`src/ui/alerta-solar.js`): un minuto después de empezar y luego cada 10 minutos consulta DONKI
+  de los últimos 2 días, **sin caché** (primero el servidor CCMC, que no gasta la clave; después api.nasa.gov). Si aparece una llamarada
+  **M o X** que no estaba en la carga inicial, muestra la alerta 🚨 *"NASA DONKI detectó una llamarada clase …"*, sube el riesgo del juego
+  con la misma fórmula y pregunta si la tripulación sigue trabajando o vuelve al refugio. Si DONKI no responde, no pasa nada: el juego sigue.
+  No consulta en el modo demo (`?demo=1`).
+- **Indicador permanente:** *"☀️ Actividad solar normal · Riesgo BAJO/MEDIO/ALTO"*, o *"🚨 ALERTA SOLAR"* si los datos reales cargados
+  tienen una llamarada M o X de los últimos 3 días. Al tocarlo se abre el panel de datos.
+- **Simulacro** (`?alerta=1`): para presentaciones. Muestra una alerta con una llamarada M5.0 de ejemplo y la etiqueta **SIMULACRO** en el
+  indicador y en la alerta; nunca se presenta como dato en vivo.
+- **En la caminata**, la dosis por segundo afuera se multiplica por un factor de 0,85 a 1,4 según ese riesgo (`factorRiesgo` en
+  `src/world3d/eva.js`), y el panel muestra el nivel: BAJO, MODERADO, ALTO, o EXTREMO si hay una llamarada en curso. Es una regla de juego.
 - Fuente: https://kauai.ccmc.gsfc.nasa.gov/DONKI/ · API: https://api.nasa.gov
 - Respaldo curado: [X9.0 del 3 de octubre de 2024](https://svs.gsfc.nasa.gov/14701/) y [X8.7 del 14 de mayo de 2024](https://svs.gsfc.nasa.gov/14592/), con publicaciones de NASA SDO. Se retiraron las entradas sin verificación específica del archivo anterior.
 
@@ -51,6 +62,21 @@ nunca "en vivo", tal como pide el reto.
 | Límite de carrera NASA | 600 mSv | Dato educativo | Estándar NASA de protección radiológica |
 | **Límite de la misión del juego** | — | **60 mSv** (simplificado) | Diseño de juego |
 | Dosis extra por llamarada sin refugio | Muy variable en la realidad | X: 50 · M: 25 · C: 8 mSv × atmósfera 0,5 × blindaje 0,4 | **Simplificado**: solo respeta el orden X > M > C |
+
+### 2.2b Dosímetros de la tripulación y blindaje por secciones (reglas del juego sobre datos reales)
+- **Dosímetros:** la tripulación (Lía, Kofi, Mei y Teo) tiene una dosis por persona. La radiación de fondo de cada sol (0,7 mSv, de
+  Curiosity RAD, reducida por el blindaje) y las llamaradas sin refugio suman a **todos**; la dosis de una caminata suma **solo a quien
+  salió**, y limpiar paneles suma a quien tenga menos dosis. El límite de la misión (60 mSv, simplificado) se aplica por persona: el
+  valor que se muestra es la dosis más alta. Código: `dosisATodos`, `dosisA` y `menorDosis` en `src/sim/motor.js`.
+- **Por qué:** los astronautas reales llevan dosímetros personales, y la NASA tiene un límite de carrera por persona (600 mSv) y
+  aplica el principio **ALARA** (tan bajo como sea razonablemente posible). Elegir quién sale para repartir la dosis es la forma en que
+  el juego deja practicar esa idea; **no** describe un procedimiento oficial de asignación de caminatas.
+- **Blindaje por secciones** (tecla B, `src/ui/construccion.js` y `MISION.construccion` en `src/sim/config.js`): pared norte (3 bolsas),
+  pared sur (3), paredes este y oeste (4) y techo (4). Cada sección reduce un 15 % la radiación que entra al hábitat; con las 4 entra
+  el 40 % (= `RADIACION.atenuacionBlindaje`). Se aplica a la dosis diaria y a la de las llamaradas. Ejemplo: 0,70 → 0,60 → 0,49 → 0,39 →
+  0,28 mSv por sol. **Por qué:** cubrir un hábitat con regolito es una idea estudiada para proteger de la radiación; los porcentajes
+  son simplificados.
+- **Regolito:** se recoge en la caminata (mochila de 4 objetos) y se deposita al entrar a la base (1 objeto = 1 bolsa).
 
 ### 2.3 Estudios de NASA OSDR mostrados en el juego
 Buscados con la API de OSDR (`https://osdr.nasa.gov/osdr/data/search`). Cada tarjeta enlaza a la página del estudio.
@@ -98,5 +124,7 @@ Para que un niño de 7 años entienda el trade-off, algunos números son simplif
 - **Retraso fijo de 12 minutos** (el real varía de ~4 a ~24 según la posición de los planetas).
 - **Límite de la misión: 60 mSv** (el límite real de carrera de la NASA es 600 mSv). Se baja para que la radiación importe en 15 sols.
 - **Dosis por llamarada**: X > M > C es una regla de dificultad del juego. La clase de una llamarada no determina por sí sola una dosis en Marte. La llegada de partículas depende de otros factores. El refugio y el blindaje reducen la exposición en el modelo educativo.
+- **Dosímetros por persona y blindaje por secciones**: el reparto de dosis, el 15 % por sección y el factor de 0,85–1,4 de la caminata
+  son reglas de juego para que el trade-off se entienda; no son mediciones.
 - **Hielo en NE Syrtis**: en el Marte real, el hielo superficial abunda más lejos del ecuador; el juego lo coloca cerca de la base para jugar.
   La tarjeta del hielo lo aclara ("sobre todo lejos del ecuador").
