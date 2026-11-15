@@ -39,7 +39,7 @@ export const MISION = {
     multLlamarada: 6,         // si llega una llamarada durante la caminata
     saludRescate: 15,         // si se acaba el oxígeno del traje
     valores: { hielo: 8, roca: 6, regolito: 1, pieza: 1 },  // +O2, +ciencia, +bolsas, +repuestos
-    regolitoPorNivel: 2,      // bolsas de regolito para subir 1 nivel de blindaje
+    regolitoPorNivel: 2,      // OBSOLETO: ya no se usa (las secciones de MISION.construccion tienen su propio costo)
     // Lo que el jugador recoge: qué es (dato real) y para qué sirve en el juego
     objetos: {
       regolito: {
