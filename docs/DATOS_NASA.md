@@ -60,7 +60,8 @@ nunca "en vivo", tal como pide el reto.
 | Superficie de Marte | 0,67 mSv/día (cráter Gale, ago 2012 – jun 2013) | 0,7 mSv por sol | Hassler et al. 2014, *Science* 343 — https://ntrs.nasa.gov/citations/20180007641 |
 | Viaje a Marte | ~1,8 mSv/día | Dato educativo | Curiosity RAD (crucero) |
 | Estación Espacial | ~0,3 mGy/día (detector REM, módulo Columbus, 1–7 abril 2022) · rango típico 0,2–0,5 mSv/día | Panel "¿Qué es real?" (comparación) | API de RadLab — https://visualization.osdr.nasa.gov/radlab/ (consulta de Jorge) |
-| Límite de carrera NASA | 600 mSv | Dato educativo | Estándar NASA de protección radiológica |
+| Tierra | ~2,4 mSv/año (promedio mundial de radiación natural) | Comparación "100 días en la Tierra" | UNSCEAR 2008 — https://www.unscear.org/ |
+| Límite de carrera NASA | menos de 600 mSv | Dato educativo | NASA-STD-3001, resumido en el *Radiation Protection Technical Brief* de OCHMO — https://www.nasa.gov/wp-content/uploads/2023/03/radiation-protection-technical-brief-ochmo.pdf |
 | **Límite de la misión del juego** | — | **60 mSv** (simplificado) | Diseño de juego |
 | Dosis extra por llamarada sin refugio | Muy variable en la realidad | X: 50 · M: 25 · C: 8 mSv × atmósfera 0,5 × blindaje 0,4 | **Simplificado**: solo respeta el orden X > M > C |
 
@@ -75,7 +76,8 @@ nunca "en vivo", tal como pide el reto.
 - **Blindaje por secciones** (tecla B, `src/ui/construccion.js` y `MISION.construccion` en `src/sim/config.js`): pared norte (3 bolsas),
   pared sur (3), paredes este y oeste (4) y techo (4). Cada sección reduce un 15 % la radiación que entra al hábitat; con las 4 entra
   el 40 % (= `RADIACION.atenuacionBlindaje`). Se aplica a la dosis diaria y a la de las llamaradas. Ejemplo: 0,70 → 0,60 → 0,49 → 0,39 →
-  0,28 mSv por sol. **Por qué:** cubrir un hábitat con regolito es una idea estudiada para proteger de la radiación; los porcentajes
+  0,28 mSv por sol. **Por qué:** cubrir un hábitat con regolito es una idea estudiada por la NASA para proteger de la radiación
+  (Simonsen et al., *Space radiation shielding for a Martian habitat* — https://ntrs.nasa.gov/citations/19900062325); los porcentajes
   son simplificados.
 - **Regolito:** se recoge en la caminata (mochila de 4 objetos) y se deposita al entrar a la base (1 objeto = 1 bolsa).
 
