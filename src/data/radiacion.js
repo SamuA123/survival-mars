@@ -19,13 +19,13 @@ export const RADIACION = {
     texto_en: 'On the Space Station, the REM detector in the Columbus module measured about 0.3 mGy per day (April 1–7, 2022). On Mars, Curiosity measured 0.21 mGy per day: the Martian atmosphere, though thin, helps a little.',
   },
   tierra: {
-    // Promedio mundial de radiación natural: ~2,4 mSv por año (UNSCEAR).
-    valor: 0.0066, unidad: 'mSv por día', fuente: 'radlab',
+    // Promedio mundial de radiación natural: ~2,4 mSv por año (UNSCEAR 2008). No es un dato de RadLab.
+    valor: 0.0066, unidad: 'mSv por día', fuente: 'radiacionTierra',
     texto: 'En la Tierra recibimos unos 2,4 mSv en todo un año. ¡En Marte recibirías eso en menos de 4 días!',
   },
   limiteCarreraNASA: {
-    // Estándar de la NASA (2022): máximo 600 mSv en toda la carrera de un astronauta.
-    valor: 600, unidad: 'mSv', fuente: 'radlab',
+    // Estándar de la NASA (NASA-STD-3001): dosis efectiva de carrera menor a 600 mSv. No es un dato de RadLab.
+    valor: 600, unidad: 'mSv', fuente: 'limiteNASA',
     texto: 'La NASA no deja que un astronauta reciba más de 600 mSv en toda su carrera.',
   },
   // Dosis extra (SIMPLIFICADA para el juego) si la tripulación NO se refugia de una llamarada.

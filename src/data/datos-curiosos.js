@@ -16,7 +16,7 @@ export const DATOS = {
     texto_en: 'The light from a solar flare takes about 13 minutes to reach Mars; the dangerous particles can take from minutes to hours. That is why NASA watches the Sun all the time!' },
   radiacion: { texto: 'Marte tiene una atmósfera muy delgada y no tiene un campo magnético global, así que protege poco de la radiación. El rover Curiosity la mide con su instrumento RAD.', fuente: 'curiosityRAD',
     texto_en: 'Mars has a very thin atmosphere and no global magnetic field, so it gives little protection from radiation. The Curiosity rover measures it with its RAD instrument.' },
-  regolito: { texto: 'Cubrir el hábitat con regolito (la "tierra" de Marte) es una idea real para protegerse de la radiación: la tierra frena muchas partículas.', fuente: 'curiosityRAD',
+  regolito: { texto: 'Cubrir el hábitat con regolito (la "tierra" de Marte) es una idea real para protegerse de la radiación: la tierra frena muchas partículas.', fuente: 'blindajeRegolito',
     texto_en: 'Covering the habitat with regolith (Martian "soil") is a real idea to protect against radiation: the soil stops many particles.' },
   retraso: { texto: 'Un mensaje tarda entre 4 y 24 minutos en viajar de la Tierra a Marte, según dónde estén los planetas. ¡Ida y vuelta puede ser casi una hora! En una emergencia, la tripulación decide sola.', fuente: 'retraso',
     texto_en: 'A message takes between 4 and 24 minutes to travel from Earth to Mars, depending on where the planets are. A round trip can take almost an hour! In an emergency, the crew decides on its own.' },

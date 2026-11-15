@@ -13,7 +13,7 @@ export const DIFICULTADES = {
     resumen: '10 sols · 15 segundos para decidir · sin apagón de comunicaciones',
     tiempoEmergencia: 15,
     mision: {
-      maxSol: 10, bateriaInicial: 30, comidaInicial: 50, metaCiencia: 25, conjuncion: [],
+      maxSol: 10, bateriaInicial: 30, comidaInicial: 50, metaCiencia: 35, conjuncion: [],
       guion: { 2: 'llamarada', 4: 'reciclador', 6: 'tormenta', 9: 'remolino' },
       avisos: {
         1: ['¡Bienvenida, tripulación de cadetes! Cada mensaje tarda unos 12 minutos en llegar. En una emergencia, ustedes deciden.',

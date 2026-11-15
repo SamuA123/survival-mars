@@ -219,4 +219,28 @@ export const FUENTES = {
     uso_en: 'Space also affects the eyes.',
     papel: 'texto',
   },
+  radiacionTierra: {
+    nombre: 'UNSCEAR (Naciones Unidas) — radiación natural en la Tierra, informe 2008',
+    nombre_en: 'UNSCEAR (United Nations) — natural radiation on Earth, 2008 report',
+    url: 'https://www.unscear.org/',
+    uso: 'Promedio mundial de radiación natural: unos 2,4 mSv por año. Sirve para comparar con Marte.',
+    uso_en: 'World average natural radiation: about 2.4 mSv per year. Used to compare with Mars.',
+    papel: 'texto',
+  },
+  limiteNASA: {
+    nombre: 'NASA OCHMO — Radiation Protection Technical Brief (NASA-STD-3001)',
+    nombre_en: 'NASA OCHMO — Radiation Protection Technical Brief (NASA-STD-3001)',
+    url: 'https://www.nasa.gov/wp-content/uploads/2023/03/radiation-protection-technical-brief-ochmo.pdf',
+    uso: 'Límite real de la NASA: menos de 600 mSv en toda la carrera de un astronauta.',
+    uso_en: 'NASA\'s real limit: less than 600 mSv over an astronaut\'s whole career.',
+    papel: 'texto',
+  },
+  blindajeRegolito: {
+    nombre: 'NASA NTRS — Space radiation shielding for a Martian habitat (Simonsen et al., 1990)',
+    nombre_en: 'NASA NTRS — Space radiation shielding for a Martian habitat (Simonsen et al., 1990)',
+    url: 'https://ntrs.nasa.gov/citations/19900062325',
+    uso: 'Estudio de la NASA sobre cuánto protege cubrir el hábitat con regolito marciano.',
+    uso_en: 'NASA study on how much covering the habitat with Martian regolith protects the crew.',
+    papel: 'texto',
+  },
 };
