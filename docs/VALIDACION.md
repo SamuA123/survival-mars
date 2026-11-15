@@ -1,33 +1,58 @@
-# Validación y siguientes pasos
+# Validation and next steps
 
-## Verificación técnica
+## Technical checks
 
-Pruebas automatizadas, sin dependencias de ejecución del juego:
+Automated tests, with no game dependencies to install (Node 22 or later):
 
-```powershell
-node --experimental-default-type=module --test tests/regresiones.mjs
+```bash
+node --test tests/regresiones.mjs tests/mecanicas.mjs tests/guardado.mjs
 ```
 
-Incluyen respuestas vacías y erróneas de DONKI, segunda fuente, caché con hora original, respaldo histórico, contenido bilingüe y 864 planes de energía comparados con el avance real del motor.
+- `tests/regresiones.mjs`: empty and invalid DONKI answers; the three DONKI sources in order (flare list, flare notifications with
+  strong flares only, CCMC server); a cache that keeps the original query time; an honest historical fallback; bilingual content;
+  864 power plans compared with the engine's real progress; hunger, tasks, delayed replies and video calls; and the random emergency
+  schedule (the storm is announced 2 sols ahead, never overlaps the solar conjunction, and demo mode keeps a fixed script).
+- `tests/mecanicas.mjs`: shielding by sections (roof vs. walls), dose per astronaut and the spacewalk backpack.
+- `tests/guardado.mjs`: saving the mission and continuing it later.
 
-## Revisión a partir del feedback de un jugador
+`tests/browser.mjs` is the visual test and needs Chrome (see below); it is not part of the command above.
 
-El feedback sobre la URL original motivó estos ajustes en `samuel`:
+## Balance check: no free safe choice
 
-- Inicio con objetivo, ciclo de tres acciones y elección explícita de guía en cada partida. Saltarla no la marca como completada.
-- Panel independiente para cada edificio; tripulación e inventario tienen accesos propios desde Control base.
-- Recolección con aviso de 2,5 segundos y ubicación calculada para evitar el HUD y los controles. Las explicaciones completas están en Inventario.
-- Invernadero con cosecha, consumo, cambio de reservas y duración estimada. Comida inicial: 50 en Cadete y 40 en Comandante. Con reservas de 20 o menos hay una penalización de hambre de 3 de salud por sol; sin comida, de 10. Son reglas del juego.
-- Antena con bandeja de avisos y respuestas, cantidad de mensajes pendientes y explicación de cada nivel. Las respuestas esperan si la antena está apagada.
+The challenge asks that no option be "safe" at no cost. We simulated 400 games per strategy (Commander rank, random emergency days):
 
-Las pruebas de Chrome cubren la guía completa, un único sistema por edificio y la ausencia de superposición del aviso de recolección en 1440×1000, 390×844 y 844×390. Se revisa que el botón para terminar el sol no quede recortado en móvil. Las pruebas del motor cubren hambre, recepción de tareas, respuestas pendientes y videollamadas.
+| Strategy | Result |
+|---|---|
+| Lab at level 1, always take shelter, never go outside | Always survives, but **only 1 star**: not enough science |
+| Lab at level 2, never go outside | 2 or 3 stars, with a risk of blackouts during the dust storm |
+| Lab at level 1 plus spacewalks for rocks | 2 or 3 stars, paying with suit oxygen and radiation |
+| Never take shelter from flares | **Loses every time** (radiation limit) |
 
-La siguiente validación humana debe confirmar si el jugador entiende la comida y la antena sin explicación del equipo. El feedback original es evidencia de problemas de uso; todavía no hay una prueba humana de estas correcciones.
+Higher scores require taking some risk, and ignoring radiation always fails. The science goal (60 points for Commander, 35 for Cadet)
+was raised from 40 and 25 for this reason: before, the safe strategy earned 3 stars about 85% of the time.
 
-La prueba visual usa el protocolo de depuración de Chrome y Node 22+, sin Playwright:
+## Changes made after feedback from one player
 
-1. Servir el proyecto: `python -m http.server 5500 --bind 127.0.0.1`.
-2. Abrir Chrome con un perfil temporal distinto al personal:
+Feedback on the original link led to these adjustments:
+
+- Start screen with the goal, a three-action loop and an explicit choice of guide in every game. Skipping it does not mark it as completed.
+- A separate panel for each building; crew and inventory have their own entries from Base control.
+- Pick-up notice of 2.5 seconds, placed so it avoids the HUD and the controls. Full explanations are in the Inventory.
+- Greenhouse with harvest, consumption, change in stores and estimated duration. Starting food: 50 for Cadet and 40 for Commander. With
+  stores at 20 or less there is a hunger penalty of 3 health per sol; with no food, 10. These are game rules.
+- Antenna with an inbox of alerts and replies, the number of pending messages and an explanation of each level. Replies wait if the
+  antenna is switched off.
+
+The Chrome tests cover the full guide, one system per building and no overlap of the pick-up notice at 1440×1000, 390×844 and 844×390.
+They check that the end-sol button is not cut off on phones. The engine tests cover hunger, receiving tasks, pending replies and video calls.
+
+The next human check should confirm whether players understand food and the antenna without the team explaining them. The original
+feedback is evidence of usability problems; these fixes have not been tested with people yet.
+
+The visual test uses the Chrome debugging protocol and Node 22 or later, without Playwright:
+
+1. Serve the project: `python -m http.server 5500 --bind 127.0.0.1`.
+2. Open Chrome with a temporary profile, separate from your personal one:
 
 ```powershell
 $perfilQA = Join-Path (Get-Location) 'node_modules\chrome-qa'
@@ -35,23 +60,27 @@ Start-Process -FilePath 'C:\Program Files\Google\Chrome\Application\chrome.exe' 
 node tests/browser.mjs
 ```
 
-El script crea y cierra una pestaña propia. Revisa inicio, conservación del nombre, ubicación, consola, eventos y sus resultados, temporizador, ayuda, datos NASA, demo completa, repaso bilingüe y diseño móvil. Guarda capturas en `node_modules/qa/` (fuera de Git). El juego carga Three.js desde CDN: la prueba visual necesita acceso a ese CDN.
+The script opens and closes its own tab. It checks the start screen, keeping the name, location, console, events and their results,
+timer, help, NASA data, the full demo, the bilingual review and the mobile layout. It saves screenshots in `node_modules/qa/` (outside
+Git). The game loads Three.js from a CDN, so the visual test needs access to that CDN.
 
-## Prueba con usuarios: pendiente
+## Testing with children: pending
 
-No se han realizado pruebas con niños como parte de esta implementación. Las pruebas automáticas verifican funcionamiento; no demuestran aprendizaje.
+No tests with children have been carried out as part of this work. The automated tests check that the game works; they do not show
+that players learn.
 
-Probar con 3–5 participantes de 7–12 años, con acompañamiento de un adulto. No hace falta registrar nombres ni información personal.
+Test with 3 to 5 participants aged 7 to 12, with an adult present. There is no need to record names or personal information.
 
-Antes de jugar, preguntar sin dar la respuesta:
+Before playing, ask without giving the answer:
 
-1. Si falta electricidad, ¿qué relación tiene con el aire de la base?
-2. ¿Qué se pierde al proteger a todos en un refugio?
-3. ¿Por qué la Tierra no puede resolver una emergencia inmediatamente?
+1. If electricity runs short, how is that related to the air in the base?
+2. What do you lose by protecting everyone in a shelter?
+3. Why can't Earth solve an emergency right away?
 
-Observar una partida corta sin indicar dónde hacer clic. Anotar si comprende las instrucciones, dónde pide ayuda y si puede explicar una consecuencia. Repetir las preguntas antes de mostrar las respuestas del repaso final; después dejar que practique con el repaso.
+Watch a short game without saying where to click. Note whether they understand the instructions, where they ask for help and whether
+they can explain a consequence. Ask the questions again before showing the answers in the final review; then let them practise with the review.
 
-| Participante anónimo / rango de edad | Respuestas antes (0–3) | Después, antes de ver feedback (0–3) | Primera dificultad | ¿Explica una decisión con sus palabras? |
+| Anonymous participant / age range | Answers before (0 to 3) | After, before feedback (0 to 3) | First difficulty | Explains a decision in their own words? |
 |---|---|---|---|---|
 | A | | | | |
 | B | | | | |
@@ -59,12 +88,13 @@ Observar una partida corta sin indicar dónde hacer clic. Anotar si comprende la
 | D | | | | |
 | E | | | | |
 
-Usar los resultados como observación exploratoria de una muestra pequeña. El contador del repaso permite corregir respuestas: sirve para practicar, no como medición independiente de aprendizaje.
+Treat the results as an exploratory observation of a small sample. The review counter lets players correct their answers: it is for
+practice, not an independent measure of learning.
 
-## Antes de enviar
+## Before submitting
 
-- Comprobar el enlace público en una ventana de incógnito y en un teléfono.
-- Confirmar que Cloudflare esté sirviendo el commit revisado: un push a `samuel` no garantiza que el dominio de producción cambie.
-- Grabar el recorrido de `?demo=1&lang=en` y conservar el video para presentar sin depender de la red.
-- Confirmar campos, formato de video y hora de cierre en la página del equipo de Space Apps.
-- Añadir únicamente resultados de usuarios que realmente se hayan observado.
+- Check the public link in a private window and on a phone.
+- Confirm that Cloudflare is serving the reviewed commit: the public site is deployed from `main`, so a push to another branch does not change it.
+- Record a walkthrough of `?demo=1&lang=en` and keep the video so the presentation does not depend on the network.
+- Confirm the fields, video format and deadline on the Space Apps team page.
+- Only add results from users who were actually observed.

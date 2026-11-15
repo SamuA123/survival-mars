@@ -5,8 +5,8 @@ balanceando energía, soporte vital, comida, blindaje contra radiación y retras
 **Entrega: 15/11/2026.** Prioridad: que funcione y enseñe trade-offs reales con datos de la NASA.
 
 **Antes de trabajar, lee:**
-- `docs/RETO.md`: qué pide el reto, criterios de los jueces y recursos NASA oficiales.
-- `docs/PLAN.md`: decisiones tomadas, ramas, quién hace qué y lista de tareas.
+- `docs/equipo/RETO.md`: qué pide el reto, criterios de los jueces y recursos NASA oficiales.
+- `docs/equipo/PLAN.md`: decisiones tomadas, ramas, quién hace qué y lista de tareas.
 
 ## Tecnología
 - Three.js por import map desde CDN (sin npm, sin build). ES modules nativos.

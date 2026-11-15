@@ -76,16 +76,16 @@ NE Syrtis (Mars 2020 finalist site) / Mars Trek · MOXIE · Opportunity · MRO �
 Full details and simplifications: **[docs/DATOS_NASA.md](docs/DATOS_NASA.md)**.
 
 ## Documentation
-The NASA data document is in English; the other team documents are written in Spanish.
+The documents for judges and teachers are in English. Internal team notes (in Spanish) are kept in `docs/equipo/` and in `docs/PITCH.md`.
 
 | Document | Audience |
 |---|---|
 | [docs/DATOS_NASA.md](docs/DATOS_NASA.md) | Judges: which NASA data drives each mechanic, and why |
-| [docs/GUIA_DOCENTE.md](docs/GUIA_DOCENTE.md) | Teachers: lesson plan, questions and a printable log |
-| [docs/PITCH.md](docs/PITCH.md) | Team: video script and submission text |
-| [docs/VALIDACION.md](docs/VALIDACION.md) | Technical tests and the pending protocol for testing with children |
-| [docs/RETO.md](docs/RETO.md) · [docs/PLAN.md](docs/PLAN.md) | Team: challenge analysis and decisions |
-| [CLAUDE.md](CLAUDE.md) | Developers: code structure |
+| [docs/GUIA_DOCENTE.md](docs/GUIA_DOCENTE.md) | Teachers: lesson plan, discussion questions and a printable log |
+| [docs/VALIDACION.md](docs/VALIDACION.md) | Judges and developers: automated tests, balance check and the pending protocol for testing with children |
+| [docs/PITCH.md](docs/PITCH.md) | Team (Spanish): video script and submission text |
+| [docs/equipo/](docs/equipo/) | Team (Spanish): challenge analysis and decisions |
+| [CLAUDE.md](CLAUDE.md) | Developers (Spanish): code structure |
 
 ## Run locally
 Nothing to install:
