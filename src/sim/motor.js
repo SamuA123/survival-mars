@@ -192,15 +192,20 @@ export const astronauta = (S, id) => S.tripulacion?.find(a => a.id === id) || nu
 // ---------------------------------------------------------------------
 //  BLINDAJE POR SECCIONES (modo construcción, tecla B)
 //  Cada sección gasta regolito de la base y reduce DE VERDAD la radiación interior
-//  (dosis diaria y llamaradas). S.blindaje (0..3) se deriva para el resto del código.
+//  (dosis diaria y llamaradas). Cada sección protege distinto: las paredes frenan más la radiación
+//  de fondo y el techo frena más las llamaradas. S.blindaje (0..3) se deriva para el resto del código.
 // ---------------------------------------------------------------------
 const SECCIONES = () => MISION.construccion.secciones;
 
-// Parte de la radiación que entra al hábitat: 1 = sin blindaje, 0.4 = completo
-export function factorBlindaje(S) {
-  const p = Object.entries(SECCIONES()).reduce((a, [id, s]) => a + (S.secciones?.[id] ? s.proteccion : 0), 0);
+// Parte de la radiación que entra al hábitat: 1 = sin blindaje, 0.4 = completo.
+// tipo 'fondo' (dosis diaria, rayos cósmicos: protegen más las paredes) o 'llamarada' (llega desde arriba: protege más el techo).
+const campoProteccion = tipo => (tipo === 'llamarada' ? 'proteccionLlamarada' : 'proteccion');
+export function factorBlindaje(S, tipo = 'fondo') {
+  const campo = campoProteccion(tipo);
+  const p = Object.entries(SECCIONES()).reduce((a, [id, s]) => a + (S.secciones?.[id] ? (s[campo] ?? s.proteccion) : 0), 0);
   return r1(Math.max(0, 1 - p) * 100) / 100;
 }
+export const factorBlindajeLlamarada = S => factorBlindaje(S, 'llamarada');
 // Fracción de radiación que ENTRA al hábitat (0..1). La usa el panel de radiación de la caminata (eva-hud.js).
 export const proteccionHabitat = S => factorBlindaje(S);
 export const seccionesHechas = S => Object.keys(SECCIONES()).filter(id => S.secciones?.[id]).length;
@@ -344,7 +349,7 @@ function elegirLlamarada() {
 export function dosisLlamarada(S, clase) {
   const base = RADIACION.llamarada[clase[0]] ?? 8;
   const mag = Math.min(parseFloat(clase.slice(1)) || 1, 5);
-  const escudo = factorBlindaje(S);   // cada sección construida protege desde ya
+  const escudo = factorBlindaje(S, 'llamarada');   // cada sección protege desde ya; el techo es el que más
   return Math.round(base * (0.8 + mag / 10) * RADIACION.atenuacionAtmosfera * escudo);
 }
 
