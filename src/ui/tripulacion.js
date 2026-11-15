@@ -22,14 +22,14 @@ export const MENSAJE_NASA = () => L(
   '💡 Each astronaut wears a dosimeter, and NASA tries to keep everyone\'s radiation as low as possible: taking turns outside helps.');
 
 // Un dosímetro (tarjeta) por astronauta
-function tarjeta(a, { boton = false, elegido = false, menor = false } = {}) {
+function tarjeta(a, { boton = false, elegido = false, menor = false, num = 0 } = {}) {
   const contenido = `
     <span class="dos-casco" style="--c:${hex(a.color)}">🧑‍🚀</span>
     <span class="dos-txt"><b>${a.nombre}</b>${menor ? `<em>${L('menos dosis', 'lowest dose')}</em>` : ''}
       <span class="dos-barra ${nivel(a.dosis)}" title="${n1(a.dosis)} ${L('de', 'of')} ${MISION.radLimite} mSv"><i style="width:${pct(a.dosis)}%"></i></span>
       <small>☢️ ${n1(a.dosis)} mSv · ${pct(a.dosis)}% ${L('del límite', 'of the limit')}</small></span>`;
   return boton
-    ? `<button type="button" class="dos-card ${elegido ? 'sel' : ''}" data-astro="${a.id}" aria-pressed="${elegido}" style="--c:${hex(a.color)}">${contenido}</button>`
+    ? `<button type="button" class="dos-card ${elegido ? 'sel' : ''}" data-astro="${a.id}" aria-pressed="${elegido}" style="--c:${hex(a.color)}; position: relative">${num ? `<kbd class="tecla dos-num">${num}</kbd>` : ''}${contenido}</button>`
     : `<div class="dos-card" style="--c:${hex(a.color)}">${contenido}</div>`;
 }
 
@@ -59,10 +59,10 @@ export function elegirAstronauta(S) {
           ${botonIdioma()}
           <h2>🧑‍🚀 ${L('¿Quién sale a la caminata?', 'Who goes on the spacewalk?')}</h2>
           <p>${L('Afuera, solo quien sale recibe la radiación de la caminata. Mira los dosímetros:', 'Outside, only the person who goes out gets the spacewalk radiation. Check the dosimeters:')}</p>
-          <div class="dos-lista">${S.tripulacion.map(x => tarjeta(x, { boton: true, elegido: x.id === elegido, menor: x.id === menorDosis(S)?.id })).join('')}</div>
+          <div class="dos-lista">${S.tripulacion.map((x, i) => tarjeta(x, { boton: true, elegido: x.id === elegido, menor: x.id === menorDosis(S)?.id, num: i + 1 })).join('')}</div>
           <p class="dos-nota">${MENSAJE_NASA()}</p>
           <div class="dos-acciones">
-            <button type="button" class="btn-grande dos-ok">🚪 ${L(`Sale ${a.nombre}`, `${a.nombre} goes out`)}</button>
+            <button type="button" class="btn-grande dos-ok">🚪 ${L(`Sale ${a.nombre}`, `${a.nombre} goes out`)}<kbd class="tecla">Enter</kbd></button>
             <button type="button" class="dos-cancelar">${L('Cancelar (Esc)', 'Cancel (Esc)')}</button>
           </div>
         </div>`;

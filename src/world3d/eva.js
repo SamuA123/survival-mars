@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { alturaSuelo } from './terreno.js';
+import { empujarFuera } from './colisiones.js';
 import { MISION } from '../sim/config.js';
 import { proteccionHabitat } from '../sim/motor.js';
 import { tr, onIdioma } from '../ui/i18n.js';   // i18n no importa nada del mundo 3D: sin ciclos
@@ -17,6 +18,7 @@ export const PUERTA = new THREE.Vector3(0, 0, 6.4);
 const PANELES = new THREE.Vector3(-13, 0, 4);
 const RADIO_MAX = 76;
 const VELOCIDAD = 7.5;
+const RADIO_JUGADOR = 0.6;
 
 // Lo más valioso está más lejos de la base → hay que arriesgar más.
 // Nombre, ícono, color y explicación vienen de MISION.eva.objetos (src/sim/config.js).
@@ -112,7 +114,7 @@ export class ControlEVA {
     else do {
       const a = Math.random() * Math.PI * 2, r = T.rMin + Math.random() * (T.rMax - T.rMin);
       x = Math.cos(a) * r; z = Math.sin(a) * r; intentos++;
-    } while (intentos < 30 && OCUPADO.some(([ox, oz, rr]) => Math.hypot(x - ox, z - oz) < rr));
+    } while (intentos < 60 && (OCUPADO.some(([ox, oz, rr]) => Math.hypot(x - ox, z - oz) < rr) || !this.m.libre(x, z, 1.4)));
     const g = new THREE.Group();
     const malla = this._modelo(tipo);
     malla.scale.setScalar(1.7);
@@ -237,6 +239,7 @@ export class ControlEVA {
     this.items[tipo]--;
     const p = this.jugador.position, ang = this.jugador.rotation.y + Math.PI;
     const pos = { x: p.x + Math.sin(ang) * 1.6, z: p.z + Math.cos(ang) * 1.6 };
+    empujarFuera(pos, 1, this.m.obstaculos({ conAstros: false, conJugador: false }));   // que no quede dentro de una roca
     this.objetos.push(this._crearObjeto(tipo, TIPOS[tipo], pos));
     this._popup(`−1 ${TIPOS[tipo].icono}`, p);
   }
@@ -261,11 +264,10 @@ export class ControlEVA {
       const derecha = new THREE.Vector3().crossVectors(adelante, new THREE.Vector3(0, 1, 0));
       const mov = adelante.multiplyScalar(iy).add(derecha.multiplyScalar(ix));
       p.addScaledVector(mov, VELOCIDAD * dt);
+      // No atravesar edificios, rocas grandes, el rover ni a los compañeros (los objetos para recoger sí se pisan)
+      empujarFuera(p, RADIO_JUGADOR, m.obstaculos({ conJugador: false }));
       const r = Math.hypot(p.x, p.z);
       if (r > RADIO_MAX) { p.x *= RADIO_MAX / r; p.z *= RADIO_MAX / r; }
-      // No atravesar el hábitat
-      const rh = Math.hypot(p.x, p.z);
-      if (rh < 4.8) { p.x *= 4.8 / rh; p.z *= 4.8 / rh; }
       this.jugador.rotation.y = Math.atan2(mov.x, mov.z);
       this.paso = (this.paso || 0) + dt * 10;
       // Huellas

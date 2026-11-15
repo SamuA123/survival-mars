@@ -1,6 +1,6 @@
 // =====================================================================
 //  🧱 MISIÓN GUIADA DE CONSTRUCCIÓN (opcional, después del tutorial o desde ❓)
-//  salir a caminar → recoger 3 bolsas de regolito → volver (se depositan) →
+//  salir a caminar → recoger 3 de regolito → volver (se depositan) →
 //  abrir construcción (B o botón) → construir la Pared norte → ver cómo bajó la radiación.
 //
 //  El paso NO es una lista fija: se deduce del estado del juego en cada momento.
@@ -31,8 +31,8 @@ let activa = null;    // la misión en curso (solo una a la vez)
 // ---------------------------------------------------------------------
 const PASOS = {
   intro: {
-    texto: m => L(`🧱 <b>Misión: ¡proteger el hábitat!</b> La radiación del espacio atraviesa las paredes. Vamos a juntar <b>${m.costo} bolsas de regolito</b> (la tierra suelta de Marte) y construir la <b>${m.nombre()}</b>.`,
-      `🧱 <b>Mission: protect the habitat!</b> Space radiation gets through the walls. Let's collect <b>${m.costo} bags of regolith</b> (loose Martian soil) and build the <b>${m.nombre()}</b>.`),
+    texto: m => L(`🧱 <b>Misión: ¡proteger el hábitat!</b> La radiación del espacio atraviesa las paredes. Vamos a juntar <b>${m.costo} de regolito</b> (la tierra suelta de Marte) y construir la <b>${m.nombre()}</b>.`,
+      `🧱 <b>Mission: protect the habitat!</b> Space radiation gets through the walls. Let's collect <b>${m.costo} regolith</b> (loose Martian soil) and build the <b>${m.nombre()}</b>.`),
     boton: () => L('¡Vamos! ▶', "Let's go! ▶"),
   },
   esperar: {
@@ -59,13 +59,13 @@ const PASOS = {
   },
   volver: {
     objetivo: () => visible('#evaEntrar') ? '#evaEntrar' : '#evaBase',
-    texto: m => L(`🏠 ¡Ya tienes ${m.llevas}! Sigue la <b>flecha</b> hasta la puerta de la base y pulsa <b>Entrar</b> (o E). Las bolsas se guardan en la base.`,
-      `🏠 You have ${m.llevas}! Follow the <b>arrow</b> to the base door and press <b>Go in</b> (or E). The bags are stored in the base.`),
+    texto: m => L(`🏠 ¡Ya tienes ${m.llevas}! Sigue la <b>flecha</b> hasta la puerta de la base y pulsa <b>Entrar</b> (o E). El regolito se guarda en la base.`,
+      `🏠 You have ${m.llevas}! Follow the <b>arrow</b> to the base door and press <b>Go in</b> (or E). The regolith is stored in the base.`),
   },
   abrirB: {
     objetivo: () => visible('.btn-construccion') ? '.btn-construccion' : '.etiqueta[data-edificio="habitat"]', abrir: 'habitat',
-    texto: m => L(`🧱 ¡Tienes <b>${m.enBase} bolsas</b> en la base! Abre el <b>modo construcción</b>: pulsa la tecla <b>B</b> o el botón 🧱 del Hábitat.`,
-      `🧱 You have <b>${m.enBase} bags</b> in the base! Open <b>build mode</b>: press the <b>B</b> key or the 🧱 button in the Habitat.`),
+    texto: m => L(`🧱 ¡Tienes <b>${m.enBase} de regolito</b> en la base! Abre el <b>modo construcción</b>: pulsa la tecla <b>B</b> o el botón 🧱 del Hábitat.`,
+      `🧱 You have <b>${m.enBase} regolith</b> in the base! Open <b>build mode</b>: press the <b>B</b> key or the 🧱 button in the Habitat.`),
   },
   construir: {
     objetivo: m => `.cons-sec[data-sec="${m.id}"] .cons-btn`,
