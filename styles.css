@@ -639,3 +639,20 @@ body.en-edificio .hud-top { visibility: visible; }
   .eva-top { top: 145px; bottom: auto; height: auto; }
   #evaTarjeta { width: min(200px, calc(100vw - 24px)); font-size: 12px; }
 }
+
+/* Caminata en celular HORIZONTAL (poca altura): el panel no debe tapar la pantalla.
+   Siempre visibles: oxígeno, radiación, mochila, objetos, nivel y exposición.
+   Se ocultan: título, tiempo afuera, protección del hábitat y textos de ayuda (siguen en escritorio). */
+@media (max-height: 500px) and (orientation: landscape) {
+  body.modo-eva .hud-top { display: none; }
+  body.modo-eva .eva-top { top: 6px; left: 6px; right: auto; transform: none; width: min(380px, 52vw);
+    max-height: calc(100dvh - 12px); overflow-y: auto; padding: 4px 8px; gap: 2px 8px; border-width: 2px; }
+  body.modo-eva .eva-tit, body.modo-eva .eva-plan small, body.modo-eva .eva-mochila small { display: none; }
+  body.modo-eva .eva-barra { font-size: 11px; }
+  body.modo-eva .eva-barra .barra { height: 8px; }
+  body.modo-eva .eva-mochila, body.modo-eva .eva-plan { font-size: 11px; }
+  body.modo-eva .eva-radpanel { gap: 3px; margin-top: 2px; }
+  body.modo-eva .eva-radpanel .rp { font-size: 10px; padding: 0 6px; }
+  body.modo-eva .eva-radpanel .rp:nth-child(3), body.modo-eva .eva-radpanel .rp-prot { display: none; }
+  body.modo-eva .eva-base { top: 62px; right: 8px; bottom: auto; }   /* debajo de los botones de arriba */
+}

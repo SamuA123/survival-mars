@@ -44,13 +44,24 @@ function pintarIndicador() {
   }
   const [es, en, cls] = nivelRiesgo();
   const fuertes = recientesFuertes();
-  const alerta = simulacro || fuertes.length > 0;
-  const fuente = CLIMA.real ? 'NASA DONKI' : L('archivo histórico NASA', 'NASA historical archive');
-  el.className = `sol-estado r-${cls} ${alerta ? 'alerta' : ''}`;
-  el.title = L(`Estado del Sol según ${fuente}. Toca para ver los datos reales.`, `Sun status from ${fuente}. Tap to see the real data.`);
-  el.innerHTML = alerta
-    ? `🚨 <b>${L('ALERTA SOLAR', 'SOLAR ALERT')}</b>${simulacro ? ` <small>(${L('simulacro', 'drill')})</small>` : ''} · ☢️ ${L('Riesgo', 'Risk')} <b>${L(es, en)}</b>`
-    : `☀️ ${L('Actividad solar normal', 'Normal solar activity')} · ☢️ ${L('Riesgo', 'Risk')} <b>${L(es, en)}</b>`;
+  // Dos cosas distintas en la misma barra (antes podía leerse "normal" y "riesgo ALTO" a la vez):
+  //  1) LO QUE OBSERVÓ LA NASA (DONKI): tranquilo / alerta / sin datos recientes · o un simulacro, que no es dato real
+  //  2) EL ESCENARIO DEL JUEGO: el riesgo de la misión (misma lógica de siempre: CLIMA.riesgo)
+  const sinDatos = !simulacro && (!CLIMA.real || !navigator.onLine);
+  const alerta = !!simulacro || (!sinDatos && fuertes.length > 0);
+  const obs = simulacro
+    ? `🚨 <b>${L('ALERTA SOLAR', 'SOLAR ALERT')}</b> <small>(${L('simulacro', 'drill')})</small>`
+    : sinDatos
+      ? `📴 ${L('Sin datos recientes', 'No recent data')}`
+      : alerta
+        ? `🚨 <b>${L('ALERTA SOLAR', 'SOLAR ALERT')}</b> <small class="se-fuente">(NASA DONKI)</small>`
+        : `☀️ ${L('Sol tranquilo', 'Quiet Sun')} <small class="se-fuente">(NASA DONKI)</small>`;
+  el.className = `sol-estado r-${cls} ${alerta ? 'alerta' : ''} ${sinDatos ? 'sin-datos' : ''}`;
+  el.title = L(
+    `Izquierda: lo que observó la NASA (DONKI) en los últimos días${simulacro ? ' — ahora es un SIMULACRO, no un dato real' : sinDatos ? ' — ahora no hay datos recientes' : ''}. Derecha: el riesgo de esta misión en el juego. Toca para ver los datos reales.`,
+    `Left: what NASA observed (DONKI) in the last few days${simulacro ? ' — this is a DRILL, not real data' : sinDatos ? ' — no recent data right now' : ''}. Right: this mission's risk in the game. Tap to see the real data.`);
+  el.innerHTML = `<span class="se-obs">${obs}</span><span class="se-sep" aria-hidden="true">·</span>`
+    + `<span class="se-mision">☢️ ${L('Riesgo de la misión', 'Mission risk')}: <b>${L(es, en)}</b></span>`;
   ubicar(el);
 }
 
@@ -135,11 +146,15 @@ const css = document.createElement('style');
 css.textContent = `
   .sol-estado { position: fixed; z-index: 3; border: 2px solid var(--tinta, #2b1408); background: var(--papel, #fff4e3); color: var(--tinta, #2b1408);
     border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 13px; box-shadow: var(--sombra, 3px 3px 0 #2b1408); cursor: pointer; }
-  .sol-estado.r-bajo b { color: var(--verde, #2e9a4a); }
-  .sol-estado.r-medio b { color: #b07a00; }
-  .sol-estado.r-alto b { color: var(--marte, #e2582c); }
+  .sol-estado { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; text-align: left; }
+  .sol-estado .se-sep { opacity: .5; }
+  .sol-estado .se-fuente { font-size: 10px; opacity: .75; }
+  .sol-estado.sin-datos .se-obs { opacity: .75; }
+  .sol-estado.r-bajo .se-mision b { color: var(--verde, #2e9a4a); }
+  .sol-estado.r-medio .se-mision b { color: #b07a00; }
+  .sol-estado.r-alto .se-mision b { color: var(--marte, #e2582c); }
   .sol-estado.alerta { background: var(--rojo, #e53935); color: #fff; animation: latido .9s infinite; }
-  .sol-estado.alerta b { color: #fff; }
+  .sol-estado.alerta b, .sol-estado.alerta .se-mision b { color: #fff; }
   #alertaSolar { position: fixed; z-index: 25; left: 50%; top: 18%; transform: translate(-50%, -20px); opacity: 0; pointer-events: none;
     width: min(440px, calc(100% - 24px)); background: var(--papel, #fff4e3); color: var(--tinta, #2b1408); border: 3px solid var(--rojo, #e53935);
     border-radius: 18px; padding: 14px 16px; box-shadow: var(--sombra, 4px 4px 0 #2b1408); transition: all .3s; }
@@ -149,7 +164,11 @@ css.textContent = `
   #alertaSolar p { margin: 8px 0; font-size: 15px; }
   #alertaSolar .as-dec { font-weight: 700; }
   #alertaSolar .as-ok { border: 2px solid var(--tinta, #2b1408); background: var(--marte, #e2582c); color: #fff; border-radius: 12px; padding: 8px 16px; font: inherit; font-weight: 700; }
-  @media (max-width: 760px) { .sol-estado { font-size: 11px; padding: 3px 8px; } }`;
+  @media (max-width: 760px) {
+    /* Celular: dos líneas cortas (observado arriba, misión abajo); la fuente queda en el tooltip */
+    .sol-estado { font-size: 11px; padding: 3px 10px; flex-direction: column; align-items: flex-start; gap: 0; border-radius: 12px; }
+    .sol-estado .se-sep, .sol-estado .se-fuente { display: none; }
+  }`;
 document.head.appendChild(css);
 
 if (document.readyState === 'loading') addEventListener('DOMContentLoaded', iniciar); else iniciar();

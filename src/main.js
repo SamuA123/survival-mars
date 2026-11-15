@@ -132,7 +132,8 @@ async function salirAExplorar() {
   mostrarHUDEVA(mundo.eva, S.plan);
   mundo.eva.iniciar({
     o2PorSeg: E.o2TrajePorSeg, radPorSeg: E.radPorSeg, multLlamarada: E.multLlamarada,
-    riesgo: CLIMA.riesgo, eficienciaPaneles: S.eficiencia,
+    // Getter: si llega una alerta solar DURANTE la caminata, la dosis afuera cambia desde ese momento
+    get riesgo() { return CLIMA.riesgo; }, eficienciaPaneles: S.eficiencia,
     onUpdate: actualizarHUDEVA,
     onAviso: txt => { avisoEVA(txt); beep(300, 0.3, 'sawtooth'); },
     onRecoger: tipo => { beep(1200, 0.07, 'triangle'); tarjetaObjeto(tipo); },
