@@ -68,13 +68,18 @@ export const MISION = {
     { id: 'teo', nombre: 'Teo', color: 0xffc93c },
   ],
   // Modo construcción (tecla B): el blindaje del hábitat se arma por SECCIONES que gastan regolito.
-  // Con todas las secciones entra el 40 % de la radiación (= RADIACION.atenuacionBlindaje): 4 × 15 % = 60 % menos.
+  // Cada sección protege distinto (regla SIMPLIFICADA del juego, ver docs/DATOS_NASA.md 2.2b):
+  //  - proteccion: parte de la radiación de FONDO diaria (rayos cósmicos) que frena. Esa radiación llega
+  //    de muchas direcciones, sobre todo inclinada, así que las paredes son las que más ayudan.
+  //  - proteccionLlamarada: parte de una LLAMARADA solar que frena. Esas partículas tienen menos energía y
+  //    la atmósfera las frena en los caminos largos e inclinados: llegan sobre todo desde ARRIBA → el techo.
+  // Con las 4 juntas entra el 40 % en ambos casos (= RADIACION.atenuacionBlindaje): suman 0,60.
   construccion: {
     secciones: {
-      norte: { nombre: 'Pared norte', nombre_en: 'North wall', icono: '⬆️', costo: 3, proteccion: 0.15 },
-      sur:   { nombre: 'Pared sur', nombre_en: 'South wall', icono: '⬇️', costo: 3, proteccion: 0.15 },
-      lados: { nombre: 'Paredes este y oeste', nombre_en: 'East and west walls', icono: '↔️', costo: 4, proteccion: 0.15 },
-      techo: { nombre: 'Techo', nombre_en: 'Roof', icono: '🔼', costo: 4, proteccion: 0.15 },
+      norte: { nombre: 'Pared norte', nombre_en: 'North wall', icono: '⬆️', costo: 3, proteccion: 0.15, proteccionLlamarada: 0.05 },
+      sur:   { nombre: 'Pared sur', nombre_en: 'South wall', icono: '⬇️', costo: 3, proteccion: 0.15, proteccionLlamarada: 0.05 },
+      lados: { nombre: 'Paredes este y oeste', nombre_en: 'East and west walls', icono: '↔️', costo: 4, proteccion: 0.20, proteccionLlamarada: 0.10 },
+      techo: { nombre: 'Techo', nombre_en: 'Roof', icono: '🔼', costo: 4, proteccion: 0.10, proteccionLlamarada: 0.40 },
     },
   },
   guion: { 2: 'llamarada', 4: 'reciclador', 6: 'tormenta', 9: 'remolino', 12: 'llamarada' },

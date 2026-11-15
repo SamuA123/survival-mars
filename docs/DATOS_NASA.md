@@ -72,11 +72,33 @@ nunca "en vivo", tal como pide el reto.
 - **Por qué:** los astronautas reales llevan dosímetros personales, y la NASA tiene un límite de carrera por persona (600 mSv) y
   aplica el principio **ALARA** (tan bajo como sea razonablemente posible). Elegir quién sale para repartir la dosis es la forma en que
   el juego deja practicar esa idea; **no** describe un procedimiento oficial de asignación de caminatas.
-- **Blindaje por secciones** (tecla B, `src/ui/construccion.js` y `MISION.construccion` en `src/sim/config.js`): pared norte (3 bolsas),
-  pared sur (3), paredes este y oeste (4) y techo (4). Cada sección reduce un 15 % la radiación que entra al hábitat; con las 4 entra
-  el 40 % (= `RADIACION.atenuacionBlindaje`). Se aplica a la dosis diaria y a la de las llamaradas. Ejemplo: 0,70 → 0,60 → 0,49 → 0,39 →
-  0,28 mSv por sol. **Por qué:** cubrir un hábitat con regolito es una idea estudiada para proteger de la radiación; los porcentajes
-  son simplificados.
+- **Blindaje por secciones** (tecla B, `src/ui/construccion.js` y `MISION.construccion` en `src/sim/config.js`): cada sección
+  protege distinto, para que elegir el orden sea una decisión real y no siempre convenga empezar por la más barata.
+
+  | Sección | Costo | Frena del fondo diario (rayos cósmicos) | Frena de una llamarada solar |
+  |---|---|---|---|
+  | Pared norte | 3 bolsas | 15 % | 5 % |
+  | Pared sur | 3 bolsas | 15 % | 5 % |
+  | Paredes este y oeste | 4 bolsas | 20 % | 10 % |
+  | Techo | 4 bolsas | 10 % | 40 % |
+  | **Las 4 juntas** | 14 bolsas | **60 % → entra el 40 %** | **60 % → entra el 40 %** |
+
+  Con las 4 juntas entra el 40 % (= `RADIACION.atenuacionBlindaje`) en la dosis diaria y en las llamaradas, como antes. Dosis diaria
+  construyendo en orden norte, sur, lados y techo: 0,70 → 0,60 → 0,49 → 0,35 → 0,28 mSv por sol. Una llamarada X1.0 sin refugio
+  da 23 mSv sin blindaje; con solo el techo, 14; con solo las paredes este y oeste, 20. Código: `factorBlindaje(S, 'fondo' | 'llamarada')`,
+  `radiacionInterior` y `dosisLlamarada` en `src/sim/motor.js`; prueba en `tests/mecanicas.mjs` ("techo vs. paredes").
+- **Por qué (física real, simplificada):** la atmósfera de Marte es delgada justo hacia arriba y muy gruesa hacia el horizonte.
+  En Gale, la columna de aire vale unos **21 g/cm² mirando hacia arriba y unos 400 g/cm² cerca del horizonte**
+  ([Khaksarighiri et al. 2023, *JGR Planets*, "The Zenith-Angle Dependence of the Downward Radiation Dose Rate on the Martian
+  Surface"](https://macau.uni-kiel.de/servlets/MCRFileNodeServlet/macau_derivate_00007955/JGR%20Planets%20-%202023%20-%20Khaksarighiri%20-%20The%20Zenith%E2%80%90Angle%20Dependence%20of%20the%20Downward%20Radiation%20Dose%20Rate%20on%20the%20Martian%20Surface.pdf)).
+  - Los **rayos cósmicos** (fondo diario) tienen mucha energía y llegan de muchas direcciones; según ese mismo estudio, los protones
+    que más aportan a la dosis llegan bastante inclinados (cerca de 74° del cenit). Por eso, en el juego, las **paredes** frenan más
+    el fondo diario.
+  - Las partículas de una **llamarada solar** tienen menos energía: el aire largo y oblicuo las frena mucho más que el camino corto
+    hacia arriba, así que llegan sobre todo **desde arriba**. Por eso, en el juego, el **techo** frena más las llamaradas. El suelo
+    de Marte ya protege por abajo.
+  - **Regla simplificada del juego:** los porcentajes de la tabla son inventados para que se entienda la idea; no son una medición.
+    Cubrir un hábitat con regolito sí es una idea estudiada para protegerse de la radiación.
 - **Regolito:** se recoge en la caminata (mochila de 4 objetos) y se deposita al entrar a la base (1 objeto = 1 bolsa).
 
 ### 2.3 Estudios de NASA OSDR mostrados en el juego

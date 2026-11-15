@@ -31,14 +31,14 @@
 Regla: no editar las carpetas del otro. Si necesitas algo del otro lado, pídelo (o agrega campos nuevos sin renombrar los existentes; ver contratos en `CLAUDE.md`).
 
 ### Tareas de Jorge (rama `jorge`), por prioridad
-1. [ ] **Clave de API NASA**: pedirla en https://api.nasa.gov y ponerla en `src/data/donki.js` (`NASA_API_KEY`). *Pendiente: sigue `DEMO_KEY`; el juego usa también el servidor CCMC sin clave, la caché de 6 h y el archivo histórico.*
+1. [x] **Clave de API NASA**: clave propia en `src/data/donki.js` (`NASA_API_KEY`), commit `dfe0c6c`. Si falla, el juego usa el servidor CCMC sin clave, la caché de 6 h y el archivo histórico.
 2. [x] **`src/data/salud.js`**: 6-10 estudios reales de OSDR (con ID OSD-xxx y URL) sobre radiación, huesos/músculos, plantas/comida, sueño y oxígeno. Textos para niños de 7 a 12 años. *Hecho: 13 estudios (OSD-87, 146, 177, 268, 334, 342, 343, 360, 566, 615, 678, 766, 772), en ES/EN.*
 3. [x] **`src/data/radiacion.js`**: verificar valores (Curiosity RAD en Marte, RadLab en la ISS) y citar la fuente exacta de cada uno.
 4. [x] **`src/data/datos-curiosos.js` y `sitio.js`**: verificar cada dato y corregir lo inexacto (sitio cambiado a la meseta NE Syrtis · Isidis Planitia, con panel 📍 Ubicación y mapas de Mars Trek).
 5. [x] **`docs/DATOS_NASA.md`**: para los jueces. Qué datasets usamos, en qué mecánica y por qué, con links; qué es en vivo y qué es guardado.
 6. [x] **`README.md`**: reescribirlo para la versión 3D (cómo jugar, cómo correrlo, capturas).
 7. [x] **`docs/PITCH.md`**: guion de un video de 2 minutos y texto de envío para Space Apps.
-8. [~] **Probar el juego**: pruebas automáticas (`tests/regresiones.mjs`) y recorridos en Chrome sin interfaz hechos (`docs/VALIDACION.md`). *Pendiente: prueba con niños.*
+8. [~] **Probar el juego**: pruebas automáticas (`tests/regresiones.mjs` y `tests/mecanicas.mjs`) y recorridos en Chrome sin interfaz hechos (`docs/VALIDACION.md`). *Pendiente: prueba con niños.*
 9. [ ] (Opcional) `src/data/donki.js`: funciones nuevas para CME (`DONKI/CME`) y tormentas geomagnéticas (`DONKI/GST`), sin cambiar `cargarClimaEspacial()`.
 
 ### Tareas de Samuel (rama `samuel`)
@@ -55,6 +55,8 @@ Regla: no editar las carpetas del otro. Si necesitas algo del otro lado, pídelo
 - [x] Alerta solar: indicador permanente y vigilancia de NASA DONKI cada 10 min; `?alerta=1` para un simulacro identificado.
 - [x] Tripulación con dosímetros: Lía, Kofi, Mei y Teo; se elige quién sale a caminar; la dosis de la caminata es solo de quien sale.
 - [x] Narrador por voz, dificultad Cadete/Comandante, informe de misión, insignias, modo demo (`?demo=1`), repaso final.
+- [x] Mejoras de la revisión externa (PR #8): riesgo solar en vivo durante la caminata, indicador solar que separa lo observado por la NASA del riesgo del juego, textos de regolito con los costos reales (3/3/4/4), panel de la caminata compacto en celular horizontal y pruebas de mecánicas (`tests/mecanicas.mjs`).
+- [x] Cada sección de blindaje tiene su razón: las paredes frenan más el fondo diario y el techo frena más las llamaradas (rama `samuel-secciones`; ver `docs/DATOS_NASA.md` 2.2b). *Falta mostrar la diferencia en la ventana de construcción.*
 - [ ] Prueba con niños (protocolo en `docs/VALIDACION.md`).
 - [ ] Grabar el video y completar el formulario de Space Apps (`docs/PITCH.md`).
 
