@@ -8,16 +8,18 @@
 import { MISION } from '../sim/config.js';
 import { menorDosis } from '../sim/motor.js';
 import { beep } from './sonido.js';
+import { esEN, onIdioma, setIdioma } from './i18n.js';
+import { botonIdioma } from './construccion.js';
 
-const L = (es, en) => document.documentElement.lang === 'en' ? en : es;
+const L = (es, en) => esEN() ? en : es;
 const hex = n => '#' + Number(n).toString(16).padStart(6, '0');
 const pct = d => Math.min(100, Math.round(d / MISION.radLimite * 100));
 const n1 = v => (Math.round(v * 10) / 10).toLocaleString(L('es', 'en'));
 const nivel = d => pct(d) > 70 ? 'alto' : pct(d) > 45 ? 'medio' : 'bajo';
 
 export const MENSAJE_NASA = () => L(
-  '💡 La NASA reparte las caminatas espaciales entre la tripulación para repartir la radiación: así nadie llega a su límite.',
-  '💡 NASA shares spacewalks among the crew to share out the radiation, so nobody reaches their limit.');
+  '💡 Cada astronauta lleva su dosímetro y la NASA busca que nadie reciba más radiación de la necesaria: repartir las salidas ayuda.',
+  '💡 Each astronaut wears a dosimeter, and NASA tries to keep everyone\'s radiation as low as possible: taking turns outside helps.');
 
 // Un dosímetro (tarjeta) por astronauta
 function tarjeta(a, { boton = false, elegido = false, menor = false } = {}) {
@@ -54,6 +56,7 @@ export function elegirAstronauta(S) {
       const a = S.tripulacion.find(x => x.id === elegido);
       capa.innerHTML = `
         <div class="dos-caja" role="dialog" aria-modal="true" aria-label="${L('Elige quién sale', 'Choose who goes out')}">
+          ${botonIdioma()}
           <h2>🧑‍🚀 ${L('¿Quién sale a la caminata?', 'Who goes on the spacewalk?')}</h2>
           <p>${L('Afuera, solo quien sale recibe la radiación de la caminata. Mira los dosímetros:', 'Outside, only the person who goes out gets the spacewalk radiation. Check the dosimeters:')}</p>
           <div class="dos-lista">${S.tripulacion.map(x => tarjeta(x, { boton: true, elegido: x.id === elegido, menor: x.id === menorDosis(S)?.id })).join('')}</div>
@@ -64,12 +67,15 @@ export function elegirAstronauta(S) {
           </div>
         </div>`;
     };
-    const cerrar = id => { capa.remove(); removeEventListener('keydown', teclas, true); resolver(id); };
+    // Botón ES/EN con el selector abierto: se repinta conservando a quien está elegido
+    const quitarIdioma = onIdioma(() => { pintar(); capa.querySelector('.dos-ok')?.focus(); });
+    const cerrar = id => { capa.remove(); quitarIdioma(); removeEventListener('keydown', teclas, true); resolver(id); };
     const teclas = e => {
       if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cerrar(null); }
       if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); cerrar(elegido); }
     };
     capa.addEventListener('click', e => {
+      if (e.target.closest('[data-cambiar-idioma]')) return setIdioma(esEN() ? 'es' : 'en');   // la capa tapa el ES/EN de arriba
       const b = e.target.closest('[data-astro]');
       if (b) { elegido = b.dataset.astro; beep(760, 0.05); pintar(); return; }
       if (e.target.closest('.dos-ok')) return cerrar(elegido);

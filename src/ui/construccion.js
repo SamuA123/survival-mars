@@ -8,8 +8,13 @@
 import { MISION } from '../sim/config.js';
 import { construirSeccion, motivoNoConstruir, factorBlindaje, radiacionInterior, seccionesHechas } from '../sim/motor.js';
 import { beep } from './sonido.js';
+import { esEN, onIdioma, setIdioma, t } from './i18n.js';
 
-const L = (es, en) => document.documentElement.lang === 'en' ? en : es;
+const L = (es, en) => esEN() ? en : es;
+let ultimoMensaje = '';   // función o texto: se vuelve a generar al cambiar de idioma
+// Mismo botón que la pantalla de inicio (modal-idioma + chip-btn)
+export const botonIdioma = () => `<div class="modal-idioma"><button type="button" class="chip-btn" data-cambiar-idioma
+  aria-label="${t('top.idioma.t')}">${esEN() ? '🌐 Español' : '🌐 English'}</button></div>`;
 const SEC = () => MISION.construccion.secciones;
 const nombreSec = s => L(s.nombre, s.nombre_en);
 const n2 = v => (Math.round(v * 100) / 100).toLocaleString(L('es', 'en'), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -34,6 +39,8 @@ export function abrirConstruccion() {
   capa = document.createElement('div');
   capa.className = 'cons-capa';
   capa.addEventListener('click', e => {
+    // La capa tapa el botón ES/EN de arriba: esta ventana trae el suyo
+    if (e.target.closest('[data-cambiar-idioma]')) return setIdioma(esEN() ? 'es' : 'en');
     if (e.target === capa || e.target.closest('.cons-cerrar')) return cerrarConstruccion();
     const b = e.target.closest('[data-construir]');
     if (b && !b.disabled) construir(b.dataset.construir);
@@ -44,8 +51,11 @@ export function abrirConstruccion() {
 }
 
 export function cerrarConstruccion() {
-  capa?.remove(); capa = null;
+  capa?.remove(); capa = null; ultimoMensaje = '';
 }
+
+// Botón ES/EN con la ventana abierta: se vuelve a pintar en el nuevo idioma (la partida no cambia)
+onIdioma(() => { if (capa) pintar(ultimoMensaje); insertarBoton(); });
 
 function construir(id) {
   const S = estado();
@@ -53,18 +63,22 @@ function construir(id) {
   if (!r.ok) { beep(220, 0.2, 'sawtooth'); return pintar(); }
   const s = SEC()[id];
   beep(990, 0.12, 'triangle');
-  const msg = L(
+  const msg = () => L(
     `✅ <b>${s.nombre}</b> construida (−${s.costo} 🟫). Radiación de cada sol: <b>${n2(r.antes.diaria)} → ${n2(r.despues.diaria)} mSv</b> · una llamarada ${LLAMARADA_EJEMPLO}: <b>${r.antes.llamarada} → ${r.despues.llamarada} mSv</b>.`,
     `✅ <b>${s.nombre_en}</b> built (−${s.costo} 🟫). Radiation each sol: <b>${n2(r.antes.diaria)} → ${n2(r.despues.diaria)} mSv</b> · a ${LLAMARADA_EJEMPLO} flare: <b>${r.antes.llamarada} → ${r.despues.llamarada} mSv</b>.`);
-  S.log.unshift({ sol: S.sol, tipo: 'tierra', texto: L(
-    `🧱 Construiste: ${s.nombre} (−${s.costo} bolsas de regolito). Ahora entra el ${Math.round(factorBlindaje(S) * 100)}% de la radiación.`,
-    `🧱 You built: ${s.nombre_en} (−${s.costo} bags of regolith). Now ${Math.round(factorBlindaje(S) * 100)}% of the radiation gets in.`) });
+  // La bitácora guarda los dos idiomas: renderLog muestra texto_en en inglés
+  const entra = Math.round(factorBlindaje(S) * 100);
+  S.log.unshift({ sol: S.sol, tipo: 'tierra',
+    texto: `🧱 Construiste: ${s.nombre} (−${s.costo} bolsas de regolito). Ahora entra el ${entra}% de la radiación.`,
+    texto_en: `🧱 You built: ${s.nombre_en} (−${s.costo} bags of regolith). Now ${entra}% of the radiation gets in.` });
   juego()?.refrescar?.();
   pintar(msg);
 }
 
-function pintar(mensaje = '') {
+function pintar(mensajeArg = '') {
   if (!capa) return;
+  ultimoMensaje = mensajeArg;
+  const mensaje = typeof mensajeArg === 'function' ? mensajeArg() : mensajeArg;
   const S = estado();
   const ahora = radiacionInterior(S, LLAMARADA_EJEMPLO);
   const pct = Math.round(factorBlindaje(S) * 100);
@@ -83,7 +97,7 @@ function pintar(mensaje = '') {
       <span class="cons-ic">${s.icono}</span>
       <div class="cons-txt"><b>${nombreSec(s)}</b>
         <small>${L('Coste', 'Cost')}: <b>${s.costo} ${L('bolsas', 'bags')} 🟫</b> · ${L('Protección', 'Protection')} <b>+${Math.round(s.proteccion * 100)}%</b></small>
-        ${motivo === 'construida' ? '' : `<small class="cons-prev">☢️ ${L('Cada sol', 'Each sol')}: ${n2(ahora.diaria)} → <b>${n2(despues.diaria)} mSv</b> · ${L('llamarada', 'flare')} ${LLAMARADA_EJEMPLO}: ${ahora.llamarada} → <b>${despues.llamarada} mSv</b></small>`}
+        ${motivo === 'construida' ? '' : `<small class="cons-prev">☢️ ${L('Cada sol', 'Each sol')}: ${n2(ahora.diaria)} → <b>${n2(despues.diaria)} mSv</b> · ${L(`llamarada ${LLAMARADA_EJEMPLO}`, `${LLAMARADA_EJEMPLO} flare`)}: ${ahora.llamarada} → <b>${despues.llamarada} mSv</b></small>`}
       </div>
       ${boton}
     </div>`;
@@ -92,6 +106,7 @@ function pintar(mensaje = '') {
   capa.innerHTML = `
     <div class="cons-caja" role="dialog" aria-modal="true" aria-label="${L('Modo construcción', 'Build mode')}">
       <button class="cons-cerrar" aria-label="${L('Cerrar', 'Close')}">✕</button>
+      ${botonIdioma()}
       <h2>🧱 ${L('Modo construcción', 'Build mode')}</h2>
       <p class="cons-intro">${L(
         'Cubre el hábitat con <b>regolito</b> (la tierra suelta de Marte). Cada sección frena parte de la radiación que entra. Elige cuál construir: cada una gasta bolsas que juntaste en las caminatas.',

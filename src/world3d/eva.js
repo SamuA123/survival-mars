@@ -8,6 +8,10 @@ import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { alturaSuelo } from './terreno.js';
 import { MISION } from '../sim/config.js';
 import { proteccionHabitat } from '../sim/motor.js';
+import { tr, onIdioma } from '../ui/i18n.js';   // i18n no importa nada del mundo 3D: sin ciclos
+
+// Botón ES/EN en plena caminata: los nombres sobre los objetos cambian al momento
+onIdioma(() => document.querySelectorAll('.obj-nom[data-es]').forEach(s => { s.textContent = tr(s.dataset.es); }));
 
 export const PUERTA = new THREE.Vector3(0, 0, 6.4);
 const PANELES = new THREE.Vector3(-13, 0, 4);
@@ -123,7 +127,7 @@ export class ControlEVA {
     const div = document.createElement('div');
     div.className = 'obj-eva';
     div.style.setProperty('--c', T.color);
-    div.innerHTML = `<span class="obj-ic">${T.icono}</span><span class="obj-nom">${T.nombre}</span>`;
+    div.innerHTML = `<span class="obj-ic">${T.icono}</span><span class="obj-nom" data-es="${T.nombre}">${tr(T.nombre)}</span>`;
     const etq = new CSS2DObject(div); etq.position.y = 3.4;
     g.add(malla, anillo, haz, etq);
     g.position.set(x, alturaSuelo(x, z), z);
@@ -210,7 +214,8 @@ export class ControlEVA {
   recoger() {
     if (!this.activo || !this.cercano) return;
     if (this.carga >= MOCHILA_MAX) {
-      this.cfg.onAviso?.(Lx(`🎒 Mochila llena (${MOCHILA_MAX}). Vuelve a la base a depositar, o suelta algo con R.`,
+      // Se pasa como función: si cambia el idioma con el aviso en pantalla, se vuelve a generar
+      this.cfg.onAviso?.(() => Lx(`🎒 Mochila llena (${MOCHILA_MAX}). Vuelve a la base a depositar, o suelta algo con R.`,
         `🎒 Backpack full (${MOCHILA_MAX}). Go back to the base to drop it off, or drop something with R.`));
       return;
     }

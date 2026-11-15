@@ -125,7 +125,8 @@ export function renderPanel(S, sel) {
       <button data-sel="tripulacion"><span>🧑‍🚀</span><b>${L('Tripulación', 'Crew')}</b><small>${L('Salud y radiación', 'Health and radiation')}</small></button>
       <button data-sel="inventario"><span>🎒</span><b>${L('Inventario', 'Inventory')}</b><small>${L('Qué recogiste y para qué sirve', 'What you collected and how to use it')}</small></button>
     </nav>${resumenEnergia(S)}`;
-  else if (sel === 'tripulacion') contenido = `${colTripulante(S)}<p class="estado-numeros">🫁 ${S.o2}% · 🥔 ${S.comida}% · ❤️ ${S.salud}% · ☢️ ${L('máx.', 'max.')} ${S.rad} mSv</p><p>${L('La comida baja reduce la salud. La radiación se acumula: el refugio y el blindaje ayudan a protegerte.', 'Low food reduces health. Radiation builds up: shelter and shielding help protect you.')}</p>${dosimetrosHTML(S)}`;
+  // Los 4 dosímetros primero: es lo que se viene a mirar (sin tener que desplazarse)
+  else if (sel === 'tripulacion') contenido = `${dosimetrosHTML(S)}${colTripulante(S)}<p class="estado-numeros">🫁 ${S.o2}% · 🥔 ${S.comida}% · ❤️ ${S.salud}% · ☢️ ${L('máx.', 'max.')} ${S.rad} mSv</p><p>${L('La comida baja reduce la salud. La radiación se acumula: el refugio y el blindaje ayudan a protegerte.', 'Low food reduces health. Radiation builds up: shelter and shielding help protect you.')}</p>`;
   else if (sel === 'inventario') contenido = `${colRecoleccion(S)}<div class="inventario-explica">${Object.values(MISION.eva.objetos).map(o => `<details><summary>${o.icono} ${tr(o.nombre)}</summary><p>${tr(o.que)}</p><p>${tr(o.uso)}</p></details>`).join('')}</div>`;
   else contenido = contenidoEdificio(S, sel);
   el.innerHTML = `<div class="pantalla">
@@ -274,5 +275,5 @@ const SVG_ASTRONAUTA = `<svg class="astro" viewBox="0 0 120 150" aria-hidden="tr
 </svg>`;
 
 export function renderLog(S) {
-  $('#bitacora').innerHTML = S.log.slice(0, 40).map(l => `<li class="${l.tipo}"><span class="log-sol">${l.sol}</span> ${tr(l.texto)}</li>`).join('');
+  $('#bitacora').innerHTML = S.log.slice(0, 40).map(l => `<li class="${l.tipo}"><span class="log-sol">${l.sol}</span> ${esEN() && l.texto_en ? l.texto_en : tr(l.texto)}</li>`).join('');
 }

@@ -74,6 +74,7 @@ const T = {
     // Final
     'fin.cumplida': '¡Misión cumplida!', 'fin.abortada': '¡Misión abortada!',
     'fin.gano': 'Comandante <b>{n}</b>: tu tripulación sobrevivió {s} sols en Marte.',
+    'fin.ganoSinNombre': '<b>Comandante</b>: tu tripulación sobrevivió {s} sols en Marte.',
     'fin.perdio': '{t} La tripulación volvió a la Tierra en el Sol {s}. ¡Los verdaderos planificadores de la NASA también aprenden de cada problema!',
     'fin.criterios': '⭐ Sobrevivir · ⭐ Lograr {c} de ciencia · ⭐ Lograrlo sin arriesgar a la tripulación (radiación &lt; {r} mSv y salud ≥ 70)',
     'fin.pocaCiencia': 'Sobrevivieron, pero la misión vino a Marte a hacer ciencia. ¿Puedes conseguir {c} puntos sin arriesgar a nadie?',
@@ -188,6 +189,7 @@ const T = {
     'eva.sabiasExtra': 'On Mars, every minute outside is a decision: more time = more discoveries, but also more radiation and less oxygen.',
     'fin.cumplida': 'Mission accomplished!', 'fin.abortada': 'Mission aborted!',
     'fin.gano': 'Commander <b>{n}</b>: your crew survived {s} sols on Mars.',
+    'fin.ganoSinNombre': '<b>Commander</b>: your crew survived {s} sols on Mars.',
     'fin.perdio': '{t} The crew went back to Earth on Sol {s}. Real NASA planners also learn from every problem!',
     'fin.criterios': '⭐ Survive · ⭐ Reach {c} science · ⭐ Do it without putting the crew at risk (radiation &lt; {r} mSv and health ≥ 70)',
     'fin.pocaCiencia': 'You survived, but the mission came to Mars to do science. Can you get {c} points without putting anyone at risk?',
