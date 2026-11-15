@@ -2,6 +2,8 @@
 import { balance } from '../sim/motor.js';
 import { beep } from './sonido.js';
 import { t, esEN, onIdioma } from './i18n.js';
+// Misión guiada de construcción (y el botón 🎒 Inventario): se cargan aquí porque main.js ya importa este archivo
+import { iniciarMisionConstruccion, ofrecerMisionConstruccion, misionHecha } from './mision-construccion.js';
 const L = (es, en) => esEN() ? en : es;
 
 const CLAVE = 'survivalMars.tutorialVisto.v2';
@@ -34,7 +36,10 @@ export function iniciarTutorial(contexto) {
     clearInterval(timer);
     dejarIdioma();
     globo.remove(); foco.remove();
-    if (completado) marcarVisto();
+    if (completado) {
+      marcarVisto();
+      if (!misionHecha()) ofrecerMisionConstruccion();   // siguiente lección: recoger, depositar y construir
+    }
   }
 
   function siguiente() {
@@ -51,8 +56,11 @@ export function iniciarTutorial(contexto) {
       <div class="tuto-pie"><button class="tuto-saltar">${t('tuto.saltar')}</button>
       <span>${i + 1}/${PASOS.length}</span>
       ${p.abrir ? `<button class="tuto-abrir" data-sel="${p.abrir}">${L('Abrir', 'Open')} ${t('ed.' + p.abrir)}</button>` : ''}
-      ${p.espera ? '' : `<button class="tuto-sig">${p.final ? t('tuto.ok') : t('tuto.sig')}</button>`}</div>`;
+      ${p.espera ? '' : `<button class="tuto-sig">${p.final ? t('tuto.ok') : t('tuto.sig')}</button>`}</div>
+      ${i === 0 ? `<button class="tuto-abrir tuto-mision">🧱 ${L('Ir a la misión: construir el blindaje', 'Go to the mission: build the shield')}</button>` : ''}`;
     globo.querySelector('.tuto-saltar').onclick = () => terminar(false);
+    const mision = globo.querySelector('.tuto-mision');
+    if (mision) mision.onclick = () => { terminar(false); iniciarMisionConstruccion(); };
     const sig = globo.querySelector('.tuto-sig');
     if (sig) sig.onclick = siguiente;
     colocar();
