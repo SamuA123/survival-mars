@@ -65,6 +65,11 @@ h1, h2, h3, .btn-grande, .btn-sol, .eva-btn { font-family: var(--titulo); font-w
 .meta-ciencia { display: flex; align-items: center; gap: 6px; font-size: 13px; }
 .meta-ciencia .barra { flex: 1; height: 9px; }
 .meta-ciencia .barra > div { background: var(--ciencia); }
+.meta-ciencia.lograda .barra > div { background: linear-gradient(90deg, var(--ciencia), #ffd54a); }
+.meta-ciencia .prox-invento { font-size: 11px; opacity: .85; white-space: nowrap; }
+.inventos { margin-top: 8px; padding: 8px 10px; border-radius: 12px; background: rgba(255, 213, 74, .12); }
+.inventos p { margin: 0 0 4px; }
+.inventos ul { margin: 4px 0 0; padding-left: 18px; font-size: 13px; }
 
 .recursos { display: flex; gap: 8px; margin-top: 10px; align-items: flex-end; }
 .tanque { width: 54px; text-align: center; cursor: help; }
@@ -396,7 +401,23 @@ body.modo-eva .capa-etiquetas .etiqueta { display: none !important; }
 }
 .eva-base.urgente { background: #ffd9d6; animation: temblor .6s infinite; }
 .eva-flecha { display: inline-block; color: var(--marte); font-size: 22px; transition: transform .1s; }
-.eva-ayuda { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); background: var(--papel); border: 2px solid var(--tinta); border-radius: 999px; padding: 4px 14px; font-size: 13px; white-space: nowrap; }
+.eva-ayuda { position: absolute; left: 14px; bottom: 60px; display: flex; flex-direction: column; gap: 8px; width: 270px;
+  background: rgba(255, 244, 227, .95); color: var(--tinta); border: 3px solid var(--tinta); border-radius: 16px; padding: 10px 12px;
+  box-shadow: 4px 4px 0 rgba(43, 20, 8, .5); transition: opacity .4s, transform .4s; }
+.eva-ayuda.oculta { opacity: 0; transform: translateX(-24px); pointer-events: none; }
+.ay-tit { font-weight: 800; font-size: 13px; opacity: .75; }
+.ay-fila { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 10px; }
+.ay-fila > span { font-size: 13px; font-weight: 700; line-height: 1.2; }
+.ay-teclas { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.cruz { display: grid; grid-template-columns: repeat(3, 24px); grid-template-rows: 24px 24px; gap: 2px; }
+.cruz.chica { grid-template-columns: repeat(3, 14px); grid-template-rows: 14px 14px; gap: 1px; }
+.cruz .arriba { grid-column: 2; }
+.cruz .tk:not(.arriba) { grid-row: 2; }
+.tk { display: grid; place-items: center; min-width: 24px; height: 24px; padding: 0 3px; background: #fff; color: var(--tinta);
+  border: 2px solid var(--tinta); border-radius: 6px; box-shadow: 0 3px 0 var(--tinta); font: 800 12px/1 system-ui, sans-serif; }
+.cruz.chica .tk { min-width: 14px; height: 14px; padding: 0; border-width: 1px; border-radius: 3px; box-shadow: 0 1px 0 var(--tinta); font-size: 9px; }
+.tk.grande { min-width: 32px; height: 32px; font-size: 15px; }
+.ay-buscar .ay-teclas { font-size: 18px; }
 .eva-botones { position: absolute; bottom: 150px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
 .eva-btn { border: 3px solid var(--tinta); border-radius: 14px; padding: 12px 22px; font-size: 20px; color: #fff; background: #1f7fc0; box-shadow: 0 5px 0 var(--tinta); animation: entra .2s; }
 .eva-btn.oculto { display: none; }
@@ -530,7 +551,7 @@ button { touch-action: manipulation; }
   .joystick { width: 120px; height: 120px; left: 16px; bottom: 14px; }
   .joy-palo { left: 35px; top: 35px; }
 }
-@media (pointer: coarse) { .tecla { display: none; } }
+@media (hover: none) and (pointer: coarse) { .tecla { display: none; } }
 .eva-tarjeta { opacity: 0; transition: transform .35s ease-out, opacity .35s; }
 .eva-tarjeta.visible { opacity: 1; }
 .chip-btn.activo { border-color: var(--verde); background: rgba(76,209,122,.2); }
@@ -659,3 +680,63 @@ body.en-edificio .hud-top { visibility: visible; }
 
 /* Ventana de construcción: el botón de idioma no debe tapar la ✕ de cerrar */
 .cons-caja .modal-idioma { margin-right: 40px; }
+
+/* Textos cortos: el resto queda en "Saber más" */
+details.mas { margin: 6px 0; font-size: 13px; }
+details.mas > summary { cursor: pointer; font-weight: 700; opacity: .8; list-style: none; display: inline-block; }
+details.mas > summary::-webkit-details-marker { display: none; }
+details.mas[open] > summary { margin-bottom: 4px; }
+.lineas .explica { opacity: .75; }
+/* Cuadros de ayuda en los paneles: ícono, palabra y explicación corta */
+.fichas { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin: 8px 0; }
+.ficha { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; padding: 10px 8px;
+  border: 2px solid rgba(160, 82, 45, .35); border-radius: 14px; background: rgba(255, 255, 255, .06); }
+.ficha-ic { font-size: 26px; line-height: 1.1; }
+.ficha b { font-size: 14px; }
+.ficha small { font-size: 12px; opacity: .85; line-height: 1.25; }
+.ficha.on { border-color: #33c2d6; background: rgba(51, 194, 214, .14); }
+.ficha.mal.on { border-color: #e2582c; background: rgba(226, 88, 44, .16); }
+/* Costos y premios de una opción, en cuadritos */
+.costos { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.costo { border-radius: 8px; padding: 2px 8px; font-weight: 700; background: rgba(0, 0, 0, .08); }
+.costo.resta { background: rgba(226, 88, 44, .18); }
+.costo.suma { background: rgba(46, 125, 50, .18); }
+.plan-res.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.plan-res.chips > span { background: rgba(255,255,255,.18); border-radius: 999px; padding: 3px 10px; font-weight: 700; }
+
+/* Control base compacto: cuadros pequeños en varias columnas */
+.edificios-menu { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.edificios-menu button { display: grid; grid-template-columns: 34px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; padding: 8px 10px; }
+.edificios-menu span { float: none; margin: 0; font-size: 26px; grid-row: 1 / 3; text-align: center; }
+.edificios-menu b { font-size: 14px; line-height: 1.2; }
+.edificios-menu small { margin-top: 2px; font-size: 12px; line-height: 1.25; opacity: .8; }
+.base-energia { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; }
+.base-energia > * { margin: 0; padding: 8px 12px; }
+.base-energia p { margin: 3px 0; }
+/* Control base: la ventana mide lo que su contenido (sin espacio vacío abajo) */
+.panel.consola[data-panel="base"] { left: 0; right: 0; bottom: auto; margin: 0 auto; width: min(940px, calc(100% - 20px)); }
+.panel.consola[data-panel="base"] .pantalla { height: auto; max-height: calc(100vh - 172px); }
+.panel.consola[data-panel="base"] .edificio-contenido { padding: 10px 12px; }
+
+/* Barras de desplazamiento con el estilo del juego (todas las ventanas) */
+::-webkit-scrollbar { width: 14px; height: 14px; }
+::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+::-webkit-scrollbar-track { background: rgba(43, 20, 8, .10); border-radius: 999px; margin: 8px 0; }
+::-webkit-scrollbar-thumb { background: var(--marte, #e2582c); border: 4px solid transparent; background-clip: padding-box;
+  border-radius: 999px; box-shadow: inset 0 -2px 0 rgba(43, 20, 8, .25); }
+::-webkit-scrollbar-thumb:hover { background-color: var(--marte-osc, #b8431f); }
+::-webkit-scrollbar-corner { background: transparent; }
+@supports not selector(::-webkit-scrollbar) {
+  * { scrollbar-width: thin; scrollbar-color: var(--marte, #e2582c) rgba(43, 20, 8, .10); }
+}
+
+/* Aviso de "+1 recogido": a la derecha entra desde la derecha */
+.eva-tarjeta.derecha:not(.visible) { transform: translateX(130%) rotate(3deg); }
+.eva-tarjeta.derecha.visible { transform: translateX(0) rotate(1deg); }
+
+/* 🗺️ Minimapa de la caminata (abajo a la derecha) */
+.eva-mapa { position: absolute; right: 14px; bottom: 14px; width: 170px; height: 170px; border-radius: 50%;
+  box-shadow: 4px 4px 0 rgba(43, 20, 8, .5); pointer-events: none; }
+.eva-mapa canvas { display: block; }
+@media (max-width: 760px) { .eva-mapa { width: 110px; height: 110px; right: 10px; bottom: 230px; } }   /* encima de "0 m" y del botón de entrar */
+@media (max-height: 500px) and (orientation: landscape) { .eva-mapa { width: 96px; height: 96px; right: 8px; bottom: 78px; } }   /* encima de los botones */

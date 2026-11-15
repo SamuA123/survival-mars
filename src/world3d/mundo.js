@@ -10,6 +10,7 @@ import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer
 
 import { hash, fbm, altura, mesaFactor } from './terreno.js';
 import { ControlEVA } from './eva.js';
+import { empujarFuera, libre, crearRed, buscarRuta } from './colisiones.js';
 import { Ambiente } from './ambiente.js';
 
 const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0.1, ...o });
@@ -48,6 +49,7 @@ export class Mundo {
     this._initTerreno();
     this._initBase();
     this._initAstronautas();
+    this._initColisiones();
     this._initPolvo();
     this.amb = new Ambiente(this);   // dron y remolinos lejanos (solo decorativos)
     this._initEntrada();
@@ -164,12 +166,14 @@ export class Mundo {
     const N_ROCAS = 220;
     const rocas = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), std(0x6e2c16, { flatShading: true, roughness: 1 }), N_ROCAS);
     const obj = new THREE.Object3D();
+    this.rocasCol = [];   // rocas grandes: no se atraviesan (las chicas se pisan)
     for (let i = 0; i < N_ROCAS; i++) {
       const ang = Math.random() * Math.PI * 2, r = 26 + Math.random() * 90;
       const x = Math.cos(ang) * r, z = Math.sin(ang) * r;
       const s = 0.3 + Math.random() ** 3 * 2.2;
       obj.scale.set(s, s * (0.5 + Math.random() * 0.5), s);
       obj.position.set(x, altura(x, z) + s * 0.2, z);
+      if (s >= 0.75) this.rocasCol.push({ x, z, r: s * 0.85 });
       obj.rotation.set(Math.random() * 3, Math.random() * 3, 0);
       obj.updateMatrix();
       rocas.setMatrixAt(i, obj.matrix);
@@ -512,6 +516,60 @@ export class Mundo {
     });
   }
 
+  // ------------------------------------------------------------------
+  //  COLISIONES: forma de cada edificio vista desde arriba (círculos y rectángulos)
+  // ------------------------------------------------------------------
+  _initColisiones() {
+    const P = id => EDIFICIOS[id].pos, c = (x, z, r) => ({ x, z, r }), b = (x, z, hx, hz) => ({ x, z, hx, hz });
+    const [px, , pz] = P('paneles'), [ix, , iz] = P('invernadero'), [lx, , lz] = P('lab'), [bx, , bz] = P('bateria');
+    const [ax, , az] = P('antena'), [rx, , rz] = P('reactor');
+    this.colEstaticos = [
+      c(0, 0, 4.6),                       // hábitat (cúpula)
+      b(0, 4.4, 0.85, 0.75),              // entrada del hábitat
+      b(5.6, 0.5, 1.7, 0.95),             // túnel hábitat-invernadero
+      c(ix, iz, 3.9),                     // invernadero
+      b(lx, lz, 3.6, 1.9),                // laboratorio (módulo horizontal)
+      b(bx, bz, 2.1, 1.3),                // baterías
+      c(ax, az, 0.6),                     // mástil de la antena (el plato está arriba)
+      c(rx, rz, 2.6),                     // reactor con sus aletas
+      ...[-4.2, 0, 4.2].flatMap(dx => [-2.3, 2.3].map(dz => c(px + dx, pz + dz, 1.7))),   // 6 paneles (giran: círculo)
+    ];
+    // Puntos de trabajo de los compañeros: siempre fuera de los edificios
+    for (const v of Object.values(this.puntos)) empujarFuera(v, 0.7, this.colEstaticos);
+    for (const a of this.astros || []) empujarFuera(a.g.position, 0.6, this.colEstaticos);
+    // Red de caminos para los compañeros (el rover cuenta en su lugar de estacionamiento)
+    const casaRover = this.ed.rover?.casa || this.ed.rover?.g.position;
+    const obstRed = casaRover ? [...this.colEstaticos, c(casaRover.x, casaRover.z, 1.9)] : this.colEstaticos;
+    this.red = crearRed(obstRed, 0.55, Object.values(this.puntos));
+  }
+  // Obstáculos de este momento: edificios + rocas grandes + rover + compañeros visibles (+ jugador en la caminata)
+  // antesDe: solo cuentan los compañeros con más prioridad (índice menor). Así, cuando dos se cruzan,
+  // uno siempre tiene el paso y el otro se aparta: nunca deciden lo mismo a la vez (no "bailan").
+  obstaculos({ sinAstro = null, conJugador = true, conAstros = true, antesDe = null } = {}) {
+    const lista = [...this.colEstaticos, ...this.rocasCol];
+    const R = this.ed.rover?.g.position;
+    if (R) lista.push({ x: R.x, z: R.z, r: 1.9 });
+    if (conAstros) (this.astros || []).forEach((a, j) => {
+      // Al que está quieto siempre se le rodea; entre dos que caminan, tiene el paso el de índice menor
+      if (a !== sinAstro && a.g.visible && (antesDe == null || j < antesDe || !a.ruta?.length)) lista.push({ x: a.g.position.x, z: a.g.position.z, r: 0.55 });
+    });
+    const J = this.eva?.activo && conJugador && this.eva.jugador?.position;
+    if (J && sinAstro) lista.push({ x: J.x, z: J.z, r: 0.6 });
+    return lista;
+  }
+  libre(x, z, radio) { return libre(x, z, radio, this.obstaculos({ conAstros: false, conJugador: false })); }
+
+  // Compañeros: caminan por la red de caminos (sin cruzar edificios). Si algo que se mueve los tapa
+  // (el rover, el jugador u otro compañero), esperan un poco y buscan otro camino.
+  _rutaHacia(a, meta, refugio = false) {
+    a.meta = meta.clone();
+    const desde = { x: a.g.position.x, z: a.g.position.z };
+    a.ruta = refugio
+      ? [...buscarRuta(this.red, desde, { x: this.puntos.habitat.x, z: this.puntos.habitat.z }), { x: 0, z: 0 }]   // por la puerta
+      : buscarRuta(this.red, desde, { x: meta.x, z: meta.z });
+    a.trabado = 0;
+  }
+
   _moverAstronautas(dt, S) {
     const lista = Object.keys(this.puntos);
     // Quién está en la caminata: el elegido de la tripulación (idea 4) o, si no hay tripulación, el primero
@@ -519,29 +577,86 @@ export class Mundo {
     const enCaminata = idx >= 0 ? idx : 0;
     this.astros.forEach((a, i) => {
       let objetivo = null, ocultar = false;
-      if (S?.refugio) { objetivo = new THREE.Vector3(0, 0, 0); }
-      else if (i === 0 && S?.eva) objetivo = this.puntos.paneles.clone().add(new THREE.Vector3(Math.sin(this.t) * 3, 0, 1));
-      else if (i === enCaminata && S?.enEVA) ocultar = true;   // ese astronauta lo controla el jugador
+      if (S?.refugio) objetivo = new THREE.Vector3(0, 0, 0);
+      else if (i === 0 && S?.eva) objetivo = this.puntos.paneles;   // sale a limpiar los paneles
+      else if (i === enCaminata && S?.enEVA) ocultar = true;        // ese astronauta lo controla el jugador
       a.g.visible = !ocultar;
-      if (ocultar) { a.g.position.copy(this.ed.rover.g.position); return; }
-      if (objetivo) a.destino.copy(objetivo);
-      else if (a.g.position.distanceTo(a.destino) < 0.2) {
-        a.espera -= dt;
-        if (a.espera <= 0) {
-          a.destino.copy(this.puntos[lista[Math.floor(Math.random() * lista.length)]]);
-          a.destino.x += (Math.random() - 0.5) * 2; a.destino.z += (Math.random() - 0.5) * 2;
-          a.espera = 1 + Math.random() * 3;
+      if (ocultar) { a.g.position.copy(this.ed.rover.g.position); a.ruta = null; a.meta = null; return; }
+
+      // ¿A dónde va? Una orden (refugio, limpiar) o un punto de trabajo al azar cuando termina de esperar
+      if (objetivo) { if (!a.meta || a.meta.distanceTo(objetivo) > 0.3 || a.refugio !== !!S?.refugio) { a.refugio = !!S?.refugio; this._rutaHacia(a, objetivo, a.refugio); } }
+      else {
+        if (a.refugio) { a.refugio = false; a.ruta = null; a.g.position.copy(this.puntos.habitat); }   // salen del refugio por la puerta
+        if (!a.ruta?.length) {
+          a.espera -= dt;
+          if (a.espera <= 0) {
+            const meta = this.puntos[lista[Math.floor(Math.random() * lista.length)]].clone();
+            meta.x += (Math.random() - 0.5) * 2; meta.z += (Math.random() - 0.5) * 2;
+            empujarFuera(meta, 0.7, this.colEstaticos);
+            this._rutaHacia(a, meta);
+            a.espera = 1 + Math.random() * 3;
+          }
         }
       }
-      const dir = a.destino.clone().sub(a.g.position); dir.y = 0;
+
+      // Dentro del refugio no se ven (entraron por la puerta)
+      if (a.refugio && Math.hypot(a.g.position.x, a.g.position.z) < 3) a.g.visible = false;
+      // Ceder el paso: aunque esté quieto, se aparta si llega alguien con más prioridad (o el jugador, o el rover)
+      const obst = this.obstaculos({ sinAstro: a, antesDe: i });
+      if (!a.refugio) empujarFuera(a.g.position, 0.5, obst);
+      const sig = a.ruta?.[0];
+      if (!sig) { a.g.position.y = 0; return; }
+      const dir = new THREE.Vector3(sig.x - a.g.position.x, 0, sig.z - a.g.position.z);
       const dist = dir.length();
-      if (dist > 0.15) {
-        dir.normalize();
-        a.g.position.addScaledVector(dir, Math.min(dist, dt * 3));
-        a.g.rotation.y = Math.atan2(dir.x, dir.z);
-        a.g.position.y = Math.abs(Math.sin(this.t * 9 + a.fase)) * 0.25; // saltitos (gravedad 38%)
-      } else a.g.position.y = 0;
-      if (S?.refugio) a.g.visible = dist > 3;
+      if (dist < 0.25) { a.ruta.shift(); return; }
+      dir.normalize();
+      const paso = Math.min(dist, dt * 3);
+      let mover = dir;
+      if (!a.refugio) {
+        // Mirar adelante ANTES de dar el paso: si algo tapa el camino, girar ya (no caminar contra el obstáculo).
+        // Prueba el camino directo y luego desvíos cada vez más abiertos, empezando por el mismo lado de antes.
+        const vista = Math.min(1.1, dist + 0.3);
+        const lado = a.lado || 1;
+        let giros = [0, 30, -30, 60, -60, 90, -90].map(g => g * lado * Math.PI / 180);
+        // Mientras rodea algo, mantiene el desvío un momento antes de volver a probar de frente (sin zigzag)
+        a.desvioT = Math.max(0, (a.desvioT || 0) - dt);
+        if (a.desvioT > 0 && a.desvio) giros = [a.desvio, ...giros.filter(g => g !== a.desvio)];
+        mover = null;
+        // Último tramo y su lugar está ocupado por alguien: ya llegó (no da vueltas alrededor del otro)
+        if (a.ruta.length === 1 && dist < 1.6 && !libre(sig.x, sig.z, 0.5, obst)) { a.ruta = []; a.g.position.y = 0; return; }
+        for (const g of giros) {
+          const c = Math.cos(g), sn = Math.sin(g);
+          const cand = new THREE.Vector3(dir.x * c - dir.z * sn, 0, dir.x * sn + dir.z * c);
+          if (libre(a.g.position.x + cand.x * vista, a.g.position.z + cand.z * vista, 0.5, obst)) {
+            mover = cand;
+            if (g) { a.lado = Math.sign(g) * lado > 0 ? lado : -lado; if (g !== a.desvio || !a.desvioT) { a.desvio = g; a.desvioT = 0.25; } }   // recordar hacia dónde rodea
+            else a.desvio = 0;
+            break;
+          }
+        }
+        if (!mover) {
+          // Todo tapado: quieto (sin saltitos) y, si sigue así un momento, otro camino u otro destino
+          a.g.position.y = 0;
+          a.trabado = (a.trabado || 0) + dt;
+          if (a.trabado > 0.35) {
+            if (a.meta && a.g.position.distanceTo(a.meta) < 2) a.ruta = [];
+            else if (a.meta && (a.reintentos = (a.reintentos || 0) + 1) < 3) this._rutaHacia(a, a.meta);
+            else { a.ruta = []; a.reintentos = 0; }
+            a.trabado = 0; a.lado = -lado;
+          }
+          return;
+        }
+        a.trabado = 0; a.reintentos = 0;
+        a.g.position.addScaledVector(mover, paso);
+        empujarFuera(a.g.position, 0.5, obst);   // por si algo se movió encima
+      } else a.g.position.addScaledVector(dir, paso);
+      // Mira hacia donde camina de verdad, girando suave (sin cambios bruscos de dirección)
+      const angulo = Math.atan2(mover.x, mover.z);
+      let giro = angulo - a.g.rotation.y;
+      giro = Math.atan2(Math.sin(giro), Math.cos(giro));
+      a.g.rotation.y += giro * Math.min(1, dt * 10);
+      a.g.position.y = Math.abs(Math.sin(this.t * 9 + a.fase)) * 0.25; // saltitos (gravedad 38%)
+      if (a.refugio) a.g.visible = Math.hypot(a.g.position.x, a.g.position.z) > 3;
     });
   }
 

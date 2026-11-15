@@ -23,7 +23,7 @@ export const DIFICULTADES = {
         9: ['La nave de relevo ya está en órbita. ¡Aguanten un sol más!'],
       },
     },
-    eva: { o2TrajePorSeg: 0.9 },   // el traje dura ~110 s
+    eva: { o2TrajePorSeg: 0.9, radarMapa: 0 },   // el traje dura ~110 s · minimapa completo
   },
   comandante: {
     nombre: 'Comandante', icono: '🧑‍🚀', edad: '10 a 12 años',
@@ -36,7 +36,7 @@ export const DIFICULTADES = {
 // Guardar los valores originales una sola vez para poder volver a ellos
 const BASE = {
   mision: Object.fromEntries(['maxSol', 'bateriaInicial', 'comidaInicial', 'metaCiencia', 'conjuncion', 'guion', 'avisos'].map(k => [k, MISION[k]])),
-  eva: { o2TrajePorSeg: MISION.eva.o2TrajePorSeg },
+  eva: { o2TrajePorSeg: MISION.eva.o2TrajePorSeg, radarMapa: MISION.eva.radarMapa },
   tiempos: Object.fromEntries(Object.entries(EVENTOS).map(([id, ev]) => [id, ev.tiempo])),
 };
 

@@ -41,14 +41,15 @@ export const MISION = {
     radPorSeg: 0.04,          // mSv por segundo afuera (simplificado)
     multLlamarada: 6,         // si llega una llamarada durante la caminata
     saludRescate: 15,         // si se acaba el oxígeno del traje
-    valores: { hielo: 8, roca: 6, regolito: 1, pieza: 1 },  // +O2, +ciencia, +bolsas, +repuestos
+    radarMapa: 30,            // metros: el minimapa solo muestra lo que está así de cerca (0 = todo el mapa, Cadete)
+    valores: { hielo: 8, roca: 6, regolito: 1, pieza: 1 },  // +O2, +ciencia, +regolito, +repuestos
     regolitoPorNivel: 2,      // OBSOLETO: ya no se usa (las secciones de MISION.construccion tienen su propio costo)
     // Lo que el jugador recoge: qué es (dato real) y para qué sirve en el juego
     objetos: {
       regolito: {
         nombre: 'Regolito', icono: '🟫', color: '#ff8a3d',
         que: 'Es la capa de polvo y piedritas sueltas que cubre Marte. Es rojo porque tiene óxido de hierro: ¡Marte está oxidado como un clavo viejo!',
-        uso: 'Blindaje: se guarda en la base y con él construyes las secciones que protegen el hábitat de la radiación (cada una cuesta 3 o 4 bolsas; tecla B).',
+        uso: '🧱 Para construir el blindaje y otras obras (tecla B).',
       },
       roca: {
         nombre: 'Roca marciana', icono: '🪨', color: '#b06cff',
@@ -84,7 +85,28 @@ export const MISION = {
       lados: { nombre: 'Paredes este y oeste', nombre_en: 'East and west walls', icono: '↔️', costo: 4, proteccion: 0.20, proteccionLlamarada: 0.10 },
       techo: { nombre: 'Techo', nombre_en: 'Roof', icono: '🔼', costo: 4, proteccion: 0.10, proteccionLlamarada: 0.40 },
     },
+    // Más obras con regolito (aparte del blindaje): así el regolito sigue sirviendo después de blindar.
+    // Compiten con el blindaje por el mismo regolito: el jugador decide qué construir primero.
+    obras: {
+      camas: { nombre: 'Camas de cultivo', nombre_en: 'Growing beds', icono: '🪴', costo: 4,
+        efecto: '+1 de comida cada sol', efecto_en: '+1 food every sol',
+        pista: 'En la Tierra, científicos ya cultivaron plantas en una tierra que imita al regolito de Marte.',
+        pista_en: 'On Earth, scientists have already grown plants in soil that imitates Martian regolith.' },
+      tunel: { nombre: 'Túnel al invernadero', nombre_en: 'Tunnel to the greenhouse', icono: '🚇', costo: 4,
+        efecto: 'En el refugio también se cosecha',
+        efecto_en: 'The harvest goes on during shelter days',
+        pista: 'El regolito encima del túnel frena la radiación: la tripulación puede cuidar las plantas sin salir.',
+        pista_en: 'The regolith over the tunnel blocks radiation: the crew can look after the plants without going outside.' },
+      plataforma: { nombre: 'Plataforma de aterrizaje', nombre_en: 'Landing pad', icono: '🛬', costo: 5,
+        efecto: 'Al día siguiente llega comida, un repuesto y un botiquín',
+        efecto_en: 'Food, a spare part and a first-aid kit arrive the next day',
+        pista: 'Sin plataforma, el chorro del cohete levanta piedras y polvo que pueden dañar la base. La NASA estudia cómo hacer plataformas con regolito.',
+        pista_en: 'Without a pad, the rocket blast throws up rocks and dust that can damage the base. NASA studies how to build pads out of regolith.' },
+    },
   },
+  // Oportunidades: en los sols sin emergencia suele aparecer una decisión sin reloj (ver motor.elegirEvento).
+  probEmergencia: 0.38,
+  probOportunidad: 0.75,     // de los sols que quedan sin emergencia
   // Guion de referencia (modo demo y valores por defecto). En una partida normal, motor.sortearGuion()
   // cambia los días de cada emergencia para que ninguna partida sea igual.
   guion: { 2: 'llamarada', 4: 'reciclador', 6: 'tormenta', 9: 'remolino', 12: 'llamarada' },
@@ -124,6 +146,25 @@ export const SISTEMAS = {
     desc: 'Analiza rocas y suelo marciano. Da puntos de ciencia… pero gasta energía.',
     niveles: ['Apagado: sin experimentos', 'Experimentos: +4 ciencia por sol', 'A toda máquina: +8 ciencia por sol'],
   },
+};
+
+// Inventos del laboratorio: cada vez que la ciencia pasa un hito (motor.pasoInvento) se elige 1 de 2.
+// Así la ciencia sigue sirviendo después de la meta. Elegir uno deja el otro sin fabricar.
+export const INVENTOS = {
+  aislante: { icono: '🧥', nombre: 'Aislante térmico', detalle: 'En las tormentas, la calefacción ya no gasta energía extra.',
+    dato: 'Las naves espaciales se cubren con mantas aislantes de muchas capas para no perder calor.' },
+  led: { icono: '💡', nombre: 'Luces LED para plantas', detalle: 'Las plantas crecen más: +1 de comida cada sol.',
+    dato: 'La NASA cultiva lechugas con luces LED en la Estación Espacial (experimento Veggie).' },
+  reciclador: { icono: '♻️', nombre: 'Reciclador de agua mejorado', detalle: '+2 de oxígeno cada sol.',
+    dato: 'La Estación Espacial ya recicla el 98% de su agua.' },
+  labRefugio: { icono: '🧪', nombre: 'Laboratorio portátil', detalle: 'En los días de refugio, el laboratorio sigue haciendo un poco de ciencia.',
+    dato: 'Muchos experimentos de la Estación Espacial funcionan solos, sin que los astronautas los toquen.' },
+  taladro: { icono: '⛏️', nombre: 'Taladro para rocas', detalle: 'Cada roca que traes da +2 de ciencia extra.',
+    dato: 'El rover Perseverance usa un taladro y guarda muestras de roca en tubos.' },
+  antipolvo: { icono: '🧽', nombre: 'Capa antipolvo para paneles', detalle: 'Las tormentas rayan menos los paneles.',
+    dato: 'En 2018, el polvo de una tormenta tapó los paneles del rover Opportunity y lo dejó sin energía.' },
+  impresora: { icono: '🖨️', nombre: 'Impresora 3D de repuestos', detalle: 'Fabrica 2 repuestos ahora mismo.',
+    dato: 'La Estación Espacial tiene impresoras 3D para fabricar piezas.' },
 };
 
 export const RECURSOS = [

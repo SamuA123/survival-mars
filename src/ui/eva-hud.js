@@ -1,8 +1,9 @@
 // HUD de la caminata espacial: oxígeno del traje, radiación, objetos, flecha a la base, joystick.
 // Panel de radiación y mochila (ideas del grupo): nivel actual, exposición, tiempo afuera, protección; recoger/soltar/depositar.
-import { TIPOS, MOCHILA_MAX } from '../world3d/eva.js';
+import { TIPOS, MOCHILA_MAX, PUERTA } from '../world3d/eva.js';
 import { beep } from './sonido.js';
 import { MISION } from '../sim/config.js';
+import { dificultadActual } from '../sim/dificultad.js';
 const L = (es, en) => esEN() ? en : es;
 import { t, tr, onIdioma, esEN } from './i18n.js';
 
@@ -33,24 +34,132 @@ export function mostrarHUDEVA(control, plan = null) {
     <div class="eva-aviso" id="evaAviso"></div>
     <div class="eva-tarjeta" id="evaTarjeta" role="status" aria-live="polite" aria-atomic="true"></div>
     <div class="eva-base" id="evaBase"><span class="eva-flecha" id="evaFlecha">➤</span> 🏠 <b id="evaDist">0</b> m</div>
-    <div class="eva-ayuda" data-i18n-html="eva.ayuda">${t('eva.ayuda')}</div>
+    <div class="eva-ayuda" id="evaAyuda">${ayudaTeclas()}</div>
     <div class="eva-botones">
       <button id="evaRecoger" class="eva-btn oculto"></button>
       <button id="evaSoltar" class="eva-btn eva-btn-sec oculto"></button>
       <button id="evaLimpiar" class="eva-btn oculto">${t('eva.limpiar')}<span class="tecla"> (E)</span></button>
       <button id="evaEntrar" class="eva-btn oculto">${t('eva.entrar')}<span class="tecla"> (E)</span></button>
     </div>
-    <div class="joystick" id="joy"><div class="joy-palo" id="joyPalo"></div></div>`;
+    <div class="joystick" id="joy"><div class="joy-palo" id="joyPalo"></div></div>
+    <div class="eva-mapa" id="evaMapa" title="${tituloMapa()}"><canvas id="evaMapaCanvas"></canvas></div>`;
   document.body.appendChild(raiz);
   raiz.querySelector('#evaEntrar').onclick = () => control.accion();
   raiz.querySelector('#evaLimpiar').onclick = () => control.accion();
   raiz.querySelector('#evaRecoger').onclick = () => control.recoger();
   raiz.querySelector('#evaSoltar').onclick = () => control.soltar();
   activarJoystick(control);
+  controlMapa = control;
+  addEventListener('keydown', alMoverse);
+  mostrarAyuda();
+}
+
+// ---------------------------------------------------------------------
+//  🗺️ MINIMAPA (abajo a la derecha). Girado como la cámara: "arriba" en el mapa = la tecla W.
+//  Muestra la base, la puerta, lo que queda por recoger y al astronauta con su dirección.
+// ---------------------------------------------------------------------
+const RADIO_MUNDO = 78;
+// El rango decide: Cadete ve todo el mapa; Comandante, solo lo que alcanza el radar del traje
+const radarActual = () => (dificultadActual === 'cadete' ? 0 : MISION.eva.radarMapa || 0);
+const tituloMapa = () => (radarActual()
+  ? L(`Radar del traje: ves lo que está a menos de ${MISION.eva.radarMapa} m. Arriba es hacia donde caminas con W.`, `Suit radar: you see what is closer than ${MISION.eva.radarMapa} m. Up is where W walks.`)
+  : L('Mapa: arriba es hacia donde caminas con W.', 'Map: up is where W walks.'));            // un poco más que lo que se puede caminar (76 en world3d/eva.js)
+let controlMapa = null, ultimoMapa = 0;
+function dibujarMapa() {
+  const c = controlMapa, cv = raiz?.querySelector('#evaMapaCanvas');
+  if (!c?.jugador || !cv) return;
+  const ahora = performance.now();
+  if (ahora - ultimoMapa < 66) return;   // ~15 veces por segundo alcanza
+  ultimoMapa = ahora;
+  const lado = cv.parentElement.clientWidth || 160, dpr = Math.min(2, devicePixelRatio || 1);
+  if (cv.width !== Math.round(lado * dpr)) { cv.width = cv.height = Math.round(lado * dpr); cv.style.width = cv.style.height = lado + 'px'; }
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, lado, lado);
+  const m = lado / 2, esc = (m - 6) / RADIO_MUNDO;
+  // Dirección de la cámara en el suelo: ese es el "arriba" del mapa
+  const cam = c.m.camera.position, obj = c.m.controls.target;
+  let fx = obj.x - cam.x, fz = obj.z - cam.z;
+  const lf = Math.hypot(fx, fz) || 1; fx /= lf; fz /= lf;
+  const aPantalla = (x, z) => [m + (-x * fz + z * fx) * esc, m - (x * fx + z * fz) * esc];
+  // Fondo: suelo de Marte y borde de lo que se puede caminar
+  g.beginPath(); g.arc(m, m, m - 2, 0, Math.PI * 2);
+  g.fillStyle = 'rgba(122, 52, 24, .82)'; g.fill();
+  g.lineWidth = 3; g.strokeStyle = '#2b1408'; g.stroke();
+  g.beginPath(); g.arc(m, m, 76 * esc, 0, Math.PI * 2);
+  g.setLineDash([4, 4]); g.lineWidth = 1.5; g.strokeStyle = 'rgba(255, 244, 227, .45)'; g.stroke(); g.setLineDash([]);
+  // Base y puerta
+  const [bx, by] = aPantalla(0, 0), [px, py] = aPantalla(PUERTA.x, PUERTA.z);
+  g.beginPath(); g.arc(bx, by, 7 * esc + 4, 0, Math.PI * 2); g.fillStyle = '#fff4e3'; g.fill();
+  g.lineWidth = 2; g.strokeStyle = '#2b1408'; g.stroke();
+  g.beginPath(); g.arc(px, py, 3.5, 0, Math.PI * 2); g.fillStyle = '#33c2d6'; g.fill(); g.stroke();
+  // Radar del traje (Comandante): solo se ven los objetos a menos de radarMapa metros. Cadete ve todo.
+  const p = c.jugador.position, radar = radarActual();
+  if (radar) {
+    const [rx, ry] = aPantalla(p.x, p.z);
+    const grad = g.createRadialGradient(rx, ry, 0, rx, ry, radar * esc);
+    grad.addColorStop(0, 'rgba(51, 194, 214, .30)'); grad.addColorStop(1, 'rgba(51, 194, 214, .08)');
+    g.save(); g.beginPath(); g.arc(m, m, m - 3, 0, Math.PI * 2); g.clip();
+    g.beginPath(); g.arc(rx, ry, radar * esc, 0, Math.PI * 2); g.fillStyle = grad; g.fill();
+    g.lineWidth = 1.5; g.strokeStyle = 'rgba(155, 231, 255, .8)'; g.stroke();
+    // Barrido que gira, como una pantalla de radar
+    const a = (ahora / 900) % (Math.PI * 2);
+    g.beginPath(); g.moveTo(rx, ry); g.arc(rx, ry, radar * esc, a - 0.5, a); g.closePath();
+    g.fillStyle = 'rgba(155, 231, 255, .22)'; g.fill();
+    g.restore();
+  }
+  // Objetos que quedan: el mismo ícono que en el resto del juego, sobre su color
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '11px system-ui, "Segoe UI Emoji", sans-serif';
+  for (const o of c.objetos || []) {
+    if (!o.g.parent) continue;
+    if (radar && Math.hypot(o.g.position.x - p.x, o.g.position.z - p.z) > radar) continue;
+    const [x, y] = aPantalla(o.g.position.x, o.g.position.z), T = TIPOS[o.tipo];
+    g.beginPath(); g.arc(x, y, 7, 0, Math.PI * 2); g.fillStyle = T?.color || '#fff'; g.fill();
+    g.lineWidth = 1.5; g.strokeStyle = '#2b1408'; g.stroke();
+    g.fillText(T?.icono || '', x, y + 0.5);
+  }
+  // Astronauta: flecha que apunta hacia donde camina
+  const ry = c.jugador.rotation.y;
+  const [ax, ay] = aPantalla(p.x, p.z);
+  const dx = Math.sin(ry), dz = Math.cos(ry);
+  const ang = Math.atan2(-(dx * fx + dz * fz), (-dx * fz + dz * fx));
+  g.save(); g.translate(ax, ay); g.rotate(ang);
+  g.beginPath(); g.moveTo(9, 0); g.lineTo(-6, 6); g.lineTo(-3, 0); g.lineTo(-6, -6); g.closePath();
+  g.fillStyle = '#ffd54a'; g.fill(); g.lineWidth = 2; g.strokeStyle = '#2b1408'; g.stroke();
+  g.restore();
+}
+
+// ---------------------------------------------------------------------
+//  Teclas de la caminata dibujadas como teclas de verdad.
+//  Se esconden mientras el jugador camina y vuelven si se queda quieto un rato.
+// ---------------------------------------------------------------------
+const MOVER = new Set(['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright']);
+const QUIETO_MS = 3000;
+let ayudaTimer = null;
+const k = (x, cls = '') => `<kbd class="tk ${cls}">${x}</kbd>`;
+function ayudaTeclas() {
+  return `
+    <div class="ay-tit">⌨️ ${L('Controles', 'Controls')}</div>
+    <div class="ay-fila"><div class="ay-teclas"><div class="cruz">${k('W', 'arriba')}${k('A')}${k('S')}${k('D')}</div>
+      <div class="cruz chica">${k('↑', 'arriba')}${k('←')}${k('↓')}${k('→')}</div></div><span>${L('Caminar', 'Walk')}</span></div>
+    <div class="ay-fila"><div class="ay-teclas">${k('E', 'grande')}</div><span>${L('Recoger o entrar a la base', 'Pick up or go into the base')}</span></div>
+    <div class="ay-fila"><div class="ay-teclas">${k('R', 'grande')}</div><span>${L('Soltar de la mochila', 'Drop from the backpack')}</span></div>
+    <div class="ay-fila ay-buscar"><div class="ay-teclas">🟫 🪨 🧊</div><span>${L('Busca esto afuera', 'Look for these outside')}</span></div>`;
+}
+function mostrarAyuda() {
+  clearTimeout(ayudaTimer);
+  raiz?.querySelector('#evaAyuda')?.classList.remove('oculta');
+}
+function alMoverse(e) {
+  if (!raiz || !MOVER.has(e.key.toLowerCase())) return;
+  raiz.querySelector('#evaAyuda')?.classList.add('oculta');
+  clearTimeout(ayudaTimer);
+  ayudaTimer = setTimeout(mostrarAyuda, QUIETO_MS);
 }
 
 export function actualizarHUDEVA(e) {
   if (!raiz) return;
+  dibujarMapa();
   const q = s => raiz.querySelector(s);
   const o2 = Math.ceil(e.o2);
   ultimoEstado = e;
@@ -159,7 +268,8 @@ export function avisoEVA(txt, bueno = false) {
   el.textContent = tr(typeof txt === 'function' ? txt() : txt); el.classList.add('visible');
   el.classList.toggle('bueno', bueno);
   clearTimeout(avisoTimer);
-  avisoTimer = setTimeout(() => el.classList.remove('visible'), 3500);
+  avisoTimer = setTimeout(() => { el.classList.remove('visible'); posicionarRecogida(); }, 3500);
+  posicionarRecogida();   // si ya hay un "+1" en pantalla, se aparta del aviso
 }
 
 // Aviso breve: la explicación completa queda disponible en Inventario.
@@ -169,7 +279,7 @@ function pintarRecogida() {
   const { tipo } = ultimaTarjeta, o = TIPOS[tipo], v = MISION.eva.valores;
   const uso = tipo === 'roca' ? L(`+${v.roca} ciencia al volver`, `+${v.roca} science when you return`)
     : tipo === 'hielo' ? L(`hasta +${v.hielo} oxígeno al volver`, `up to +${v.hielo} oxygen when you return`)
-    : L('1 bolsa para el blindaje al volver', '1 bag for shielding when you return');
+    : L('+1 de regolito para construir al volver', '+1 regolith for building when you return');
   const el = raiz.querySelector('#evaTarjeta');
   el.style.setProperty('--c', o.color);
   el.innerHTML = `<b>${o.icono} +1 ${tr(o.nombre)}</b><small>${uso}</small>`;
@@ -191,14 +301,17 @@ function posicionarRecogida() {
   const el = raiz?.querySelector('#evaTarjeta');
   if (!el?.classList.contains('visible')) return;
   const ancho = el.offsetWidth, alto = el.offsetHeight, margen = 12;
-  const ocupados = [...document.querySelectorAll('.hud-top, .eva-top, .eva-base, .eva-botones, .joystick, .botones-top, .eva-ayuda, .eva-aviso.visible')]
+  const ocupados = [...document.querySelectorAll('.hud-top, .eva-top, .eva-base, .eva-botones, .joystick, .botones-top, .eva-ayuda, .eva-mapa, .eva-aviso.visible')]
     .filter(n => getComputedStyle(n).visibility !== 'hidden')
-    .map(n => n.getBoundingClientRect()).filter(r => r.width && r.height);
-  const xs = [innerWidth - ancho - margen, margen, (innerWidth - ancho) / 2];
-  for (let y = 76; y + alto <= innerHeight - margen; y += 12) {
-    for (const x of xs) {
+    .map(n => n.getBoundingClientRect()).filter(r => r.width && r.height)
+    .map(r => ({ left: r.left - 30, right: r.right + 30, top: r.top - 10, bottom: r.bottom + 10 }));   // margen extra: el aviso todavía está creciendo
+  // Toda la columna derecha primero; si no cabe, la izquierda. Nunca el centro: ahí van los avisos importantes.
+  const xs = [innerWidth - ancho - margen, margen];
+  for (const x of xs) {
+    for (let y = 76; y + alto <= innerHeight - margen; y += 12) {
       if (x < 0 || ocupados.some(r => x < r.right + 8 && x + ancho > r.left - 8 && y < r.bottom + 8 && y + alto > r.top - 8)) continue;
-      Object.assign(el.style, { left: x + 'px', top: y + 'px' });
+      Object.assign(el.style, { left: x + 'px', top: y + 'px', bottom: 'auto' });
+      el.classList.toggle('derecha', x > innerWidth / 2);
       el.style.visibility = 'visible';
       return;
     }
@@ -210,13 +323,16 @@ addEventListener('resize', posicionarRecogida);
 
 export function ocultarHUDEVA() {
   document.body.classList.remove('modo-eva');
-  raiz?.remove(); raiz = null;
+  raiz?.remove(); raiz = null; controlMapa = null;
   ultimoAviso = null; ultimaTarjeta = null;
-  clearTimeout(avisoTimer); clearTimeout(tarjetaTimer);
+  clearTimeout(avisoTimer); clearTimeout(tarjetaTimer); clearTimeout(ayudaTimer);
+  removeEventListener('keydown', alMoverse);
 }
 
 onIdioma(() => {
   if (!raiz) return;
+  raiz.querySelector('#evaAyuda').innerHTML = ayudaTeclas();
+  raiz.querySelector('#evaMapa').title = tituloMapa();
   raiz.querySelector('#evaEntrar').innerHTML = `${t('eva.entrar')}<span class="tecla"> (E)</span>`;
   raiz.querySelector('#evaLimpiar').innerHTML = `${t('eva.limpiar')}<span class="tecla"> (E)</span>`;
   ultimoPanel = '';

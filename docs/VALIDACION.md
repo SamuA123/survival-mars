@@ -5,7 +5,7 @@
 Automated tests, with no game dependencies to install (Node 22 or later):
 
 ```bash
-node --test tests/regresiones.mjs tests/mecanicas.mjs tests/guardado.mjs
+node --test tests/regresiones.mjs tests/mecanicas.mjs tests/guardado.mjs tests/progreso.mjs
 ```
 
 - `tests/regresiones.mjs`: empty and invalid DONKI answers; the three DONKI sources in order (flare list, flare notifications with
@@ -14,6 +14,8 @@ node --test tests/regresiones.mjs tests/mecanicas.mjs tests/guardado.mjs
   schedule (the storm is announced 2 sols ahead, never overlaps the solar conjunction, and demo mode keeps a fixed script).
 - `tests/mecanicas.mjs`: shielding by sections (roof vs. walls), dose per astronaut and the spacewalk backpack.
 - `tests/guardado.mjs`: saving the mission and continuing it later.
+- `tests/progreso.mjs`: what keeps the middle of the game interesting: extra regolith buildings, lab inventions after the science
+  goal, opportunities on quiet sols, and their English texts.
 
 `tests/browser.mjs` is the visual test and needs Chrome (see below); it is not part of the command above.
 
@@ -28,8 +30,22 @@ The challenge asks that no option be "safe" at no cost. We simulated 400 games p
 | Lab at level 1 plus spacewalks for rocks | 2 or 3 stars, paying with suit oxygen and radiation |
 | Never take shelter from flares | **Loses every time** (radiation limit) |
 
-Higher scores require taking some risk, and ignoring radiation always fails. The science goal (60 points for Commander, 35 for Cadet)
+Higher scores require taking some risk, and ignoring radiation always fails. The same check was repeated after adding lab inventions
+and opportunities (below): playing safe still earns 1 star 98% of the time, and accepting every opportunity spends power and lowers
+the share of 3-star games (lab at level 2: from 56% to 23%), so opportunities are trade-offs, not free points. The science goal (60 points for Commander, 35 for Cadet)
 was raised from 40 and 25 for this reason: before, the safe strategy earned 3 stars about 85% of the time.
+
+## Changes made after playtesting by the team
+
+Playing full games showed three dull stretches. Changes:
+
+- **Building stopped mattering once the shield was finished.** Build mode now also offers growing beds (+1 harvest per sol), a
+  tunnel to the greenhouse (shelter days no longer halve the harvest) and a landing pad (a cargo ship lands the next sol). They use
+  the same regolith as the shield, so players choose what to build first.
+- **Science stopped mattering after the goal.** Every 20 science points (12 for Cadet) the lab offers two inventions and the player
+  keeps one (for example LED grow lights, a better water recycler or a rock drill). Milestones continue past the goal.
+- **Some sols had nothing to decide.** On sols with no emergency, an opportunity with no timer usually appears: a drone flight to a
+  crater, recording a class for a school on Earth, extra exercise, a maintenance check or a crew birthday. Each has a cost.
 
 ## Changes made after feedback from one player
 

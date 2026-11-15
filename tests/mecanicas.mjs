@@ -204,3 +204,40 @@ test('Secciones: la pared barata ya no es siempre la mejor primera opción', () 
   assert.ok(radiacionInterior(pared).diaria < radiacionInterior(techo).diaria);
   assert.ok(radiacionInterior(techo).llamarada < radiacionInterior(pared).llamarada);
 });
+
+// ---------------------------------------------------------------- Colisiones (mundo 3D, sin Three.js)
+test('Colisiones: el personaje no atraviesa círculos ni rectángulos y resbala por el borde', async () => {
+  const { empujarFuera, libre } = await import('../src/world3d/colisiones.js');
+  const habitat = { x: 0, z: 0, r: 4.6 }, lab = { x: -3, z: -9, hx: 3.6, hz: 1.9 };
+  const p = { x: 1, z: 1 };
+  assert.equal(empujarFuera(p, 0.6, [habitat]), true);
+  assert.ok(Math.hypot(p.x, p.z) >= 4.6 + 0.6 - 1e-9, 'queda fuera de la cúpula');
+  const q = { x: -3, z: -8.5 };   // dentro del laboratorio
+  empujarFuera(q, 0.6, [lab]);
+  assert.ok(q.z >= -9 + 1.9 + 0.6 - 1e-9 || q.z <= -9 - 1.9 - 0.6 + 1e-9 || Math.abs(q.x + 3) >= 3.6 + 0.6 - 1e-9, 'sale del rectángulo');
+  // Caminar en diagonal contra una pared: se conserva el avance a lo largo del borde
+  const r = { x: 0.5, z: -6.5 };
+  empujarFuera(r, 0.6, [lab]);
+  assert.ok(Math.abs(r.x - 0.5) < 1e-9, 'resbala sin perder el avance lateral');
+  assert.equal(libre(20, 20, 0.6, [habitat, lab]), true);
+  assert.equal(libre(0, 3, 0.6, [habitat]), false);
+});
+
+test('Rutas de los compañeros: ningún tramo atraviesa un edificio (ni en las esquinas entre edificios)', async () => {
+  const { crearRed, buscarRuta, libre, empujarFuera } = await import('../src/world3d/colisiones.js');
+  const c = (x, z, r) => ({ x, z, r }), b = (x, z, hx, hz) => ({ x, z, hx, hz });
+  // Las mismas formas que src/world3d/mundo.js (_initColisiones) + el rover estacionado
+  const obst = [c(0, 0, 4.6), b(0, 4.4, 0.85, 0.75), b(5.6, 0.5, 1.7, 0.95), c(10, 1, 3.9), b(-3, -9, 3.6, 1.9), b(6, -8, 2.1, 1.3),
+    c(-13, 15, 0.6), c(17, -14, 2.6), ...[-4.2, 0, 4.2].flatMap(dx => [-2.3, 2.3].map(dz => c(-13 + dx, 4 + dz, 1.7))), c(8, 10, 1.9)];
+  const puntos = [[0, 6], [10, 5.5], [-3, -6.2], [-13, 0], [6, -5.8], [-11, 13], [8, 7.6]].map(([x, z]) => { const p = { x, z }; empujarFuera(p, 0.7, obst); return p; });
+  const red = crearRed(obst, 0.55, puntos);
+  const tramoLibre = (a, q) => { for (let t = 0; t <= 1; t += 0.02) if (!libre(a.x + (q.x - a.x) * t, a.z + (q.z - a.z) * t, 0.5, obst)) return false; return true; };
+  // Incluye el caso de la captura: rodear la unión cúpula-túnel-invernadero
+  const casos = [...puntos.flatMap(p => puntos.filter(q => q !== p).map(q => [p, q])), [{ x: 7, z: -3 }, { x: 4, z: 6 }]];
+  for (const [desde, hasta] of casos) {
+    const ruta = buscarRuta(red, desde, hasta);
+    let previo = desde;
+    for (const p of ruta) { assert.ok(tramoLibre(previo, p), `tramo bloqueado de (${previo.x.toFixed(1)},${previo.z.toFixed(1)}) a (${p.x.toFixed(1)},${p.z.toFixed(1)})`); previo = p; }
+    assert.ok(Math.hypot(previo.x - hasta.x, previo.z - hasta.z) < 1e-6, 'llega a la meta');
+  }
+});
