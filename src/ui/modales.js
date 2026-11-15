@@ -26,6 +26,18 @@ onIdioma(() => {
 const L = (es, en) => esEN() ? en : es;
 // Nombre que se pone solo si el jugador no escribe nada (en cualquiera de los dos idiomas)
 export const nombrePorDefecto = n => !n || ['comandante', 'commander'].includes(String(n).trim().toLowerCase());
+// Regolito del inventario según las secciones REALES del modo construcción (cuestan 3/3/4/4, no "cada 2 bolsas")
+function regolitoInventario(S) {
+  const secs = Object.entries(MISION.construccion?.secciones || {});
+  const prox = secs.find(([id]) => !S.secciones?.[id]);
+  const r = S.regolito || 0;
+  const base = t('inv.regolito', { r, u: t(r === 1 ? 'inv.bolsa' : 'inv.bolsas'), x: seccionesHechas(S), tot: secs.length });
+  if (!prox) return `${base} · ${t('inv.blindajeListo')}`;
+  const [, s] = prox, faltan = Math.max(0, s.costo - r);
+  const clave = !faltan ? 'inv.proxLista' : faltan === 1 ? 'inv.proxFalta1' : 'inv.proxFalta';
+  return `${base} · ${t(clave, { n: esEN() ? s.nombre_en : s.nombre, c: s.costo, f: faltan })}`;
+}
+
 export const escapar = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 export function abrir(html, clase = '') {
@@ -262,7 +274,7 @@ export function panelInventario(S) {
       <h2>${t('inv.tit')}</h2>
       <p class="tranqui">${t('inv.desc')}</p>
       <div class="inv-lista">${filas}</div>
-      <div class="inv-extra">${t('inv.regolito', { r: S.regolito, n: MISION.eva.regolitoPorNivel, b: S.blindaje, x: seccionesHechas(S) })}</div>
+      <div class="inv-extra">${regolitoInventario(S)}</div>
       ${p ? `<div class="plan-res ${p.cumplido ? 'ok' : ''}">${t('inv.planHoy', { c: p.cantidad, i: o.icono, n: tr(o.nombre), h: Math.min(S.inventario.hoy[p.tipo], p.cantidad) })} ${p.cumplido ? '✅' : t('inv.opcional')}</div>` : ''}
       <div class="inv-extra">${t('fin.planes', { a: S.planesCumplidos, b: S.planesEnviados })}</div>
       <button class="btn-grande" id="btnCerrarInv">${t('volver')}</button>`, 'ancho');
