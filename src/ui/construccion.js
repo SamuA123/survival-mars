@@ -16,6 +16,12 @@ let ultimoMensaje = '';   // función o texto: se vuelve a generar al cambiar de
 export const botonIdioma = () => `<div class="modal-idioma"><button type="button" class="chip-btn" data-cambiar-idioma
   aria-label="${t('top.idioma.t')}">${esEN() ? '🌐 Español' : '🌐 English'}</button></div>`;
 const SEC = () => MISION.construccion.secciones;
+// Pista corta: por qué cada sección protege distinto (fondo diario vs. llamaradas)
+const pista = (id, s) => (s.proteccionLlamarada ?? 0) > s.proteccion
+  ? L('Las partículas de las llamaradas llegan sobre todo desde arriba: el techo es el mejor escudo.',
+      'Flare particles come mostly from above: the roof is the best shield.')
+  : L('Los rayos cósmicos llegan de lado todos los días: las paredes frenan más la radiación de fondo.',
+      'Cosmic rays come in from the sides every day: walls block more of the background radiation.');
 const nombreSec = s => L(s.nombre, s.nombre_en);
 const n2 = v => (Math.round(v * 100) / 100).toLocaleString(L('es', 'en'), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const juego = () => window.juego;
@@ -96,7 +102,10 @@ function pintar(mensajeArg = '') {
     return `<div class="cons-sec ${motivo === 'construida' ? 'hecha' : ''}" data-sec="${id}">
       <span class="cons-ic">${s.icono}</span>
       <div class="cons-txt"><b>${nombreSec(s)}</b>
-        <small>${L('Coste', 'Cost')}: <b>${s.costo} ${L('bolsas', 'bags')} 🟫</b> · ${L('Protección', 'Protection')} <b>+${Math.round(s.proteccion * 100)}%</b></small>
+        <small>${L('Coste', 'Cost')}: <b>${s.costo} ${L('bolsas', 'bags')} 🟫</b> · ${L(
+          `🛡️ Fondo diario <b>+${Math.round(s.proteccion * 100)} %</b> · ☀️ Llamaradas <b>+${Math.round((s.proteccionLlamarada ?? s.proteccion) * 100)} %</b>`,
+          `🛡️ Daily background <b>+${Math.round(s.proteccion * 100)}%</b> · ☀️ Flares <b>+${Math.round((s.proteccionLlamarada ?? s.proteccion) * 100)}%</b>`)}</small>
+        <small class="cons-pista">💡 ${pista(id, s)}</small>
         ${motivo === 'construida' ? '' : `<small class="cons-prev">☢️ ${L('Cada sol', 'Each sol')}: ${n2(ahora.diaria)} → <b>${n2(despues.diaria)} mSv</b> · ${L(`llamarada ${LLAMARADA_EJEMPLO}`, `${LLAMARADA_EJEMPLO} flare`)}: ${ahora.llamarada} → <b>${despues.llamarada} mSv</b></small>`}
       </div>
       ${boton}
@@ -154,7 +163,9 @@ function insertarBoton() {
     vital.appendChild(b);
   }
   const html = `<span>🧱 ${L('Modo construcción', 'Build mode')} <kbd>B</kbd></span>
-    <small>${L('Blindaje', 'Shield')} ${seccionesHechas(S)}/${Object.keys(SEC()).length} · 🟫 ${S.regolito || 0} ${L('bolsas', 'bags')} · ☢️ ${Math.round(factorBlindaje(S) * 100)}% ${L('entra', 'gets in')}</small>`;
+    <small>${L('Blindaje', 'Shield')} ${seccionesHechas(S)}/${Object.keys(SEC()).length} · 🟫 ${S.regolito || 0} ${L('bolsas', 'bags')} · ${L(
+      `☢️ entra ${Math.round(factorBlindaje(S) * 100)}% · ☀️ ${Math.round(factorBlindaje(S, 'llamarada') * 100)}% en llamaradas`,
+      `☢️ ${Math.round(factorBlindaje(S) * 100)}% gets in · ☀️ ${Math.round(factorBlindaje(S, 'llamarada') * 100)}% in flares`)}</small>`;
   if (b.innerHTML !== html) b.innerHTML = html;
 }
 let pendiente = false;
@@ -189,6 +200,7 @@ css.textContent = `
   .cons-ic { font-size: 26px; text-align: center; }
   .cons-txt small { display: block; font-size: 12px; margin-top: 2px; }
   .cons-prev { color: #8a4b12; }
+  .cons-pista { opacity: .8; font-style: italic; }
   .cons-btn { border: 0; border-radius: 12px; padding: 10px 14px; font-weight: 900; font-size: 15px; color: #fff; cursor: pointer;
     background: linear-gradient(180deg, #f07a45, #c9481f); box-shadow: 0 3px 0 #7d2a10; min-width: 110px; }
   .cons-btn:disabled { background: #b9a59a; box-shadow: none; cursor: not-allowed; }
