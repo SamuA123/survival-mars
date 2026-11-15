@@ -738,5 +738,5 @@ details.mas[open] > summary { margin-bottom: 4px; }
 .eva-mapa { position: absolute; right: 14px; bottom: 14px; width: 170px; height: 170px; border-radius: 50%;
   box-shadow: 4px 4px 0 rgba(43, 20, 8, .5); pointer-events: none; }
 .eva-mapa canvas { display: block; }
-@media (max-width: 760px) { .eva-mapa { width: 110px; height: 110px; right: 10px; bottom: 10px; } }
-@media (max-height: 500px) and (orientation: landscape) { .eva-mapa { width: 110px; height: 110px; right: 8px; bottom: 8px; } }
+@media (max-width: 760px) { .eva-mapa { width: 110px; height: 110px; right: 10px; bottom: 230px; } }   /* encima de "0 m" y del botón de entrar */
+@media (max-height: 500px) and (orientation: landscape) { .eva-mapa { width: 96px; height: 96px; right: 8px; bottom: 78px; } }   /* encima de los botones */
