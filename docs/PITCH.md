@@ -18,6 +18,26 @@ El modo se identifica como demostración, usa datos históricos y da 30 segundos
 
 No afirmar mejoras de aprendizaje hasta completar la prueba de usuarios de `VALIDACION.md`.
 
+## Capturas para el envío
+Tomadas de la vista previa (`samuel.survival-mars.pages.dev`), 1280×720, en `docs/img/` (menos de 160 KB cada una).
+Algunos textos pueden variar un poco respecto de la versión final.
+
+| Archivo | Qué muestra | Úsala para |
+|---|---|---|
+| `img/01-base.png` | La base en NE Syrtis, tanques de recursos, ruta de la misión e indicador del Sol | Imagen principal del proyecto |
+| `img/02-tripulacion.png` | Elegir quién sale a caminar, con los 4 dosímetros | Trade-off de radiación por persona |
+| `img/03-caminata-mochila.png` | Caminata: recoger regolito, mochila 3/4 y panel de radiación | Exploración con costo |
+| `img/04-construccion.png` | Modo construcción: pared norte construida, 0,70 → 0,60 mSv por sol | Blindaje que cambia la dosis |
+| `img/05-alerta-solar.png` | Alerta solar (SIMULACRO) con NASA DONKI | Datos de la NASA en la decisión |
+| `img/06-final.png` | Pantalla final: estrellas, criterios e insignias | Cierre y rejugabilidad |
+
+![Base](img/01-base.png)
+![Tripulación](img/02-tripulacion.png)
+![Caminata](img/03-caminata-mochila.png)
+![Construcción](img/04-construccion.png)
+![Alerta solar (simulacro)](img/05-alerta-solar.png)
+![Final](img/06-final.png)
+
 ## 1. Guion del video (2 minutos)
 
 | Tiempo | En pantalla | Narración (ES) |
