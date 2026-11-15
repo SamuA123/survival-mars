@@ -656,3 +656,6 @@ body.en-edificio .hud-top { visibility: visible; }
   body.modo-eva .eva-radpanel .rp:nth-child(3), body.modo-eva .eva-radpanel .rp-prot { display: none; }
   body.modo-eva .eva-base { top: 62px; right: 8px; bottom: auto; }   /* debajo de los botones de arriba */
 }
+
+/* Ventana de construcción: el botón de idioma no debe tapar la ✕ de cerrar */
+.cons-caja .modal-idioma { margin-right: 40px; }
