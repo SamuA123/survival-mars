@@ -12,23 +12,25 @@ export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const r1 = v => Math.round(v * 10) / 10;
 
 // Clima espacial (lo llena main.js con DONKI)
-export const CLIMA = { real: false, tranquilo: false, flares: LLAMARADAS_RESPALDO, riesgo: 1, resumen: 'cargando…' };
+export const CLIMA = { real: false, tranquilo: false, origen: 'cargando', consultadoEn: null, flares: LLAMARADAS_RESPALDO, riesgo: 1, resumen: 'cargando…' };
 export function setClima(c) { Object.assign(CLIMA, c); }
 
 // ---------------------------------------------------------------------
 export function crearPartida(nombre = 'Comandante') {
   return {
     nombre, sol: 1, fase: 'planear',
-    bateria: MISION.bateriaInicial, o2: 100, comida: 60, salud: 100, rad: 0, ciencia: 0,
+    bateria: MISION.bateriaInicial, o2: 100, comida: MISION.comidaInicial, salud: 100, rad: 0, ciencia: 0,
     niveles: { vital: 2, invernadero: 2, radio: 1, lab: 0 },
     paneles: true, eficiencia: 1, invSalud: 1,
     repuestos: MISION.repuestos, botiquin: MISION.botiquin,
     blindaje: 0, construir: false,
+    tripulacion: MISION.tripulacion.map(t => ({ ...t, dosis: 0 })), evaAstronauta: null,
+    secciones: Object.fromEntries(Object.keys(MISION.construccion.secciones).map(id => [id, false])),
     polvoSols: 0, eva: false, expedicion: false, refugio: false, ocupados: false,
     evaHecha: false, enEVA: false, regolito: 0,
     inventario: { hoy: { regolito: 0, roca: 0, hielo: 0 }, total: { regolito: 0, roca: 0, hielo: 0 } },
     plan: null, planesCumplidos: 0, planesEnviados: 0,
-    energiaOk: true, pendientes: [], aprendidos: [], ultimoEvento: null,
+    energiaOk: true, pendientes: [], mensajes: [], aprendidos: [], ultimoEvento: null,
     llamarada: null, evento: null, historial: [], log: [],
   };
 }
@@ -59,6 +61,32 @@ export function balance(S) {
   return { solar, nuclear, gen, cons, bal, manana: clamp(S.bateria + bal, 0, MISION.bateriaMax), apagon: S.bateria + bal < 0 };
 }
 
+// Shared by the preview and the actual simulation. Future events are not predicted.
+export function preverSol(S) {
+  const gen = solarHoy(S) + MISION.nuclear;
+  const niv = { ...S.niveles };
+  let construir = S.construir;
+  const disponible = S.bateria + gen;
+  const apagados = [];
+  if (construir && consumo(S, niv, construir) > disponible) { construir = false; apagados.push('la construcción'); }
+  for (const id of ['lab', 'radio', 'invernadero', 'vital']) {
+    while (consumo(S, niv, construir) > disponible + 1e-9 && niv[id] > 0) {
+      niv[id]--;
+      const nom = SISTEMAS[id].nombre.toLowerCase();
+      if (!apagados.includes(nom)) apagados.push(nom);
+    }
+  }
+  const trabajan = !S.refugio && !S.ocupados;
+  return {
+    niv, construir, apagados,
+    bateria: r1(clamp(S.bateria + gen - consumo(S, niv, construir), 0, MISION.bateriaMax)),
+    oxigeno: clamp(Math.round(S.o2 + [-20, -8, 0, 4][niv.vital]), 0, 100) - S.o2,
+    cosecha: r1(MISION.cosecha[niv.invernadero] * S.invSalud * (trabajan ? 1 : 0.5)),
+    comida: clamp(Math.round(S.comida + MISION.cosecha[niv.invernadero] * S.invSalud * (trabajan ? 1 : 0.5) - MISION.consumoComida), 0, 100) - S.comida,
+    ciencia: trabajan ? [0, 4, 8][niv.lab] : 0,
+  };
+}
+
 // ---------------------------------------------------------------------
 //  ACCIONES (todas tienen un costo)
 // ---------------------------------------------------------------------
@@ -75,14 +103,16 @@ export const ACCIONES = {
     texto: () => '🧹 Salir a limpiar los paneles',
     detalle: S => enTormenta(S) ? 'No se puede salir en plena tormenta' : '+30% eficiencia · cuesta +1,5 mSv de radiación',
     visible: S => S.eficiencia < 1, activo: S => !enTormenta(S) && !S.eva,
-    hacer(S) { S.eva = true; S.rad = r1(S.rad + 1.5); S.eficiencia = Math.min(1, S.eficiencia + 0.3); aprender(S, 'eva'); log(S, '🧑‍🚀 Una astronauta salió a limpiar los paneles (+1,5 mSv).'); },
+    hacer(S) { S.eva = true; dosisA(S, menorDosis(S)?.id, 1.5); S.eficiencia = Math.min(1, S.eficiencia + 0.3); aprender(S, 'eva'); log(S, '🧑‍🚀 Una astronauta salió a limpiar los paneles (+1,5 mSv).'); },
   },
+  // El blindaje ahora se construye por secciones en el modo construcción (src/ui/construccion.js, tecla B).
+  // Esta acción queda oculta para no tener dos formas distintas de construir.
   blindaje: {
     edificio: 'habitat',
-    texto: S => S.construir ? '⏸️ Pausar construcción del blindaje' : `🧱 Construir blindaje de regolito (${S.blindaje}/3)`,
-    detalle: () => 'Cubrir el hábitat con tierra marciana: –60% de radiación. Cuesta +3 kWh por sol durante 3 sols.',
-    visible: S => S.blindaje < 3, activo: () => true,
-    hacer(S) { S.construir = !S.construir; },
+    texto: S => `🧱 Construir blindaje de regolito (${S.blindaje}/3)`,
+    detalle: () => '',
+    visible: () => false, activo: () => true,
+    hacer() {},
   },
   // La caminata la controla el jugador en 3D: main.js intercepta esta acción.
   eva: {
@@ -100,6 +130,69 @@ export const ACCIONES = {
     hacer(S) { S.repuestos--; S.invSalud = 1; log(S, '🔧 Invernadero reparado.'); },
   },
 };
+
+// ---------------------------------------------------------------------
+//  TRIPULACIÓN CON DOSÍMETROS
+//  Fondo diario y llamaradas: a TODOS. Caminata: solo a quien sale.
+//  S.rad = la dosis más alta (el límite de la misión aplica por persona). Repartir las
+//  caminatas mantiene a todos más seguros: es lo que hace la NASA de verdad.
+// ---------------------------------------------------------------------
+const recalcularRad = S => { if (S.tripulacion?.length) S.rad = r1(Math.max(...S.tripulacion.map(a => a.dosis))); };
+export function dosisATodos(S, d) {
+  if (!S.tripulacion?.length) { S.rad += d; return; }
+  for (const a of S.tripulacion) a.dosis = Math.round((a.dosis + d) * 100) / 100;
+  recalcularRad(S);
+}
+export function dosisA(S, id, d) {
+  const a = S.tripulacion?.find(x => x.id === id) || menorDosis(S);
+  if (!a) { S.rad += d; return; }
+  a.dosis = Math.round((a.dosis + d) * 100) / 100;
+  recalcularRad(S);
+}
+export const menorDosis = S => S.tripulacion?.reduce((m, a) => (!m || a.dosis < m.dosis ? a : m), null) || null;
+export const astronauta = (S, id) => S.tripulacion?.find(a => a.id === id) || null;
+
+// ---------------------------------------------------------------------
+//  BLINDAJE POR SECCIONES (modo construcción, tecla B)
+//  Cada sección gasta regolito de la base y reduce DE VERDAD la radiación interior
+//  (dosis diaria y llamaradas). S.blindaje (0..3) se deriva para el resto del código.
+// ---------------------------------------------------------------------
+const SECCIONES = () => MISION.construccion.secciones;
+
+// Parte de la radiación que entra al hábitat: 1 = sin blindaje, 0.4 = completo
+export function factorBlindaje(S) {
+  const p = Object.entries(SECCIONES()).reduce((a, [id, s]) => a + (S.secciones?.[id] ? s.proteccion : 0), 0);
+  return r1(Math.max(0, 1 - p) * 100) / 100;
+}
+// Fracción de radiación que ENTRA al hábitat (0..1). La usa el panel de radiación de la caminata (eva-hud.js).
+export const proteccionHabitat = S => factorBlindaje(S);
+export const seccionesHechas = S => Object.keys(SECCIONES()).filter(id => S.secciones?.[id]).length;
+const nivelBlindaje = S => Math.round(seccionesHechas(S) * 3 / Object.keys(SECCIONES()).length);
+
+// Radiación interior de un sol tranquilo y de una llamarada de ejemplo (para mostrar el antes/después)
+export function radiacionInterior(S, claseEjemplo = 'X1.0') {
+  return { diaria: Math.round(MISION.radDiaria * factorBlindaje(S) * 100) / 100, llamarada: dosisLlamarada(S, claseEjemplo) };
+}
+
+// '' si se puede; si no, el motivo (código): 'construida' | 'faltaRegolito' | 'noExiste'
+export function motivoNoConstruir(S, id) {
+  const s = SECCIONES()[id];
+  if (!s) return 'noExiste';
+  if (S.secciones?.[id]) return 'construida';
+  if ((S.regolito || 0) < s.costo) return 'faltaRegolito';
+  return '';
+}
+
+export function construirSeccion(S, id) {
+  const motivo = motivoNoConstruir(S, id);
+  if (motivo) return { ok: false, motivo };
+  const antes = radiacionInterior(S);
+  S.regolito -= SECCIONES()[id].costo;
+  S.secciones[id] = true;
+  S.blindaje = nivelBlindaje(S);
+  aprender(S, 'regolito');
+  return { ok: true, antes, despues: radiacionInterior(S) };
+}
 
 // ---------------------------------------------------------------------
 //  CAMINATA ESPACIAL (EVA) — el jugador controla a un astronauta en 3D
@@ -123,7 +216,7 @@ export function iniciarEVA(S) {
 export function terminarEVA(S, r) {
   const V = MISION.eva.valores, lineas = [];
   S.enEVA = false;
-  S.rad = r1(S.rad + r.rad);
+  dosisA(S, S.evaAstronauta, r.rad);   // la caminata solo irradia a quien salió
   lineas.push(`⏱️ Estuviste afuera ${Math.round(r.segundos)} segundos y recibiste <b>${r1(r.rad)} mSv</b> de radiación.`);
   if (r.rescate) {
     S.salud = clamp(S.salud - MISION.eva.saludRescate, 0, 100);
@@ -133,9 +226,9 @@ export function terminarEVA(S, r) {
   }
   const it = r.items;
   if (it.regolito) {
+    // Se guarda en la base; el jugador decide qué sección construir (modo construcción, tecla B)
     S.regolito = (S.regolito || 0) + it.regolito;
-    while (S.regolito >= MISION.eva.regolitoPorNivel && S.blindaje < 3) { S.regolito -= MISION.eva.regolitoPorNivel; S.blindaje++; }
-    lineas.push(`🟫 <b>${it.regolito} de regolito</b> (la tierra roja y suelta de Marte) → cubre el hábitat: blindaje ${S.blindaje}/3.`); aprender(S, 'regolito');
+    lineas.push(`🟫 <b>${it.regolito} de regolito</b> (la tierra roja y suelta de Marte) → guardado en la base: ${S.regolito} bolsas para construir el blindaje (tecla B).`); aprender(S, 'regolito');
   }
   if (it.roca) { S.ciencia += it.roca * V.roca; lineas.push(`🪨 <b>${it.roca} roca(s) marciana(s)</b> de basalto → el laboratorio las analiza: +${it.roca * V.roca} de ciencia.`); }
   if (it.hielo) { S.o2 = clamp(S.o2 + it.hielo * V.hielo, 0, 100); lineas.push(`🧊 <b>${it.hielo} bloque(s) de hielo de agua</b> → el agua se separa en hidrógeno y oxígeno: +${it.hielo * V.hielo} de oxígeno.`); aprender(S, 'hielo'); }
@@ -214,7 +307,7 @@ function elegirLlamarada() {
 export function dosisLlamarada(S, clase) {
   const base = RADIACION.llamarada[clase[0]] ?? 8;
   const mag = Math.min(parseFloat(clase.slice(1)) || 1, 5);
-  const escudo = S.blindaje >= 3 ? RADIACION.atenuacionBlindaje : 1;
+  const escudo = factorBlindaje(S);   // cada sección construida protege desde ya
   return Math.round(base * (0.8 + mag / 10) * RADIACION.atenuacionAtmosfera * escudo);
 }
 
@@ -252,19 +345,19 @@ export const EVENTOS = {
     texto: S => {
       const f = S.llamarada;
       const origen = CLIMA.real && !CLIMA.tranquilo
-        ? `🛰️ Basada en una llamarada <b>real</b> que la NASA detectó el ${f.fecha} (DONKI, en vivo).`
+        ? `🛰️ Basada en una llamarada <b>real</b> que la NASA detectó el ${f.fecha} (consulta NASA DONKI).`
         : `📚 Basada en una llamarada histórica real del ${f.fecha} (archivo NASA DONKI).`;
-      return `Los satélites detectaron una llamarada clase <b>${f.clase}</b>. Una lluvia de partículas de alta energía viene hacia Marte.<br><small class="real">${origen}</small>`;
+      return `Ejercicio: llamarada clase <b>${f.clase}</b>. En este escenario simulado, una tormenta de partículas llega a Marte. ¿Proteges a la tripulación o sigues trabajando?<br><small class="real">${origen}</small>`;
     },
     consejo: 'Todos al refugio. La salud de la tripulación es primero; los experimentos pueden esperar.',
     inicio(S) { S.llamarada = elegirLlamarada(); },
     opciones: [
       { texto: '🛡️ ¡Todos al refugio!', detalle: 'Nadie trabaja hoy: sin ciencia y menos cosecha',
-        efecto(S) { S.refugio = true; S.rad += 0.3; return 'La tripulación se protegió en el refugio. Hoy no hubo ciencia y se cosechó menos, pero todos están a salvo.'; } },
+        efecto(S) { S.refugio = true; dosisATodos(S, 0.3); return 'La tripulación se protegió en el refugio. Hoy no hubo ciencia y se cosechó menos, pero todos están a salvo.'; } },
       { texto: '🔬 Seguir con los experimentos', detalle: '+10 ciencia… pero mucha radiación',
-        efecto(S) { const d = dosisLlamarada(S, S.llamarada.clase); S.rad += d; S.ciencia += 10; return `Siguieron trabajando: +10 ciencia, pero recibieron <b>${d} mSv</b> extra de radiación.`; } },
+        efecto(S) { const d = dosisLlamarada(S, S.llamarada.clase); dosisATodos(S, d); S.ciencia += 10; return `Siguieron trabajando: +10 ciencia, pero recibieron <b>${d} mSv</b> extra de radiación.`; } },
     ],
-    alAgotarse(S) { const d = dosisLlamarada(S, S.llamarada.clase); S.rad += d; return `Nadie dio la orden y la tripulación recibió <b>${d} mSv</b> de radiación.`; },
+    alAgotarse(S) { const d = dosisLlamarada(S, S.llamarada.clase); dosisATodos(S, d); return `Nadie dio la orden y la tripulación recibió <b>${d} mSv</b> de radiación.`; },
   },
   meteorito: {
     icono: '☄️', titulo: '¡Impacto de micrometeorito!', fx: 'meteorito', tiempo: 10, dato: 'meteorito',
@@ -356,9 +449,12 @@ export function iniciarSol(S) {
     const despues = MISION.conjuncion[MISION.conjuncion.length - 1] + 1;
     S.pendientes.push(...llegan.map(p => ({ ...p, sol: despues })));
   } else if (S.niveles.radio > 0) {
+    S.mensajes.push(...avisos.map(texto => ({ sol: S.sol, texto, tipo: 'aviso' })), ...llegan.map(p => ({ sol: S.sol, texto: p.texto, tipo: 'respuesta' })));
+    S.mensajes = S.mensajes.slice(-12);
     for (const a of avisos) log(S, `📡 <b>Control de Misión</b> <small>(enviado hace ${MISION.delayMin} min)</small>: ${a}`, 'tierra');
     for (const p of llegan) log(S, `📡 <b>Respuesta a tu pregunta del Sol ${p.desde}</b>: ${p.texto}`, 'tierra');
   } else if (avisos.length || llegan.length) {
+    S.pendientes.push(...llegan.map(p => ({ ...p, sol: S.sol + 1 })));
     log(S, '📡 Había mensajes de la Tierra… pero las comunicaciones estaban <b>apagadas</b>. ¡No los recibiste!', 'mal');
   }
   if (S.sol === 1) aprender(S, 'sol');
@@ -393,20 +489,8 @@ export function simularSol(S, resultadoEvento, ev) {
   if (resultadoEvento) lineas.push(`${ev.icono} ${resultadoEvento}`);
 
   // 1) Energía: si no alcanza, se apagan sistemas (primero lo menos vital)
-  const gen = solarHoy(S) + MISION.nuclear;
-  const niv = { ...S.niveles };
-  let construir = S.construir;
-  const disponible = S.bateria + gen;
-  const apagados = [];
-  if (construir && consumo(S, niv, construir) > disponible) { construir = false; apagados.push('la construcción'); }
-  for (const id of ['lab', 'radio', 'invernadero', 'vital']) {
-    while (consumo(S, niv, construir) > disponible + 1e-9 && niv[id] > 0) {
-      niv[id]--;
-      const nom = SISTEMAS[id].nombre.toLowerCase();
-      if (!apagados.includes(nom)) apagados.push(nom);
-    }
-  }
-  S.bateria = r1(clamp(S.bateria + gen - consumo(S, niv, construir), 0, MISION.bateriaMax));
+  const { niv, construir, apagados, bateria } = preverSol(S);
+  S.bateria = bateria;
   S.energiaOk = apagados.length === 0;
   if (apagados.length) { lineas.push(`🔌 <b>¡Apagón!</b> La energía no alcanzó y se apagó o bajó: ${apagados.join(', ')}.`); aprender(S, 'bateria'); }
 
@@ -421,8 +505,9 @@ export function simularSol(S, resultadoEvento, ev) {
   }
 
   // 3) Comida
-  let cosecha = [0, 2, 4, 6][niv.invernadero] * S.invSalud * (trabajan ? 1 : 0.5);
-  S.comida += cosecha - 5;
+  const cosecha = MISION.cosecha[niv.invernadero] * S.invSalud * (trabajan ? 1 : 0.5);
+  S.comida += cosecha - MISION.consumoComida;
+  lineas.push(`🥔 Cosecha: ${r1(cosecha)} · consumo: ${MISION.consumoComida} · reservas: ${clamp(Math.round(S.comida), 0, 100)}.`);
 
   // 4) Ciencia
   if (niv.lab > 0) {
@@ -433,10 +518,14 @@ export function simularSol(S, resultadoEvento, ev) {
   }
 
   // 5) Comunicaciones
-  if (niv.radio >= 2 && !enConjuncion(S)) S.salud += 2;
+  if (niv.radio >= 2 && !enConjuncion(S)) {
+    const recuperacion = Math.min(2, 100 - S.salud);
+    S.salud += recuperacion;
+    if (recuperacion > 0) lineas.push(`📡 Videollamada con la Tierra: +${recuperacion} de salud.`);
+  }
 
   // 6) Radiación de fondo (en Marte siempre hay un poco)
-  S.rad += MISION.radDiaria * (S.blindaje >= 3 ? RADIACION.atenuacionBlindaje : 1);
+  dosisATodos(S, MISION.radDiaria * factorBlindaje(S));   // fondo diario: a toda la tripulación
 
   // 7) Polvo
   if (enTormenta(S) && S.paneles) {
@@ -444,17 +533,16 @@ export function simularSol(S, resultadoEvento, ev) {
     lineas.push('🌪️ El polvo rayó y cubrió los paneles: ahora generan menos.');
   }
 
-  // 8) Blindaje
-  if (construir) {
-    S.blindaje++;
-    if (S.blindaje >= 3) { S.construir = false; lineas.push('🧱 <b>¡Blindaje terminado!</b> La radiación ahora les afecta mucho menos.'); aprender(S, 'regolito'); }
-    else lineas.push(`🧱 Construcción del blindaje: ${S.blindaje}/3.`);
-  }
+  // 8) Blindaje: se construye por secciones en el modo construcción (construirSeccion), no aquí.
 
   // 9) Salud según recursos
   let sano = niv.vital >= 2;
   if (S.o2 < 25) { S.salud -= 10; sano = false; lineas.push('⚠️ ¡Queda poco oxígeno! La tripulación se siente mareada.'); }
   if (S.comida <= 0) { S.salud -= 10; sano = false; lineas.push('⚠️ ¡Se acabó la comida!'); }
+  else if (S.comida <= MISION.comidaBaja) {
+    S.salud -= MISION.penalizacionHambre; sano = false;
+    lineas.push(`⚠️ Queda poca comida: la tripulación tiene hambre (-${MISION.penalizacionHambre} de salud). Aumenta la cosecha o ahorra reservas.`);
+  }
   if (sano) S.salud += 2;
 
   for (const k of ['o2', 'comida', 'salud']) S[k] = clamp(Math.round(S[k]), 0, 100);

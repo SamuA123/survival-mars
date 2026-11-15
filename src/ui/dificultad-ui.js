@@ -2,14 +2,17 @@
 import { DIFICULTADES, aplicarDificultad } from '../sim/dificultad.js';
 import { MISION } from '../sim/config.js';
 import { t } from './i18n.js';
+import { esDemo } from '../sim/demostracion.js';
 
 const CLAVE = 'survivalMars.dificultad';
 let elegida = (() => { try { return localStorage.getItem(CLAVE) || 'cadete'; } catch { return 'cadete'; } })();
+if (!DIFICULTADES[elegida]) elegida = 'cadete';
 aplicarDificultad(elegida);
 
 function insertar() {
+  if (esDemo) return;
   const intro = document.querySelector('#modalCaja .intro');
-  const btn = intro?.querySelector('#btnEmpezar');
+  const btn = intro?.querySelector('.inicio-acciones');
   if (!btn || intro.querySelector('.dificultad')) return;
   const caja = document.createElement('div');
   caja.className = 'dificultad';

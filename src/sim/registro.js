@@ -7,8 +7,8 @@ export function iniciarRegistro(S) {
 }
 
 // Una emergencia: cuánto tardó en decidir y si se le acabó el tiempo
-export function registrarDecision(S, evento, segundos, agotado) {
-  S.registro?.decisiones.push({ sol: S.sol, evento, segundos, agotado });
+export function registrarDecision(S, evento, segundos, agotado, opcion = null) {
+  S.registro?.decisiones.push({ sol: S.sol, evento, segundos, agotado, opcion });
 }
 
 // Estado al final de cada sol (después de simular)

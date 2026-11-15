@@ -8,17 +8,24 @@ import { MISION } from './sim/config.js';
 import { mostrarHUDEVA, actualizarHUDEVA, avisoEVA, ocultarHUDEVA, tarjetaObjeto } from './ui/eva-hud.js';
 import { cargarClimaEspacial } from './data/donki.js';
 import { renderRecursos, renderEnergia, renderPanel, renderLog } from './ui/hud.js';
-import { pantallaInicio, mostrarEvento, mostrarResumen, mostrarResumenEVA, pantallaFinal, panelDatos, panelTarea, refrescarClimaInicio } from './ui/modales.js';
+import { pantallaInicio, mostrarEvento, mostrarResumen, mostrarResumenEVA, pantallaFinal, panelDatos, panelTarea, refrescarClimaInicio, nombrePorDefecto } from './ui/modales.js';
 import { beep, audio } from './ui/sonido.js';
-import { iniciarTutorial, tutorialVisto } from './ui/tutorial.js';
+import { iniciarTutorial } from './ui/tutorial.js';
 import { iniciarRegistro, registrarDecision, registrarSol, registrarEVA } from './sim/registro.js';
 import { enTormenta } from './sim/motor.js';
 import './ui/dificultad-ui.js';   // selector Cadete / Comandante en la pantalla de inicio
 import './ui/voz.js';             // narrador por voz (botones 🔈 y 🗣️)
 import './ui/ubicacion.js';       // 📍 resumen del lugar de la base + mapas de NASA Mars Trek
-import { t, idioma, setIdioma, aplicarEstaticos } from './ui/i18n.js';
+import './ui/alerta-solar.js';    // ☀️ estado del Sol y alerta solar en vivo (NASA DONKI)
+import { elegirAstronauta } from './ui/tripulacion.js';   // 🧑‍🚀 quién sale a caminar (dosímetros)
+import './ui/construccion.js';    // 🧱 modo construcción del blindaje por secciones (tecla B)
+import { t, idioma, setIdioma, aplicarEstaticos, onIdioma } from './ui/i18n.js';
+import { esDemo, aplicarDemo } from './sim/demostracion.js';
+import { LLAMARADAS_RESPALDO } from './data/donki.js';
 
 const $ = s => document.querySelector(s);
+aplicarDemo();
+document.body.classList.toggle('modo-demo', esDemo);
 let S = crearPartida();
 let sel = null;
 let ocupado = false;
@@ -46,13 +53,19 @@ document.addEventListener('click', e => {
   if (t.dataset.sis) { cambiarNivel(S, t.dataset.sis, +t.dataset.d); beep(+t.dataset.d > 0 ? 880 : 440, 0.05); }
   else if (t.dataset.accion === 'eva') { return salirAExplorar(); }
   else if (t.dataset.accion) { ACCIONES[t.dataset.accion].hacer(S); beep(700, 0.06); }
-  else if ('sel' in t.dataset) { mundo.seleccionar(t.dataset.sel || null); return; }
+  else if ('sel' in t.dataset) { seleccionarPanel(t.dataset.sel || null); return; }
   refrescar();
 });
 
+function seleccionarPanel(id) {
+  if (['base', 'tripulacion', 'inventario'].includes(id)) {
+    mundo.seleccionar(null); sel = id; refrescar();
+  } else mundo.seleccionar(id);
+}
+
 async function terminarSol() {
   if (ocupado) return;
-  if (tutorial?.activo()) tutorial.terminar();
+  if (tutorial?.activo()) tutorial.terminar(tutorial.ultimoPaso());
   ocupado = true;
   mundo.seleccionar(null);
   refrescar();
@@ -67,15 +80,18 @@ async function terminarSol() {
     if (ev.fx) mundo.efecto(ev.fx);
     refrescar();
     // Medir cuánto tarda en elegir una opción (para el registro e insignias)
-    const t0 = performance.now(); let tDecision = null;
+    const t0 = performance.now(); let tDecision = null, opcion = null;
     const medir = e => {
-      if (tDecision == null && e.target.closest('.opcion')) tDecision = (performance.now() - t0) / 1000;
+      if (tDecision == null && e.target.closest('.opcion:not(:disabled)')) {
+        tDecision = (performance.now() - t0) / 1000;
+        opcion = Number(e.target.closest('.opcion').dataset.op);
+      }
       if (e.target.closest('#btnAyuda') && S.registro) S.registro.pidioAyuda = true;
     };
     document.addEventListener('click', medir, true);
     res = await mostrarEvento(S, ev);
     document.removeEventListener('click', medir, true);
-    if (ev.tiempo) registrarDecision(S, id, tDecision, String(res).includes('Se acabó el tiempo'));
+    if (ev.tiempo) registrarDecision(S, id, tDecision, String(res).includes('Se acabó el tiempo'), opcion);
     aprender(S, ev.dato);
     refrescar();
   }
@@ -101,10 +117,14 @@ async function terminarSol() {
 // ---------------------------------------------------------------------
 //  CAMINATA ESPACIAL: el jugador controla a un astronauta
 // ---------------------------------------------------------------------
-function salirAExplorar() {
+async function salirAExplorar() {
   if (ocupado || motivoNoEVA(S)) return;
   if (tutorial?.activo()) tutorial.terminar();
-  ocupado = true;
+  // Elegir quién sale (por defecto, quien tiene menos dosis): la caminata solo irradia a esa persona
+  ocupado = true; refrescar();
+  const quien = await elegirAstronauta(S);
+  if (!quien) { ocupado = false; refrescar(); return; }
+  S.evaAstronauta = quien;
   iniciarEVA(S);
   beep(600, 0.15, 'triangle');
   refrescar();
@@ -134,24 +154,29 @@ async function nuevaPartida() {
   ocupado = true;
   S = crearPartida();
   refrescar();
-  const nombre = await pantallaInicio();
+  const { nombre, guiar } = await pantallaInicio();
   S = crearPartida(nombre);
+  S.demo = esDemo;
   iniciarRegistro(S);
-  S.log.unshift({ sol: 1, texto: t('log.inicio', { n: nombre.replace(/[<>&]/g, '') }), tipo: 'tierra' });
+  const limpio = nombre.replace(/[<>&]/g, '');
+  const sinNombre = nombrePorDefecto(nombre);   // evita "Comandante Comandante"
+  S.log.unshift({ sol: 1, tipo: 'tierra',
+    texto: sinNombre ? '🚀 <b>Comandante</b> al mando de la base en la meseta NE Syrtis.' : `🚀 Comandante <b>${limpio}</b> al mando de la base en la meseta NE Syrtis.`,
+    texto_en: sinNombre ? '🚀 <b>Commander</b> in charge of the base on the NE Syrtis plateau.' : `🚀 Commander <b>${limpio}</b> in charge of the base on the NE Syrtis plateau.` });
   iniciarSol(S);
   ocupado = false;
   refrescar();
-  if (!tutorialVisto()) tutorial = iniciarTutorial(() => ({ S, sel }));
+  if (guiar) tutorial = iniciarTutorial(() => ({ S, sel }));
 }
 
 $('#btnSol').onclick = terminarSol;
 $('#btnDatos').onclick = panelDatos;
 $('#btnTarea').onclick = () => { if (!S.enEVA) panelTarea(S); };
-// Consola de la base: se abre completa ("base") o, tocando un edificio, con ese sistema resaltado.
+// Control base abre el menú; cada edificio, tripulación e inventario tiene su propio panel.
 $('#btnBase').onclick = () => {
   if (ocupado) return;
   if (sel) return mundo.seleccionar(null);
-  mundo.seleccionar(null); sel = 'base'; beep(760, 0.05); refrescar();
+  seleccionarPanel('base'); beep(760, 0.05);
 };
 addEventListener('keydown', e => { if (e.key === 'Escape' && sel && !ocupado) mundo.seleccionar(null); });
 $('#btnSonido').onclick = () => { audio.on = !audio.on; $('#btnSonido').textContent = audio.on ? '🔊' : '🔇'; };
@@ -159,11 +184,9 @@ $('#btnAyudaTuto').onclick = () => { if (!ocupado && !tutorial?.activo()) tutori
 $('#btnLog').onclick = () => $('#bitacoraBox').classList.toggle('abierta');
 // Botón ES / EN (la elección se guarda en localStorage desde i18n.js)
 $('#btnIdioma').onclick = () => {
-  const enInicio = !$('#modal').classList.contains('oculto') && !!document.querySelector('#modalCaja .intro');
   setIdioma(idioma === 'es' ? 'en' : 'es');
-  if (enInicio) { location.reload(); return; }   // la pantalla de inicio se vuelve a dibujar en el nuevo idioma
-  refrescar();
 };
+onIdioma(() => { refrescar(); ponerLigero(mundo.ligero, false); });
 aplicarEstaticos();
 
 refrescar();
@@ -176,7 +199,7 @@ function ponerLigero(on, guardar = true) {
   mundo.setLigero(on);
   $('#btnLigero').classList.toggle('activo', on);
   $('#btnLigero').classList.remove('sugerido');
-  $('#btnLigero').title = on ? 'Gráficos ligeros: ACTIVADOS (toca para volver a normales)' : 'Gráficos ligeros (para computadoras lentas)';
+  $('#btnLigero').title = t(on ? 'top.ligeroOn' : 'top.ligero');
   if (guardar) { try { localStorage.setItem(CLAVE_LIGERO, on ? '1' : '0'); } catch { /* sin almacenamiento */ } }
 }
 $('#btnLigero').onclick = () => ponerLigero(!mundo.ligero);
@@ -197,5 +220,10 @@ else if (leerLigero() === null) {
   else setTimeout(sugerir, 1500);
 }
 
-cargarClimaEspacial().then(c => { setClima(c); refrescar(); refrescarClimaInicio(); });
+if (esDemo) {
+  setClima({ real: false, tranquilo: false, origen: 'historico', consultadoEn: null,
+    flares: [{ ...LLAMARADAS_RESPALDO[0] }], riesgo: 1,
+    resumen: 'Demostración con una llamarada histórica NASA del 2024-10-03.',
+    resumen_en: 'Demo using a historical NASA flare from 2024-10-03.' });
+} else cargarClimaEspacial().then(c => { setClima(c); refrescar(); refrescarClimaInicio(); });
 nuevaPartida();

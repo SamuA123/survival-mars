@@ -7,9 +7,13 @@
 //  La elección se guarda en localStorage.
 // =====================================================================
 const CLAVE = 'survivalMars.idioma';
-export let idioma = (() => { try { return localStorage.getItem(CLAVE) === 'en' ? 'en' : 'es'; } catch { return 'es'; } })();
-const oyentes = [];
-export const onIdioma = fn => oyentes.push(fn);
+export let idioma = (() => {
+  const pedido = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('lang') : null;
+  if (pedido === 'en' || pedido === 'es') return pedido;
+  try { return localStorage.getItem(CLAVE) === 'en' ? 'en' : 'es'; } catch { return 'es'; }
+})();
+const oyentes = new Set();
+export const onIdioma = fn => { oyentes.add(fn); return () => oyentes.delete(fn); };
 export function setIdioma(l) {
   idioma = l === 'en' ? 'en' : 'es';
   try { localStorage.setItem(CLAVE, idioma); } catch { /* sin almacenamiento */ }
@@ -70,6 +74,7 @@ const T = {
     // Final
     'fin.cumplida': '¡Misión cumplida!', 'fin.abortada': '¡Misión abortada!',
     'fin.gano': 'Comandante <b>{n}</b>: tu tripulación sobrevivió {s} sols en Marte.',
+    'fin.ganoSinNombre': '<b>Comandante</b>: tu tripulación sobrevivió {s} sols en Marte.',
     'fin.perdio': '{t} La tripulación volvió a la Tierra en el Sol {s}. ¡Los verdaderos planificadores de la NASA también aprenden de cada problema!',
     'fin.criterios': '⭐ Sobrevivir · ⭐ Lograr {c} de ciencia · ⭐ Lograrlo sin arriesgar a la tripulación (radiación &lt; {r} mSv y salud ≥ 70)',
     'fin.pocaCiencia': 'Sobrevivieron, pero la misión vino a Marte a hacer ciencia. ¿Puedes conseguir {c} puntos sin arriesgar a nadie?',
@@ -81,7 +86,7 @@ const T = {
     'inv.hoyTit': '🎒 Recolectado hoy:', 'inv.hoyNada': 'nada (no saliste o volviste con las manos vacías)',
     'inv.tit': '🎒 Inventario de Marte', 'inv.desc': 'Lo que tu tripulación recolectó en las caminatas espaciales. Cada cosa se usa enseguida en la base.',
     'inv.hoy': 'hoy', 'inv.mision': 'misión',
-    'inv.regolito': '🟫 Regolito guardado para el próximo nivel de blindaje: <b>{r}/{n}</b> · Blindaje: <b>{b}/3</b>',
+    'inv.regolito': '🟫 Regolito en la base: <b>{r} bolsas</b> · Blindaje: <b>{x}/4 secciones</b> (tecla B)',
     'inv.planHoy': '📋 <b>Plan de hoy:</b> trae {c} {i} {n} ({h}/{c})', 'inv.opcional': '— opcional, da bono', 'volver': 'Volver a la base',
     // Datos NASA
     'datos.tit': '📡 Datos reales de la NASA en este juego', 'datos.vivo': '🛰️ <b>EN VIVO</b>', 'datos.archivo': '📚 <b>ARCHIVO HISTÓRICO</b> (sin conexión)',
@@ -184,6 +189,7 @@ const T = {
     'eva.sabiasExtra': 'On Mars, every minute outside is a decision: more time = more discoveries, but also more radiation and less oxygen.',
     'fin.cumplida': 'Mission accomplished!', 'fin.abortada': 'Mission aborted!',
     'fin.gano': 'Commander <b>{n}</b>: your crew survived {s} sols on Mars.',
+    'fin.ganoSinNombre': '<b>Commander</b>: your crew survived {s} sols on Mars.',
     'fin.perdio': '{t} The crew went back to Earth on Sol {s}. Real NASA planners also learn from every problem!',
     'fin.criterios': '⭐ Survive · ⭐ Reach {c} science · ⭐ Do it without putting the crew at risk (radiation &lt; {r} mSv and health ≥ 70)',
     'fin.pocaCiencia': 'You survived, but the mission came to Mars to do science. Can you get {c} points without putting anyone at risk?',
@@ -194,7 +200,7 @@ const T = {
     'inv.hoyTit': '🎒 Collected today:', 'inv.hoyNada': 'nothing (you didn\'t go out or came back empty-handed)',
     'inv.tit': '🎒 Mars inventory', 'inv.desc': 'What your crew collected on spacewalks. Everything is used right away in the base.',
     'inv.hoy': 'today', 'inv.mision': 'mission',
-    'inv.regolito': '🟫 Regolith saved for the next shield level: <b>{r}/{n}</b> · Shield: <b>{b}/3</b>',
+    'inv.regolito': '🟫 Regolith in the base: <b>{r} bags</b> · Shield: <b>{x}/4 sections</b> (B key)',
     'inv.planHoy': '📋 <b>Today\'s plan:</b> bring {c} {i} {n} ({h}/{c})', 'inv.opcional': '— optional, gives a bonus', 'volver': 'Back to the base',
     'datos.tit': '📡 Real NASA data in this game', 'datos.vivo': '🛰️ <b>LIVE</b>', 'datos.archivo': '📚 <b>HISTORICAL ARCHIVE</b> (offline)',
     'datos.nota': 'The game\'s numbers are simplified so they are easy to understand, but they are based on these real measurements.',
@@ -250,6 +256,35 @@ const T = {
   },
 };
 
+Object.assign(T.es, {
+  'top.ligero': 'Gráficos ligeros (para computadoras lentas)',
+  'top.ligeroOn': 'Gráficos ligeros: ACTIVADOS (toca para volver a normales)',
+  'ubic.boton': '📍 Ubicación', 'ubic.title': 'Dónde está tu base en Marte',
+  'ubic.intro': '📍 Conoce el lugar de tu base (con mapa de la NASA)',
+  'ubic.dialog': 'Ubicación de la base', 'ubic.base': 'Tu base en Marte', 'cerrar': 'Cerrar',
+  'clima.consulta': 'CONSULTA RECIENTE', 'clima.cache': 'CONSULTA GUARDADA', 'clima.historico': 'ARCHIVO HISTÓRICO',
+  'clima.cargando': 'Cargando datos NASA…', 'clima.fecha': 'Última consulta: {fecha}',
+  'fin.aprendiste': '🧠 Datos que exploraste ({n})',
+});
+Object.assign(T.en, {
+  'top.ligero': 'Low graphics (for slower computers)',
+  'top.ligeroOn': 'Low graphics: ON (tap to restore normal graphics)',
+  'ubic.boton': '📍 Location', 'ubic.title': 'Where your base is on Mars',
+  'ubic.intro': '📍 Explore your base location (with a NASA map)',
+  'ubic.dialog': 'Base location', 'ubic.base': 'Your base on Mars', 'cerrar': 'Close',
+  'clima.consulta': 'RECENT QUERY', 'clima.cache': 'SAVED QUERY', 'clima.historico': 'HISTORICAL ARCHIVE',
+  'clima.cargando': 'Loading NASA data…', 'clima.fecha': 'Last queried: {fecha}',
+  'fin.aprendiste': '🧠 Facts you explored ({n})',
+});
+
+export const campo = (o, nombre) => idioma === 'en' ? (o?.[nombre + '_en'] ?? o?.[nombre]) : o?.[nombre];
+export const resumenClima = c => idioma === 'en' ? (c.resumen_en || tr(c.resumen)) : c.resumen;
+export const estadoClima = c => t('clima.' + (c.origen || (c.real ? 'consulta' : 'historico')));
+export function fechaClima(c) {
+  if (!c.consultadoEn) return '';
+  return t('clima.fecha', { fecha: new Date(c.consultadoEn).toLocaleString(idioma === 'en' ? 'en-US' : 'es-PE', { timeZoneName: 'short' }) });
+}
+
 export function t(clave, vars = {}) {
   const s = T[idioma][clave] ?? T.es[clave] ?? clave;
   return s.replace(/\{(\w+)\}/g, (_, n) => (vars[n] ?? ''));
@@ -260,7 +295,8 @@ export function t(clave, vars = {}) {
 // ---------------------------------------------------------------------
 const EXACTO = new Map(Object.entries({
   // Recursos y sistemas (config.js)
-  'Energía': 'Power', 'Oxígeno': 'Oxygen', 'Comida': 'Food', 'Radiación': 'Radiation', 'Tripulación': 'Crew',
+  'Energía': 'Power', 'Oxígeno': 'Oxygen', 'Comida': 'Food', 'Radiación': 'Radiation', 'Tripulación': 'Crew', 'Ciencia': 'Science', 'Construcción': 'Construction',
+  '🐢 El juego va un poco lento en esta computadora. Prueba el botón 🐢 (gráficos ligeros).': '🐢 The game is running slowly on this computer. Try the 🐢 button (low graphics).',
   'La batería guarda energía para la noche y las tormentas.': 'The battery stores power for the night and for storms.',
   'Lo fabrica el soporte vital. ¡Sin oxígeno no se respira!': 'Life support makes it. Without oxygen nobody can breathe!',
   'La tripulación come cada sol. El invernadero produce más.': 'The crew eats every sol. The greenhouse makes more.',
@@ -404,6 +440,13 @@ const RIESGO = { bajo: 'low', medio: 'medium', ALTO: 'HIGH' };
 
 // [regex, reemplazo] — reemplazo puede ser función; tr() se aplica a las partes anidadas
 const PATRONES = [
+  [/^🥔 Cosecha: ([\d.]+) · consumo: ([\d.]+) · reservas: ([\d.]+)\.$/, '🥔 Harvest: $1 · used: $2 · reserves: $3.'],
+  [/^📡 Videollamada con la Tierra: \+([\d.]+) de salud\.$/, '📡 Video call with Earth: +$1 health.'],
+  [/^⚠️ Queda poca comida: la tripulación tiene hambre \(-(\d+) de salud\)\. Aumenta la cosecha o ahorra reservas\.$/, '⚠️ Food is running low: the crew is hungry (-$1 health). Grow more food or build up reserves.'],
+  [/^🚀 Comandante <b>(.*?)<\/b> al mando de la base en la meseta NE Syrtis\.$/s, '🚀 Commander <b>$1</b> is in charge of the base on the NE Syrtis plateau.'],
+  [/^Ejercicio: llamarada clase <b>([^<]+)<\/b>\. En este escenario simulado, una tormenta de partículas llega a Marte\. ¿Proteges a la tripulación o sigues trabajando\?<br><small class="real">(.*)<\/small>$/s,
+    (m, c, origen) => `Training exercise: class <b>${c}</b> solar flare. In this simulated scenario, a particle storm reaches Mars. Will you protect the crew or keep working?<br><small class="real">${tr(origen)}</small>`],
+  [/^🛰️ Basada en una llamarada <b>real<\/b> que la NASA detectó el (.+) \(consulta NASA DONKI\)\.$/, '🛰️ Based on a <b>real</b> flare NASA detected on $1 (NASA DONKI query).'],
   [/^⏰ <b>¡Se acabó el tiempo!<\/b> (.*)$/s, (m, r) => `⏰ <b>Time's up!</b> ${tr(r)}`],
   [/^🧱 Construir blindaje de regolito \((\d)\/3\)$/, '🧱 Build regolith shield ($1/3)'],
   [/^Recoge hielo, rocas y más\. Cuesta (\d+) de oxígeno de la base; afuera recibes radiación\.$/, 'Collect ice, rocks and more. Costs $1 of the base\'s oxygen; outside you get radiation.'],
@@ -411,6 +454,7 @@ const PATRONES = [
   [/^Quedan (\d+)$/, '$1 left'],
   [/^⏱️ Estuviste afuera (\d+) segundos y recibiste <b>([\d.]+) mSv<\/b> de radiación\.$/, '⏱️ You were outside $1 seconds and received <b>$2 mSv</b> of radiation.'],
   [/^🆘 ¡Se acabó el oxígeno del traje! Tus compañeros te rescataron, pero perdiste todo lo recolectado y la salud bajó \(-(\d+)\)\.$/, '🆘 The suit ran out of oxygen! Your crewmates rescued you, but you lost everything you collected and your health went down (-$1).'],
+  [/^🟫 <b>(\d+) de regolito<\/b> \(la tierra roja y suelta de Marte\) → guardado en la base: (\d+) bolsas para construir el blindaje \(tecla B\)\.$/, '🟫 <b>$1 regolith</b> (the loose red soil of Mars) → stored in the base: $2 bags to build the shield (B key).'],
   [/^🟫 <b>(\d+) de regolito<\/b> \(la tierra roja y suelta de Marte\) → cubre el hábitat: blindaje (\d)\/3\.$/, '🟫 <b>$1 regolith</b> (the loose red soil of Mars) → covers the habitat: shield $2/3.'],
   [/^🪨 <b>(\d+) roca\(s\) marciana\(s\)<\/b> de basalto → el laboratorio las analiza: \+(\d+) de ciencia\.$/, '🪨 <b>$1 Martian basalt rock(s)</b> → the lab analyzes them: +$2 science.'],
   [/^🧊 <b>(\d+) bloque\(s\) de hielo de agua<\/b> → el agua se separa en hidrógeno y oxígeno: \+(\d+) de oxígeno\.$/, '🧊 <b>$1 block(s) of water ice</b> → the water splits into hydrogen and oxygen: +$2 oxygen.'],
@@ -460,7 +504,7 @@ export function tr(s) {
 //  3) DATOS (src/data) y utilidades
 // ---------------------------------------------------------------------
 export const txt = o => (idioma === 'en' && o?.texto_en) ? o.texto_en : o?.texto;
-export const fuenteNombre = f => (idioma === 'en' && f?.nombre_en) ? f.nombre_en : f?.nombre;
+export const fuenteNombre = f => campo(f, 'nombre');
 export const fuenteUso = f => (idioma === 'en' && f?.uso_en) ? f.uso_en : f?.uso;
 
 // Textos fijos de index.html: data-i18n (texto), data-i18n-html (HTML), data-i18n-title (title)
@@ -468,8 +512,13 @@ export function aplicarEstaticos() {
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
   document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
   const b = document.querySelector('#btnIdioma');
-  if (b) { b.textContent = idioma === 'es' ? '🌐 EN' : '🌐 ES'; b.title = t('top.idioma.t'); }
+  if (b) {
+    b.innerHTML = `<span class="idioma-icono" aria-hidden="true">🌐</span><span class="idioma-codigo" aria-hidden="true">${idioma === 'es' ? 'EN' : 'ES'}</span>`;
+    b.title = t('top.idioma.t');
+    b.setAttribute('aria-label', b.title);
+  }
 }
 
 // Etiquetas del mundo 3D (las crea src/world3d): se traducen al aparecer, sin tocar ese código.

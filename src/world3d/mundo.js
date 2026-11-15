@@ -8,8 +8,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-import { hash, fbm, altura } from './terreno.js';
+import { hash, fbm, altura, mesaFactor } from './terreno.js';
 import { ControlEVA } from './eva.js';
+import { Ambiente } from './ambiente.js';
 
 const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0.1, ...o });
 const C = {
@@ -48,6 +49,7 @@ export class Mundo {
     this._initBase();
     this._initAstronautas();
     this._initPolvo();
+    this.amb = new Ambiente(this);   // dron y remolinos lejanos (solo decorativos)
     this._initEntrada();
     this.eva = new ControlEVA(this);
     window.addEventListener('resize', () => this._resize());
@@ -129,12 +131,22 @@ export class Mundo {
     g.rotateX(-Math.PI / 2);
     const p = g.attributes.position, col = [];
     const c1 = new THREE.Color(0xc0582c), c2 = new THREE.Color(0x8c3a1b), c3 = new THREE.Color(0xd9844f);
+    // NE Syrtis: mesas con capas de roca (claras y oscuras) y manchas oscuras de olivino en el llano
+    const capaClara = new THREE.Color(0xe0a573), capaOscura = new THREE.Color(0x9a4a26), olivino = new THREE.Color(0x5e4a30);
     const tmp = new THREE.Color();
     for (let i = 0; i < p.count; i++) {
       const x = p.getX(i), z = p.getZ(i), h = altura(x, z);
       p.setY(i, h);
       const n = fbm(x * 0.08 + 10, z * 0.08);
       tmp.copy(c1).lerp(c2, n * 0.9).lerp(c3, THREE.MathUtils.clamp(h / 18, 0, 0.5));
+      const mesa = mesaFactor(x, z);
+      if (mesa > 0.05) {
+        const banda = Math.floor(h * 0.9 + fbm(x * 0.05, z * 0.05) * 1.5) % 2 === 0 ? capaClara : capaOscura;
+        tmp.lerp(banda, mesa * 0.55);
+      }
+      const r = Math.hypot(x, z);
+      const olv = THREE.MathUtils.smoothstep(fbm(x * 0.035 + 40, z * 0.035 - 7), 0.6, 0.72) * THREE.MathUtils.smoothstep(r, 30, 45) * (1 - mesa);
+      if (olv > 0) tmp.lerp(olivino, olv * 0.6);
       col.push(tmp.r, tmp.g, tmp.b);
     }
     g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
@@ -148,20 +160,23 @@ export class Mundo {
     pad.position.y = 0.05; pad.receiveShadow = true;
     this.scene.add(pad);
 
-    // Rocas
-    const geoRoca = new THREE.DodecahedronGeometry(1, 0);
-    const matRoca = std(0x6e2c16, { flatShading: true, roughness: 1 });
-    for (let i = 0; i < 220; i++) {
+    // Rocas: una sola malla instanciada (1 llamada de dibujo en vez de 220) → más fluido en PCs lentas
+    const N_ROCAS = 220;
+    const rocas = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), std(0x6e2c16, { flatShading: true, roughness: 1 }), N_ROCAS);
+    const obj = new THREE.Object3D();
+    for (let i = 0; i < N_ROCAS; i++) {
       const ang = Math.random() * Math.PI * 2, r = 26 + Math.random() * 90;
       const x = Math.cos(ang) * r, z = Math.sin(ang) * r;
-      const roca = new THREE.Mesh(geoRoca, matRoca);
       const s = 0.3 + Math.random() ** 3 * 2.2;
-      roca.scale.set(s, s * (0.5 + Math.random() * 0.5), s);
-      roca.position.set(x, altura(x, z) + s * 0.2, z);
-      roca.rotation.set(Math.random() * 3, Math.random() * 3, 0);
-      roca.castShadow = roca.receiveShadow = true;
-      this.scene.add(roca);
+      obj.scale.set(s, s * (0.5 + Math.random() * 0.5), s);
+      obj.position.set(x, altura(x, z) + s * 0.2, z);
+      obj.rotation.set(Math.random() * 3, Math.random() * 3, 0);
+      obj.updateMatrix();
+      rocas.setMatrixAt(i, obj.matrix);
     }
+    rocas.instanceMatrix.needsUpdate = true;
+    rocas.castShadow = rocas.receiveShadow = true;
+    this.scene.add(rocas);
   }
 
   // ------------------------------------------------------------------
@@ -246,14 +261,28 @@ export class Mundo {
       baliza.position.y = 5.9;
       const luzAlarma = new THREE.PointLight(C.rojo, 0, 25);
       luzAlarma.position.y = 6.4;
-      // Blindaje de regolito
-      const blindaje = new THREE.Mesh(
-        new THREE.SphereGeometry(4.9, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2),
-        std(C.regolito, { flatShading: true, roughness: 1 }));
-      blindaje.position.y = 1.3; blindaje.scale.set(1, 0.001, 1); blindaje.visible = false;
-      const pg = blindaje.geometry.attributes.position;
-      for (let i = 0; i < pg.count; i++) { const k = 1 + (hash(i, 3) - 0.5) * 0.12; pg.setXYZ(i, pg.getX(i) * k, pg.getY(i) * k, pg.getZ(i) * k); }
-      blindaje.geometry.computeVertexNormals();
+      // Blindaje de regolito POR SECCIONES (modo construcción): cada pieza aparece al construirla.
+      // En SphereGeometry, phi=π/2 apunta a +z (sur, lado de la puerta) y phi=3π/2 a -z (norte).
+      const matRegolito = std(C.regolito, { flatShading: true, roughness: 1 });
+      const pieza = (phi0, phiLen, th0, thLen) => {
+        const geo = new THREE.SphereGeometry(4.9, 12, 6, phi0, phiLen, th0, thLen);
+        const pg = geo.attributes.position;
+        for (let i = 0; i < pg.count; i++) { const k = 1 + (hash(i, phi0 * 7) - 0.5) * 0.12; pg.setXYZ(i, pg.getX(i) * k, pg.getY(i) * k, pg.getZ(i) * k); }
+        geo.computeVertexNormals();
+        const m = new THREE.Mesh(geo, matRegolito);
+        m.scale.setScalar(0.001); m.visible = false;
+        return m;
+      };
+      const PI = Math.PI, pared = [PI / 4, PI / 4];   // banda baja del domo
+      const blindaje = new THREE.Group();
+      blindaje.position.y = 1.3;
+      blindaje.userData.piezas = {
+        sur: [pieza(PI / 4, PI / 2, ...pared)],
+        norte: [pieza(5 * PI / 4, PI / 2, ...pared)],
+        lados: [pieza(3 * PI / 4, PI / 2, ...pared), pieza(-PI / 4, PI / 2, ...pared)],
+        techo: [pieza(0, 2 * PI, 0, PI / 4)],
+      };
+      Object.values(blindaje.userData.piezas).flat().forEach(m => blindaje.add(m));
       g.add(base, domo, anillo, puerta, baliza, luzAlarma, blindaje);
       this._sombra(g);
       this.ed.habitat = { g, ventanas, baliza, luzAlarma, blindaje, domo };
@@ -485,11 +514,14 @@ export class Mundo {
 
   _moverAstronautas(dt, S) {
     const lista = Object.keys(this.puntos);
+    // Quién está en la caminata: el elegido de la tripulación (idea 4) o, si no hay tripulación, el primero
+    const idx = S?.tripulacion ? S.tripulacion.findIndex(x => x.id === S.evaAstronauta) : -1;
+    const enCaminata = idx >= 0 ? idx : 0;
     this.astros.forEach((a, i) => {
       let objetivo = null, ocultar = false;
       if (S?.refugio) { objetivo = new THREE.Vector3(0, 0, 0); }
       else if (i === 0 && S?.eva) objetivo = this.puntos.paneles.clone().add(new THREE.Vector3(Math.sin(this.t) * 3, 0, 1));
-      else if (i === 0 && S?.enEVA) ocultar = true;   // ese astronauta lo controla el jugador
+      else if (i === enCaminata && S?.enEVA) ocultar = true;   // ese astronauta lo controla el jugador
       a.g.visible = !ocultar;
       if (ocultar) { a.g.position.copy(this.ed.rover.g.position); return; }
       if (objetivo) a.destino.copy(objetivo);
@@ -615,6 +647,7 @@ export class Mundo {
     const atardecer = Math.max(0, 1 - Math.abs(elev) / 0.3) * (elev > -0.2 ? 1 : 0);
     const tormenta = S && S.polvoSols > 0 ? 1 : 0;
     this.polvoNivel += (tormenta - this.polvoNivel) * dt * 1.5;
+    this._angSol = ang; this._dia = dia;   // para que los paneles sigan al Sol
 
     const cx = this.controls.target.x, cz = this.controls.target.z;
     this.sol.position.set(cx + Math.cos(ang) * 70, Math.max(8, elev * 80), cz + 30);
@@ -646,6 +679,7 @@ export class Mundo {
     if (S) this._actualizarBase(S, dt, dia);
     this._moverAstronautas(dt, S);
     this._efectos(dt);
+    try { this.amb.update(dt, { dia, tormenta: this.polvoNivel }); } catch (e) { console.warn('[ambiente]', e); }   // decorativo: nunca debe frenar el juego
     if (this.eva.activo) this.eva.update(dt);
 
     // Cámara
@@ -669,9 +703,15 @@ export class Mundo {
     // Hábitat
     const H = this.ed.habitat;
     H.ventanas.forEach(v => { v.material.emissiveIntensity = hayEnergia && S.niveles.vital > 0 ? 0.6 + noche * 2.2 : 0; });
-    const objBl = S.blindaje / 3;
-    H.blindaje.visible = S.blindaje > 0;
-    H.blindaje.scale.y = lerp(H.blindaje.scale.y, Math.max(0.001, objBl), 2);
+    // Cada sección construida "crece" en su lugar (modo construcción)
+    for (const [id, piezas] of Object.entries(H.blindaje.userData.piezas)) {
+      const hecha = !!S.secciones?.[id];
+      for (const m of piezas) {
+        const s = lerp(m.scale.x, hecha ? 1 : 0.001, 3);
+        m.scale.setScalar(s);
+        m.visible = s > 0.01;
+      }
+    }
     const alarmaOn = this.alarma > 0;
     const parpadeo = alarmaOn ? (Math.sin(this.t * 12) > 0 ? 1 : 0) : 0;
     H.baliza.material.emissiveIntensity = parpadeo * 3;
@@ -697,9 +737,13 @@ export class Mundo {
 
     // Paneles
     const P = this.ed.paneles;
+    // De día, los paneles giran despacio siguiendo al Sol (como los seguidores solares reales)
+    const giroSol = S.paneles ? THREE.MathUtils.clamp(Math.cos(this._angSol ?? Math.PI / 2) * 0.7, -0.7, 0.7) * (this._dia ?? 1) : 0;
     P.pivots.forEach((pv, i) => {
       const tilt = S.paneles ? -0.55 : 0;
       const plegado = S.paneles ? 1 : 0.18;
+      if (pv.rotation.order !== 'YXZ') pv.rotation.order = 'YXZ';
+      pv.rotation.y = lerp(pv.rotation.y, -giroSol, 1.5);
       pv.rotation.x = lerp(pv.rotation.x, tilt, 3);
       pv.scale.z = lerp(pv.scale.z, plegado, 3 + i * 0.3);
       pv.scale.x = lerp(pv.scale.x, S.paneles ? 1 : 0.5, 3 + i * 0.3);
@@ -739,15 +783,19 @@ export class Mundo {
 
     // Etiquetas con nivel actual
     const pips = (n, max) => '●'.repeat(n) + '○'.repeat(max - n);
+    const en = document.documentElement.lang === 'en';   // el botón ES/EN cambia el idioma del documento
     const extra = {
-      habitat: `🫁 ${pips(S.niveles.vital, 3)}${S.blindaje ? ` · 🧱${S.blindaje}/3` : ''}`,
+      habitat: (() => {   // blindaje por secciones (modo construcción)
+        const sec = Object.values(S.secciones || {}), hechas = sec.filter(Boolean).length;
+        return `🫁 ${pips(S.niveles.vital, 3)}${hechas ? ` · 🧱${hechas}/${sec.length}` : ''}`;
+      })(),
       invernadero: `${pips(S.niveles.invernadero, 3)}${S.invSalud < 1 ? ' ⚠️' : ''}`,
       lab: pips(S.niveles.lab, 2),
-      antena: conj ? '🌞 sin señal' : pips(S.niveles.radio, 2),
-      paneles: S.paneles ? `${Math.round(S.eficiencia * 100)}%` : 'plegados',
+      antena: conj ? (en ? '🌞 no signal' : '🌞 sin señal') : pips(S.niveles.radio, 2),
+      paneles: S.paneles ? `${Math.round(S.eficiencia * 100)}%` : (en ? 'folded' : 'plegados'),
       bateria: `${Math.round(S.bateria)} kWh`,
-      reactor: 'siempre ON',
-      rover: S.expedicion ? 'explorando…' : 'listo',
+      reactor: en ? 'always ON' : 'siempre ON',
+      rover: S.expedicion ? (en ? 'exploring…' : 'explorando…') : (en ? 'ready' : 'listo'),
     };
     for (const id in extra) {
       const el = this.etiquetas[id].querySelector('.et-extra');

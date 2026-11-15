@@ -8,6 +8,11 @@ export const MISION = {
   nuclear: 3,                 // kWh constantes del mini reactor
   bateriaMax: 40,
   bateriaInicial: 26,
+  comidaInicial: 40,
+  consumoComida: 5,
+  cosecha: [0, 2, 4, 6],
+  comidaBaja: 20,
+  penalizacionHambre: 3,     // regla educativa: reservas bajas dificultan recuperarse
   consumoBase: 1,             // computadoras y luces
   frioTormenta: 2,            // kWh extra de calefacción en tormenta (el polvo tapa el Sol y enfría)
   delayMin: SITIO.retrasoMin,
@@ -52,6 +57,24 @@ export const MISION = {
         que: 'En Marte hay hielo de agua escondido bajo el suelo, sobre todo lejos del ecuador. Derretido da agua; con electricidad se separa en hidrógeno y oxígeno.',
         uso: 'Oxígeno: el soporte vital lo convierte en aire → +8 de oxígeno.',
       },
+    },
+  },
+  // Tripulación: cada astronauta lleva su propio dosímetro. Colores = los de los astronautas 3D
+  // (src/world3d/mundo.js _initAstronautas). El límite de radiación se aplica por persona.
+  tripulacion: [
+    { id: 'lia', nombre: 'Lía', color: 0xe2673a },
+    { id: 'kofi', nombre: 'Kofi', color: 0x2f7de1 },
+    { id: 'mei', nombre: 'Mei', color: 0x49c45e },
+    { id: 'teo', nombre: 'Teo', color: 0xffc93c },
+  ],
+  // Modo construcción (tecla B): el blindaje del hábitat se arma por SECCIONES que gastan regolito.
+  // Con todas las secciones entra el 40 % de la radiación (= RADIACION.atenuacionBlindaje): 4 × 15 % = 60 % menos.
+  construccion: {
+    secciones: {
+      norte: { nombre: 'Pared norte', nombre_en: 'North wall', icono: '⬆️', costo: 3, proteccion: 0.15 },
+      sur:   { nombre: 'Pared sur', nombre_en: 'South wall', icono: '⬇️', costo: 3, proteccion: 0.15 },
+      lados: { nombre: 'Paredes este y oeste', nombre_en: 'East and west walls', icono: '↔️', costo: 4, proteccion: 0.15 },
+      techo: { nombre: 'Techo', nombre_en: 'Roof', icono: '🔼', costo: 4, proteccion: 0.15 },
     },
   },
   guion: { 2: 'llamarada', 4: 'reciclador', 6: 'tormenta', 9: 'remolino', 12: 'llamarada' },

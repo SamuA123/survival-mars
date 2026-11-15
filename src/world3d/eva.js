@@ -7,6 +7,11 @@ import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { alturaSuelo } from './terreno.js';
 import { MISION } from '../sim/config.js';
+import { proteccionHabitat } from '../sim/motor.js';
+import { tr, onIdioma } from '../ui/i18n.js';   // i18n no importa nada del mundo 3D: sin ciclos
+
+// Botón ES/EN en plena caminata: los nombres sobre los objetos cambian al momento
+onIdioma(() => document.querySelectorAll('.obj-nom[data-es]').forEach(s => { s.textContent = tr(s.dataset.es); }));
 
 export const PUERTA = new THREE.Vector3(0, 0, 6.4);
 const PANELES = new THREE.Vector3(-13, 0, 4);
@@ -22,6 +27,18 @@ export const TIPOS = {
   roca:     { ...O.roca,     hex: 0xb06cff, rMin: 34, rMax: 68, n: 3 },
 };
 const DIST_NOMBRE = 16;   // a esta distancia se muestra el nombre del objeto
+const DIST_RECOGER = 2.6; // a esta distancia se puede recoger con E / Q
+export const MOCHILA_MAX = 4;   // objetos que caben en la mochila: más viajes = más tiempo afuera = más radiación
+const enIngles = () => document.documentElement.lang === 'en';
+const Lx = (es, en) => enIngles() ? en : es;
+
+// Nivel de radiación que se siente afuera, a partir del riesgo de DONKI (0,5–2,5) y de una llamarada activa
+export function nivelRadiacion(riesgo = 1, llamarada = false) {
+  if (llamarada) return 'extrema';
+  return riesgo < 0.9 ? 'baja' : riesgo < 1.4 ? 'moderada' : 'alta';
+}
+// Cuánto más rápido sube la dosis afuera según la actividad solar real (regla del juego, simplificada)
+export const factorRiesgo = riesgo => Math.min(1.4, Math.max(0.85, 0.75 + 0.25 * (riesgo || 1)));
 
 // Zonas ocupadas por edificios (para no poner objetos encima)
 const OCUPADO = [[0, 0, 7], [10, 1, 6], [-3, -9, 6], [-13, 4, 9], [6, -8, 4], [-13, 15, 4], [17, -14, 5], [8, 10, 4]];
@@ -35,7 +52,10 @@ export class ControlEVA {
     addEventListener('keydown', e => {
       if (!this.activo || e.target.tagName === 'INPUT') return;
       this.teclas[e.key.toLowerCase()] = true;
-      if (e.key.toLowerCase() === 'e') this.accion();
+      const tecla = e.key.toLowerCase();
+      if (tecla === 'e') this.accion();
+      if (tecla === 'q') this.recoger();
+      if (tecla === 'r') this.soltar();
       if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(e.key.toLowerCase())) e.preventDefault();
     });
     addEventListener('keyup', e => { this.teclas[e.key.toLowerCase()] = false; });
@@ -47,14 +67,21 @@ export class ControlEVA {
     const m = this.m;
     this.cfg = cfg;
     this.t = 0; this.o2 = 100; this.rad = 0; this.salio = false; this.limpio = false; this.terminado = false;
-    this.items = { regolito: 0, roca: 0, hielo: 0 };
+    this.items = { regolito: 0, roca: 0, hielo: 0 };   // lo que va en la mochila (se deposita al entrar)
+    this.cercano = null;                                // objeto que se puede recoger ahora
+    const S0 = m.getEstado?.();
+    // Tripulación con dosímetros (idea 4): si existe, usa al astronauta elegido para salir
+    this.astronauta = S0?.tripulacion?.find(a => a.id === S0.evaAstronauta) || null;
+    this.radBase = this.astronauta?.dosis ?? S0?.rad ?? 0;   // dosis acumulada antes de salir
+    this.blindajeBase = S0?.blindaje ?? 0;
+    try { this.entraHabitat = S0 ? proteccionHabitat(S0) : 1; } catch { this.entraHabitat = 1; }   // fracción de radiación que entra al hábitat
     this.huellas = []; this.ultHuella = null;
 
     // Llamarada sorpresa durante la caminata (más probable si el Sol real está activo)
     this.llamarada = { en: 18 + Math.random() * 30, activa: false, va: Math.random() < 0.22 * (cfg.riesgo || 1) };
 
     // Jugador
-    this.jugador = m.crearAstronauta(0xe2673a);
+    this.jugador = m.crearAstronauta(this.astronauta?.color ?? 0xe2673a);
     this.jugador.scale.setScalar(1.45);
     this.jugador.position.copy(PUERTA);
     const flecha = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.7, 4), new THREE.MeshBasicMaterial({ color: 0xffd25c }));
@@ -78,9 +105,10 @@ export class ControlEVA {
     this.activo = true;
   }
 
-  _crearObjeto(tipo, T) {
+  _crearObjeto(tipo, T, pos = null) {
     let x, z, intentos = 0;
-    do {
+    if (pos) { x = pos.x; z = pos.z; }
+    else do {
       const a = Math.random() * Math.PI * 2, r = T.rMin + Math.random() * (T.rMax - T.rMin);
       x = Math.cos(a) * r; z = Math.sin(a) * r; intentos++;
     } while (intentos < 30 && OCUPADO.some(([ox, oz, rr]) => Math.hypot(x - ox, z - oz) < rr));
@@ -99,7 +127,7 @@ export class ControlEVA {
     const div = document.createElement('div');
     div.className = 'obj-eva';
     div.style.setProperty('--c', T.color);
-    div.innerHTML = `<span class="obj-ic">${T.icono}</span><span class="obj-nom">${T.nombre}</span>`;
+    div.innerHTML = `<span class="obj-ic">${T.icono}</span><span class="obj-nom" data-es="${T.nombre}">${tr(T.nombre)}</span>`;
     const etq = new CSS2DObject(div); etq.position.y = 3.4;
     g.add(malla, anillo, haz, etq);
     g.position.set(x, alturaSuelo(x, z), z);
@@ -172,10 +200,44 @@ export class ControlEVA {
   get cercaPuerta() { return this.jugador.position.distanceTo(PUERTA) < 3.2; }
   get cercaPaneles() { return !this.limpio && this.cfg.eficienciaPaneles < 1 && this.jugador.position.distanceTo(PANELES) < 7.5; }
 
+  get carga() { return Object.values(this.items).reduce((a, b) => a + b, 0); }
+
+  // E: recoger lo que está cerca > limpiar paneles > depositar y entrar por la puerta
   accion() {
     if (!this.activo) return;
+    if (this.cercano) return this.recoger();
     if (this.cercaPaneles) { this.limpio = true; this._popup('🧹 +30%', this.jugador.position); this.cfg.onAviso?.('🧹 ¡Paneles limpios!'); }
     else if (this.cercaPuerta && this.t > 1) this.terminar(false);
+  }
+
+  // E / Q: recoger el objeto más cercano (si cabe en la mochila)
+  recoger() {
+    if (!this.activo || !this.cercano) return;
+    if (this.carga >= MOCHILA_MAX) {
+      // Se pasa como función: si cambia el idioma con el aviso en pantalla, se vuelve a generar
+      this.cfg.onAviso?.(() => Lx(`🎒 Mochila llena (${MOCHILA_MAX}). Vuelve a la base a depositar, o suelta algo con R.`,
+        `🎒 Backpack full (${MOCHILA_MAX}). Go back to the base to drop it off, or drop something with R.`));
+      return;
+    }
+    const o = this.cercano;
+    this.items[o.tipo]++;
+    this._popup(`+1 ${TIPOS[o.tipo].icono}`, o.g.position);
+    o.etq.element.remove();
+    o.g.removeFromParent();
+    this.cercano = null;
+    this.cfg.onRecoger?.(o.tipo);
+  }
+
+  // R: soltar el último tipo recogido (para hacer espacio a algo más valioso)
+  soltar() {
+    if (!this.activo || !this.carga) return;
+    const orden = ['regolito', 'hielo', 'roca'];   // primero suelta lo menos valioso
+    const tipo = orden.find(k => this.items[k] > 0);
+    this.items[tipo]--;
+    const p = this.jugador.position, ang = this.jugador.rotation.y + Math.PI;
+    const pos = { x: p.x + Math.sin(ang) * 1.6, z: p.z + Math.cos(ang) * 1.6 };
+    this.objetos.push(this._crearObjeto(tipo, TIPOS[tipo], pos));
+    this._popup(`−1 ${TIPOS[tipo].icono}`, p);
   }
 
   update(dt) {
@@ -225,21 +287,17 @@ export class ControlEVA {
     m.camera.zoom += (this.zoomObj - m.camera.zoom) * Math.min(1, dt * 2);
     m.camera.updateProjectionMatrix();
 
-    // --- Objetos ---
+    // --- Objetos: se recogen con E / Q cuando estás cerca (ya no solos) ---
+    let cercano = null, dMin = DIST_RECOGER;
     for (const o of this.objetos) {
       if (!o.g.parent) continue;
       if (o.malla.userData.girar) o.malla.rotation.y += dt * 0.8;
       o.anillo.scale.setScalar(1 + Math.sin(this.t * 3 + o.fase) * 0.12);
       const dist = Math.hypot(o.g.position.x - p.x, o.g.position.z - p.z);
       o.etq.element.classList.toggle('cerca', dist < DIST_NOMBRE);
-      if (dist < 2.4) {
-        this.items[o.tipo]++;
-        this._popup(`+1 ${TIPOS[o.tipo].icono} ${TIPOS[o.tipo].nombre}`, o.g.position);
-        o.etq.element.remove();
-        o.g.removeFromParent();
-        c.onRecoger?.(o.tipo);
-      }
+      if (dist < dMin) { dMin = dist; cercano = o; }
     }
+    this.cercano = cercano;
 
     // --- Costos: oxígeno del traje y radiación ---
     this.o2 = Math.max(0, this.o2 - c.o2PorSeg * dt);
@@ -249,13 +307,21 @@ export class ControlEVA {
       m.efecto('llamarada');
       c.onAviso?.('☢️ ¡LLAMARADA SOLAR! La radiación aumentó mucho. ¡Vuelve a la base YA!');
     }
-    this.rad += c.radPorSeg * (L.activa ? c.multLlamarada : 1) * dt;
+    // La dosis afuera depende de la actividad solar real (DONKI) y de si hay una llamarada en curso
+    this.rad += c.radPorSeg * factorRiesgo(c.riesgo) * (L.activa ? c.multLlamarada : 1) * dt;
+    const limite = MISION.radLimite || 60;
 
     c.onUpdate?.({
       o2: this.o2, rad: this.rad, items: this.items, t: this.t,
       distBase: Math.round(p.distanceTo(PUERTA)),
       cercaPuerta: this.cercaPuerta, cercaPaneles: this.cercaPaneles, llamarada: L.activa,
       angBase: this._anguloPantalla(PUERTA),
+      // Panel de radiación (idea del grupo)
+      nivel: nivelRadiacion(c.riesgo, L.activa),
+      exposicion: Math.min(100, Math.round((this.radBase + this.rad) / limite * 100)),
+      blindaje: this.blindajeBase, entraHabitat: this.entraHabitat,
+      carga: this.carga, mochilaMax: MOCHILA_MAX,
+      cercano: this.cercano ? this.cercano.tipo : null, mochilaLlena: this.carga >= MOCHILA_MAX,
     });
 
     if (this.o2 <= 0) this.terminar(true);
