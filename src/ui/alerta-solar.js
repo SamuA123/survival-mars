@@ -140,6 +140,8 @@ css.textContent = `
   .sol-estado.r-alto b { color: var(--marte, #e2582c); }
   .sol-estado.alerta { background: var(--rojo, #e53935); color: #fff; animation: latido .9s infinite; }
   .sol-estado.alerta b { color: #fff; }
+  /* Vive pegado al tablero de recursos: si el tablero se oculta o una consola lo tapa, se oculta con él */
+  body.en-consola .sol-estado { display: none !important; }
   #alertaSolar { position: fixed; z-index: 25; left: 50%; top: 18%; transform: translate(-50%, -20px); opacity: 0; pointer-events: none;
     width: min(440px, calc(100% - 24px)); background: var(--papel, #fff4e3); color: var(--tinta, #2b1408); border: 3px solid var(--rojo, #e53935);
     border-radius: 18px; padding: 14px 16px; box-shadow: var(--sombra, 4px 4px 0 #2b1408); transition: all .3s; }
