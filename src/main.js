@@ -3,6 +3,7 @@ import { Mundo } from './world3d/mundo.js';
 import {
   crearPartida, iniciarSol, elegirEvento, simularSol, finDePartida, EVENTOS, ACCIONES,
   cambiarNivel, aprender, foto, setClima, enConjuncion, CLIMA, motivoNoEVA, iniciarEVA, terminarEVA,
+  inventosPorElegir, eventoInvento,
 } from './sim/motor.js';
 import { MISION } from './sim/config.js';
 import { mostrarHUDEVA, actualizarHUDEVA, avisoEVA, ocultarHUDEVA, tarjetaObjeto } from './ui/eva-hud.js';
@@ -22,6 +23,8 @@ import './ui/ubicacion.js';       // 📍 resumen del lugar de la base + mapas d
 import './ui/alerta-solar.js';    // ☀️ estado del Sol y alerta solar en vivo (NASA DONKI)
 import { elegirAstronauta } from './ui/tripulacion.js';   // 🧑‍🚀 quién sale a caminar (dosímetros)
 import './ui/construccion.js';    // 🧱 modo construcción del blindaje por secciones (tecla B)
+import './ui/leyenda.js';         // 📖 qué significa cada ícono, palabra y tecla
+import './ui/teclado.js';         // ⌨️ Esc cierra, Enter sigue, 1-4 elige en todas las ventanas
 import { t, idioma, setIdioma, aplicarEstaticos, onIdioma } from './ui/i18n.js';
 import { esDemo, aplicarDemo } from './sim/demostracion.js';
 import { LLAMARADAS_RESPALDO } from './data/donki.js';
@@ -64,6 +67,15 @@ function seleccionarPanel(id) {
   if (['base', 'tripulacion', 'inventario'].includes(id)) {
     mundo.seleccionar(null); sel = id; refrescar();
   } else mundo.seleccionar(id);
+}
+
+// 💡 Inventos: cada hito de ciencia abre una elección (1 de 2). Se ofrece al terminar el sol y al volver de caminar.
+async function ofrecerInventos() {
+  while (inventosPorElegir(S) > 0) {
+    beep(1320, 0.12, 'triangle');
+    await mostrarEvento(S, eventoInvento(S));
+    refrescar();
+  }
 }
 
 async function terminarSol() {
@@ -112,6 +124,7 @@ async function terminarSol() {
     await pantallaFinal(S, fin);
     return nuevaPartida();
   }
+  await ofrecerInventos();
   S.sol++;
   iniciarSol(S);
   guardarPartida(S, dificultadActual);   // 💾 al empezar cada sol
@@ -150,6 +163,7 @@ async function salirAExplorar() {
       await mostrarResumenEVA(res, lineas);
       const fin = finDePartida(S);   // ¿la radiación o la salud llegaron al límite?
       if (fin && !fin.gano) { borrarPartida(); await pantallaFinal(S, fin); return nuevaPartida(); }
+      await ofrecerInventos();
       guardarPartida(S, dificultadActual);   // 💾 al volver de una caminata
       ocupado = false;
       refrescar();
@@ -203,6 +217,15 @@ $('#btnBase').onclick = () => {
   seleccionarPanel('base'); beep(760, 0.05);
 };
 addEventListener('keydown', e => { if (e.key === 'Escape' && sel && !ocupado) mundo.seleccionar(null); });
+// E en la base = salir a explorar (afuera, la misma tecla recoge y entra). Solo sin ventanas abiertas.
+addEventListener('keydown', e => {
+  if (e.key.toLowerCase() !== 'e' || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.target?.closest?.('input, textarea, select, [contenteditable]')) return;
+  if (ocupado || S.enEVA || !$('#modal').classList.contains('oculto') || document.querySelector('.cons-capa, .dos-capa, .ubic-capa, .ley-capa, .cont-capa')) return;
+  e.preventDefault();
+  if (motivoNoEVA(S)) { beep(220, 0.15, 'sawtooth'); seleccionarPanel('rover'); return; }   // muestra por qué no se puede
+  salirAExplorar();
+});
 $('#btnSonido').onclick = () => { audio.on = !audio.on; $('#btnSonido').textContent = audio.on ? '🔊' : '🔇'; };
 $('#btnAyudaTuto').onclick = () => { if (!ocupado && !tutorial?.activo()) tutorial = iniciarTutorial(() => ({ S, sel })); };
 $('#btnLog').onclick = () => $('#bitacoraBox').classList.toggle('abierta');

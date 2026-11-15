@@ -2,7 +2,7 @@
 //  MOTOR DE SIMULACIÓN — lógica pura (sin DOM, sin Three.js).
 //  La UI llama a estas funciones; la escena 3D solo LEE el estado.
 // =====================================================================
-import { MISION, SISTEMAS } from './config.js';
+import { MISION, SISTEMAS, INVENTOS } from './config.js';
 import { RADIACION } from '../data/radiacion.js';
 import { LLAMARADAS_RESPALDO } from '../data/donki.js';
 import { DATOS } from '../data/datos-curiosos.js';
@@ -26,6 +26,8 @@ export function crearPartida(nombre = 'Comandante') {
     blindaje: 0, construir: false,
     tripulacion: MISION.tripulacion.map(t => ({ ...t, dosis: 0 })), evaAstronauta: null,
     secciones: Object.fromEntries(Object.keys(MISION.construccion.secciones).map(id => [id, false])),
+    obras: Object.fromEntries(Object.keys(MISION.construccion.obras || {}).map(id => [id, false])), cargaSol: null,
+    inventos: [], inventosElegidos: 0, oportunidadesVistas: [],
     polvoSols: 0, eva: false, expedicion: false, refugio: false, ocupados: false,
     evaHecha: false, enEVA: false, regolito: 0,
     inventario: { hoy: { regolito: 0, roca: 0, hielo: 0 }, total: { regolito: 0, roca: 0, hielo: 0 } },
@@ -89,13 +91,28 @@ export function consumo(S, niv = S.niveles, construir = S.construir) {
   let c = MISION.consumoBase;
   for (const id in SISTEMAS) c += niv[id] * SISTEMAS[id].costo;
   if (construir) c += 3;
-  if (enTormenta(S) && niv.vital > 0) c += MISION.frioTormenta;
+  if (enTormenta(S) && niv.vital > 0 && !tieneInvento(S, 'aislante')) c += MISION.frioTormenta;
   return c;
 }
 export function balance(S) {
   const solar = solarHoy(S), nuclear = MISION.nuclear, gen = solar + nuclear, cons = consumo(S);
   const bal = gen - cons;
   return { solar, nuclear, gen, cons, bal, manana: clamp(S.bateria + bal, 0, MISION.bateriaMax), apagon: S.bateria + bal < 0 };
+}
+
+// Inventos y obras que cambian la producción (partidas guardadas antiguas no los tienen: por eso el ?.)
+export const tieneInvento = (S, id) => !!S.inventos?.includes(id);
+export const tieneObra = (S, id) => !!S.obras?.[id];
+export function cosechaDe(S, niv, trabajan) {
+  if (!niv.invernadero) return 0;
+  const cuidado = trabajan || tieneObra(S, 'tunel') ? 1 : 0.5;
+  const extra = (tieneInvento(S, 'led') ? 1 : 0) + (tieneObra(S, 'camas') ? 1 : 0);
+  return (MISION.cosecha[niv.invernadero] + extra) * S.invSalud * cuidado;
+}
+export const oxigenoDe = (S, niv) => [-20, -8, 0, 4][niv.vital] + (niv.vital >= 2 && tieneInvento(S, 'reciclador') ? 2 : 0);
+export function cienciaDe(S, niv, trabajan) {
+  const base = [0, 4, 8][niv.lab];
+  return trabajan ? base : tieneInvento(S, 'labRefugio') ? base / 2 : 0;
 }
 
 // Shared by the preview and the actual simulation. Future events are not predicted.
@@ -117,10 +134,10 @@ export function preverSol(S) {
   return {
     niv, construir, apagados,
     bateria: r1(clamp(S.bateria + gen - consumo(S, niv, construir), 0, MISION.bateriaMax)),
-    oxigeno: clamp(Math.round(S.o2 + [-20, -8, 0, 4][niv.vital]), 0, 100) - S.o2,
-    cosecha: r1(MISION.cosecha[niv.invernadero] * S.invSalud * (trabajan ? 1 : 0.5)),
-    comida: clamp(Math.round(S.comida + MISION.cosecha[niv.invernadero] * S.invSalud * (trabajan ? 1 : 0.5) - MISION.consumoComida), 0, 100) - S.comida,
-    ciencia: trabajan ? [0, 4, 8][niv.lab] : 0,
+    oxigeno: clamp(Math.round(S.o2 + oxigenoDe(S, niv)), 0, 100) - S.o2,
+    cosecha: r1(cosechaDe(S, niv, trabajan)),
+    comida: clamp(Math.round(S.comida + cosechaDe(S, niv, trabajan) - MISION.consumoComida), 0, 100) - S.comida,
+    ciencia: cienciaDe(S, niv, trabajan),
   };
 }
 
@@ -237,6 +254,64 @@ export function construirSeccion(S, id) {
 }
 
 // ---------------------------------------------------------------------
+//  MÁS OBRAS CON REGOLITO (camas de cultivo, túnel, plataforma de aterrizaje)
+// ---------------------------------------------------------------------
+const OBRAS = () => MISION.construccion.obras || {};
+export function motivoNoObra(S, id) {
+  const o = OBRAS()[id];
+  if (!o) return 'noExiste';
+  if (tieneObra(S, id)) return 'construida';
+  if ((S.regolito || 0) < o.costo) return 'faltaRegolito';
+  return '';
+}
+export function construirObra(S, id) {
+  const motivo = motivoNoObra(S, id);
+  if (motivo) return { ok: false, motivo };
+  S.regolito -= OBRAS()[id].costo;
+  (S.obras ||= {})[id] = true;
+  if (id === 'plataforma') S.cargaSol = S.sol + 1;   // la nave de carga aterriza al sol siguiente
+  aprender(S, 'regolito');
+  return { ok: true };
+}
+// ¿Queda algo por construir? (el plan del sol sigue pidiendo regolito mientras sí)
+export const quedaPorConstruir = S =>
+  Object.keys(SECCIONES()).some(id => !S.secciones?.[id]) || Object.keys(OBRAS()).some(id => !tieneObra(S, id));
+
+// ---------------------------------------------------------------------
+//  INVENTOS DEL LABORATORIO: cada hito de ciencia permite elegir 1 de 2 inventos.
+//  Los hitos siguen después de la meta: la ciencia nunca deja de servir.
+// ---------------------------------------------------------------------
+export const pasoInvento = () => Math.max(3, Math.round(MISION.metaCiencia / 3));
+export const inventosPorElegir = S => Math.max(0, Math.floor(S.ciencia / pasoInvento()) - (S.inventosElegidos || 0));
+export const proximoInvento = S => ((S.inventosElegidos || 0) + inventosPorElegir(S) + 1) * pasoInvento();
+export function opcionesInvento(S) {
+  const libres = Object.keys(INVENTOS).filter(id => !tieneInvento(S, id));
+  for (let i = libres.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [libres[i], libres[j]] = [libres[j], libres[i]]; }
+  return libres.slice(0, 2);
+}
+export function elegirInvento(S, id) {
+  S.inventosElegidos = (S.inventosElegidos || 0) + 1;
+  if (!id || !INVENTOS[id] || tieneInvento(S, id)) return;
+  (S.inventos ||= []).push(id);
+  if (id === 'impresora') S.repuestos += 2;
+  log(S, `💡 Invento: ${INVENTOS[id].nombre}.`, 'tierra');
+}
+// Se muestra con la misma ventana que las emergencias (sin reloj)
+export function eventoInvento(S) {
+  const hito = ((S.inventosElegidos || 0) + 1) * pasoInvento();
+  const opciones = opcionesInvento(S).map(id => {
+    const I = INVENTOS[id];
+    return { texto: `${I.icono} ${I.nombre}`, detalle: I.detalle, efecto(S) { elegirInvento(S, id); return `¡Invento listo: ${I.nombre}! ${I.dato}`; } };
+  });
+  if (!opciones.length) opciones.push({ texto: '🎉 ¡Genial!', efecto(S) { elegirInvento(S, null); S.salud = clamp(S.salud + 5, 0, 100); return 'Ya tienen todos los inventos. La tripulación está orgullosa (+5 de salud).'; } });
+  return {
+    icono: '💡', titulo: '¡El laboratorio puede fabricar un invento!', fx: null, tiempo: 0, dato: null, invento: true,
+    texto: () => `Ya juntaron ${hito} puntos de ciencia. ¿Qué invento fabrican?`,
+    opciones,
+  };
+}
+
+// ---------------------------------------------------------------------
 //  CAMINATA ESPACIAL (EVA) — el jugador controla a un astronauta en 3D
 // ---------------------------------------------------------------------
 export function motivoNoEVA(S) {
@@ -270,9 +345,9 @@ export function terminarEVA(S, r) {
   if (it.regolito) {
     // Se guarda en la base; el jugador decide qué sección construir (modo construcción, tecla B)
     S.regolito = (S.regolito || 0) + it.regolito;
-    lineas.push(`🟫 <b>${it.regolito} de regolito</b> (la tierra roja y suelta de Marte) → guardado en la base: ${S.regolito} bolsas para construir el blindaje (tecla B).`); aprender(S, 'regolito');
+    lineas.push(`🟫 <b>${it.regolito} de regolito</b> (la tierra roja y suelta de Marte) → ahora tienes ${S.regolito} en la base para construir (tecla B).`); aprender(S, 'regolito');
   }
-  if (it.roca) { S.ciencia += it.roca * V.roca; lineas.push(`🪨 <b>${it.roca} roca(s) marciana(s)</b> de basalto → el laboratorio las analiza: +${it.roca * V.roca} de ciencia.`); }
+  if (it.roca) { const c = it.roca * (V.roca + (tieneInvento(S, 'taladro') ? 2 : 0)); S.ciencia += c; lineas.push(`🪨 <b>${it.roca} roca(s) marciana(s)</b> de basalto → el laboratorio las analiza: +${c} de ciencia.`); }
   if (it.hielo) { S.o2 = clamp(S.o2 + it.hielo * V.hielo, 0, 100); lineas.push(`🧊 <b>${it.hielo} bloque(s) de hielo de agua</b> → el agua se separa en hidrógeno y oxígeno: +${it.hielo * V.hielo} de oxígeno.`); aprender(S, 'hielo'); }
   if (it.pieza) { S.repuestos += it.pieza; lineas.push(`🔩 ${it.pieza} pieza(s) de una sonda vieja → +${it.pieza} repuesto(s).`); }
   if (r.limpio) { S.eficiencia = Math.min(1, S.eficiencia + 0.3); lineas.push('🧹 Limpiaste los paneles solares: +30% de eficiencia.'); }
@@ -306,7 +381,7 @@ export function generarPlan(S) {
   if (S.niveles.radio === 0) return { estado: 'sinRadio' };
   const pesos = {
     hielo: S.o2 < 70 ? 3 : 1,
-    regolito: S.blindaje < 3 ? 2 : 0,
+    regolito: quedaPorConstruir(S) ? 2 : 0,
     roca: S.ciencia < MISION.metaCiencia ? 2 : 1,
   };
   let r = Math.random() * Object.values(pesos).reduce((a, b) => a + b, 0), tipo = 'roca';
@@ -458,6 +533,80 @@ export const EVENTOS = {
   },
 };
 
+// ---------------------------------------------------------------------
+//  OPORTUNIDADES: decisiones sin reloj para los sols sin emergencia.
+//  Cada una tiene costo: aceptar gasta algo; decir que no deja pasar el premio.
+// ---------------------------------------------------------------------
+const OPORTUNIDADES = ['transmision', 'dron', 'ejercicio', 'mantenimiento', 'cumple'];
+const gastar = (S, kWh) => { S.bateria = r1(Math.max(0, S.bateria - kWh)); };
+Object.assign(EVENTOS, {
+  transmision: {
+    icono: '📺', titulo: 'Una escuela de la Tierra quiere conocerlos', fx: null, tiempo: 0, dato: 'retraso', oportunidad: true,
+    puede: S => S.niveles.radio > 0 && !enConjuncion(S),
+    texto: () => 'Una escuela quiere hacerles preguntas. Los mensajes tardan 12 minutos: no se puede hablar en vivo, así que graban la clase y la envían.',
+    opciones: [
+      { texto: '🎥 Grabar la clase', detalle: '−4 ⚡ · +6 ❤️', disponible: S => S.bateria >= 4,
+        efecto(S) { gastar(S, 4); S.salud = clamp(S.salud + 6, 0, 100); return 'Grabaron la clase y la enviaron a la Tierra. ¡La tripulación está feliz! (+6 de salud, −4 kWh)'; } },
+      { texto: '🔋 Hoy no', detalle: '',
+        efecto() { return 'Guardaron la energía para la base. La escuela lo entenderá.'; } },
+    ],
+  },
+  dron: {
+    icono: '🚁', titulo: 'El dron puede explorar un cráter', fx: null, tiempo: 0, dato: null, oportunidad: true,
+    puede: S => !enTormenta(S),
+    texto: () => 'A 2 km hay un cráter con capas de roca. ¿Lo fotografía el dron? El helicóptero Ingenuity voló 72 veces en Marte.',
+    opciones: [
+      { texto: '🚁 Volar al cráter', detalle: '−5 ⚡ · +7 🔬 (8 de cada 10 veces)', disponible: S => S.bateria >= 5,
+        efecto(S) { gastar(S, 5); if (Math.random() < 0.8) { S.ciencia += 7; return '¡Fotos increíbles de las capas de roca! +7 de ciencia (−5 kWh).'; } return 'El polvo tapó la cámara del dron: volvió sin fotos (−5 kWh).'; } },
+      { texto: '🛬 Dejarlo en la base', detalle: '',
+        efecto() { return 'El dron se quedó cargando en la base.'; } },
+    ],
+  },
+  ejercicio: {
+    icono: '🏃', titulo: 'La tripulación se siente débil', fx: null, tiempo: 0, dato: null, oportunidad: true,
+    texto: () => 'Con poca gravedad, músculos y huesos se debilitan. En la Estación Espacial hacen 2 horas de ejercicio al día.',
+    opciones: [
+      { texto: '🏃 Ejercicio extra', detalle: '−3 ⚡ · +6 ❤️', disponible: S => S.bateria >= 3,
+        efecto(S) { gastar(S, 3); S.salud = clamp(S.salud + 6, 0, 100); return 'Corrieron en la cinta y pedalearon: +6 de salud (−3 kWh).'; } },
+      { texto: '🔬 Seguir trabajando', detalle: '+3 🔬 · −4 ❤️',
+        efecto(S) { S.ciencia += 3; S.salud = clamp(S.salud - 4, 0, 100); return 'Siguieron con los experimentos: +3 de ciencia, pero −4 de salud.'; } },
+    ],
+  },
+  mantenimiento: {
+    icono: '🔧', titulo: 'Hora de revisar las máquinas', fx: null, tiempo: 0, dato: null, oportunidad: true,
+    texto: () => 'Las máquinas llevan muchos sols funcionando. Al revisarlas se pueden recuperar piezas.',
+    opciones: [
+      { texto: '🔧 Revisar todo', detalle: '+1 🧰 · hoy no hay ciencia',
+        efecto(S) { S.ocupados = true; S.repuestos++; return 'Revisaron todo y recuperaron una pieza: +1 repuesto. Hoy se trabajó menos.'; } },
+      { texto: '⏭️ Hoy no', detalle: '',
+        efecto() { return 'Siguieron con el trabajo de siempre.'; } },
+    ],
+  },
+  cumple: {
+    icono: '🎂', titulo: '¡Un cumpleaños en Marte!', fx: null, tiempo: 0, dato: null, oportunidad: true,
+    puede: S => S.comida >= 15,
+    inicio(S) { const t = S.tripulacion?.length ? S.tripulacion : [{ nombre: 'Lía' }]; S.cumpleanero = t[Math.floor(Math.random() * t.length)].nombre; },
+    texto: S => `Hoy cumple años <b>${S.cumpleanero || 'Lía'}</b>. ¿Hacen un pastel con lo que crece en el invernadero?`,
+    opciones: [
+      { texto: '🎂 ¡Celebrar!', detalle: '−6 🥔 · +8 ❤️',
+        efecto(S) { S.comida = clamp(S.comida - 6, 0, 100); S.salud = clamp(S.salud + 8, 0, 100); return '¡Fiesta en Marte! +8 de salud, −6 de comida.'; } },
+      { texto: '📋 Celebrar otro día', detalle: '',
+        efecto() { return 'Guardaron la comida. El pastel tendrá que esperar.'; } },
+    ],
+  },
+});
+
+function elegirOportunidad(S) {
+  const posibles = OPORTUNIDADES.filter(id => id !== S.ultimoEvento && (EVENTOS[id].puede?.(S) ?? true));
+  if (!posibles.length) return null;
+  S.oportunidadesVistas ||= [];
+  let nuevas = posibles.filter(id => !S.oportunidadesVistas.includes(id));
+  if (!nuevas.length) { S.oportunidadesVistas = []; nuevas = posibles; }
+  const id = nuevas[Math.floor(Math.random() * nuevas.length)];
+  S.oportunidadesVistas.push(id);
+  return id;
+}
+
 function esperarPlaga(S) {
   if (Math.random() < 0.6) { S.invSalud = Math.max(0.3, S.invSalud - 0.3); return 'La enfermedad se contagió. El invernadero producirá menos.'; }
   return '¡Las plantas se recuperaron solas! Esta vez hubo suerte.';
@@ -466,7 +615,8 @@ function esperarPlaga(S) {
 export function elegirEvento(S) {
   const g = (S.guion || MISION.guion)[S.sol];
   if (g) return g;
-  if (S.sol < 2 || Math.random() > 0.38) return null;
+  if (S.sol < 2) return null;
+  if (Math.random() > (MISION.probEmergencia ?? 0.38)) return Math.random() < (MISION.probOportunidad ?? 0) ? elegirOportunidad(S) : null;
   const pool = [
     ['meteorito', 1], ['reciclador', 0.7], ['plaga', 1], ['fiebre', 0.7],
     ['llamarada', CLIMA.riesgo], ['polvo', enTormenta(S) ? 0 : 1],
@@ -500,6 +650,11 @@ export function iniciarSol(S) {
     log(S, '📡 Había mensajes de la Tierra… pero las comunicaciones estaban <b>apagadas</b>. ¡No los recibiste!', 'mal');
   }
   if (S.sol === 1) aprender(S, 'sol');
+  if (S.cargaSol === S.sol) {
+    S.cargaSol = null;
+    S.comida = clamp(S.comida + 15, 0, 100); S.repuestos++; S.botiquin++;
+    log(S, '🛬 <b>¡Aterrizó la nave de carga en la plataforma!</b> +15 de comida, +1 repuesto y +1 botiquín.', 'tierra');
+  }
 
   // Plan del sol (solo llega si hay comunicación)
   const g = generarPlan(S);
@@ -539,7 +694,7 @@ export function simularSol(S, resultadoEvento, ev) {
   const trabajan = !S.refugio && !S.ocupados;
 
   // 2) Soporte vital: oxígeno y calor
-  S.o2 += [-20, -8, 0, 4][niv.vital];
+  S.o2 += oxigenoDe(S, niv);
   if (niv.vital < 2) {
     S.salud -= 4 * (2 - niv.vital);
     lineas.push('🥶 El soporte vital trabajó poco: bajó el oxígeno y hizo frío.');
@@ -547,13 +702,13 @@ export function simularSol(S, resultadoEvento, ev) {
   }
 
   // 3) Comida
-  const cosecha = MISION.cosecha[niv.invernadero] * S.invSalud * (trabajan ? 1 : 0.5);
+  const cosecha = cosechaDe(S, niv, trabajan);
   S.comida += cosecha - MISION.consumoComida;
   lineas.push(`🥔 Cosecha: ${r1(cosecha)} · consumo: ${MISION.consumoComida} · reservas: ${clamp(Math.round(S.comida), 0, 100)}.`);
 
   // 4) Ciencia
   if (niv.lab > 0) {
-    const c = trabajan ? [0, 4, 8][niv.lab] : 0;
+    const c = cienciaDe(S, niv, trabajan);
     S.ciencia += c;
     if (c) lineas.push(`🔬 El laboratorio hizo experimentos: +${c} ciencia.`);
     else lineas.push('🔬 Hoy nadie pudo trabajar en el laboratorio.');
@@ -571,7 +726,7 @@ export function simularSol(S, resultadoEvento, ev) {
 
   // 7) Polvo
   if (enTormenta(S) && S.paneles) {
-    S.eficiencia = Math.max(0.2, S.eficiencia - 0.15);
+    S.eficiencia = Math.max(0.2, S.eficiencia - (tieneInvento(S, 'antipolvo') ? 0.07 : 0.15));
     lineas.push('🌪️ El polvo rayó y cubrió los paneles: ahora generan menos.');
   }
 

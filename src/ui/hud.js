@@ -1,8 +1,8 @@
 // HUD: tanques de recursos, ruta de la misión, panel del edificio, pronóstico de batería y bitácora.
 // Formas y valores visibles para relacionar cada decisión con sus consecuencias.
 // Diseño de Jorge. Textos: t() interfaz, tr() textos de src/sim, txt() datos con *_en, L(es, en) textos nuevos.
-import { MISION, SISTEMAS, RECURSOS } from '../sim/config.js';
-import { ACCIONES, balance, preverSol, r1, clamp, enTormenta, enConjuncion, seccionesHechas } from '../sim/motor.js';
+import { MISION, SISTEMAS, RECURSOS, INVENTOS } from '../sim/config.js';
+import { ACCIONES, balance, preverSol, r1, clamp, enTormenta, enConjuncion, seccionesHechas, proximoInvento, tieneInvento } from '../sim/motor.js';
 import { HALLAZGOS } from '../data/salud.js';
 import { t, tr, txt, esEN } from './i18n.js';
 import { dosimetrosHTML } from './tripulacion.js';
@@ -71,10 +71,12 @@ function renderRuta(S) {
     return `<i class="${clase}" title="Sol ${n}">${marca}</i>`;
   }).join('');
   const ciencia = clamp(S.ciencia / MISION.metaCiencia * 100, 0, 100);
+  const meta = S.ciencia >= MISION.metaCiencia, prox = proximoInvento(S);
   $('#sol').innerHTML = `<div class="ruta-cab"><b>Sol ${S.sol}</b><small>${L('de', 'of')} ${MISION.maxSol}</small></div>
     <div class="ruta">${celdas}</div>
-    <div class="meta-ciencia" title="${L(`Ciencia: ${S.ciencia} de ${MISION.metaCiencia} para la segunda estrella`, `Science: ${S.ciencia} of ${MISION.metaCiencia} for the second star`)}">
-      🔬 <div class="barra"><div style="width:${ciencia}%"></div></div><b>${S.ciencia}/${MISION.metaCiencia}</b></div>`;
+    <div class="meta-ciencia ${meta ? 'lograda' : ''}" title="${L(`Ciencia: ${S.ciencia} de ${MISION.metaCiencia} para la segunda estrella. Próximo invento del laboratorio a los ${prox} puntos.`, `Science: ${S.ciencia} of ${MISION.metaCiencia} for the second star. Next lab invention at ${prox} points.`)}">
+      🔬 <div class="barra"><div style="width:${ciencia}%"></div></div><b>${meta ? `${S.ciencia} ⭐` : `${S.ciencia}/${MISION.metaCiencia}`}</b>
+      <small class="prox-invento">💡 ${prox}</small></div>`;
 }
 
 // Botón "Tarea del día": muestra el progreso de hoy; al tocarlo se abre la tarea completa (modales.panelTarea).
@@ -121,12 +123,11 @@ export function renderPanel(S, sel) {
   const e = EDIF[sel];
   const titulo = e ? `${e.icono} ${e.nombre}` : sel === 'tripulacion' ? L('🧑‍🚀 Tripulación', '🧑‍🚀 Crew') : sel === 'inventario' ? L('🎒 Inventario', '🎒 Inventory') : L('🖥️ Control base', '🖥️ Base control');
   let contenido;
-  if (sel === 'base') contenido = `<p>${L('Elige qué quieres gestionar. Cada edificio tiene sus propios controles.', 'Choose what to manage. Each building has its own controls.')}</p>
-    <nav class="edificios-menu" aria-label="${L('Edificios y estado', 'Buildings and status')}">
-      ${Object.entries(EDIF).map(([id, e]) => `<button data-sel="${id}"><span>${e.icono}</span><b>${e.nombre}</b><small>${proposito(id)}</small></button>`).join('')}
+  if (sel === 'base') contenido = `<nav class="edificios-menu" aria-label="${L('Edificios y estado', 'Buildings and status')}">
+      ${Object.entries(EDIF).map(([id, e]) => `<button data-sel="${id}"><span>${e.icono}</span><b>${e.nombre}</b><small>${resumenCorto(id)}</small></button>`).join('')}
       <button data-sel="tripulacion"><span>🧑‍🚀</span><b>${L('Tripulación', 'Crew')}</b><small>${L('Salud y radiación', 'Health and radiation')}</small></button>
-      <button data-sel="inventario"><span>🎒</span><b>${L('Inventario', 'Inventory')}</b><small>${L('Qué recogiste y para qué sirve', 'What you collected and how to use it')}</small></button>
-    </nav>${resumenEnergia(S)}`;
+      <button data-sel="inventario"><span>🎒</span><b>${L('Inventario', 'Inventory')}</b><small>${L('Lo que recogiste', 'What you collected')}</small></button>
+    </nav><div class="base-energia">${resumenEnergia(S)}</div>`;
   // Los 4 dosímetros primero: es lo que se viene a mirar (sin tener que desplazarse)
   else if (sel === 'tripulacion') contenido = `${dosimetrosHTML(S)}${colTripulante(S)}<p class="estado-numeros">🫁 ${S.o2}% · 🥔 ${S.comida}% · ❤️ ${S.salud}% · ☢️ ${L('máx.', 'max.')} ${S.rad} mSv</p><p>${L('La comida baja reduce la salud. La radiación se acumula: el refugio y el blindaje ayudan a protegerte.', 'Low food reduces health. Radiation builds up: shelter and shielding help protect you.')}</p>`;
   else if (sel === 'inventario') contenido = `${colRecoleccion(S)}<div class="inventario-explica">${Object.values(MISION.eva.objetos).map(o => `<details><summary>${o.icono} ${tr(o.nombre)}</summary><p>${tr(o.que)}</p><p>${tr(o.uso)}</p></details>`).join('')}</div>`;
@@ -136,6 +137,15 @@ export function renderPanel(S, sel) {
     <section class="edificio-contenido">${e ? `<p class="edificio-proposito">${proposito(sel)}</p>` : ''}${contenido}</section>
     ${sel === 'base' ? '' : `<button class="panel-volver" data-sel="base">${L('← Todos los edificios', '← All buildings')}</button>`}
   </div>`;
+}
+
+// Para los cuadros de Control base: dos o tres palabras, sin cortar
+function resumenCorto(id) {
+  return {
+    habitat: L('Aire y refugio', 'Air and shelter'), invernadero: L('Comida', 'Food'), lab: L('Ciencia', 'Science'),
+    antena: L('Mensajes de la Tierra', 'Messages from Earth'), paneles: L('Energía del Sol', 'Power from the Sun'),
+    bateria: L('Guarda energía', 'Stores power'), reactor: L('Energía día y noche', 'Power day and night'), rover: L('Salir a explorar', 'Go exploring'),
+  }[id] || '';
 }
 
 function proposito(id) {
@@ -155,15 +165,36 @@ function contenidoEdificio(S, id) {
   const e = EDIF[id], p = preverSol(S), signo = n => n > 0 ? `+${n}` : String(n);
   if (!e) return '';
   let detalle = '';
-  if (id === 'habitat') detalle = `<p class="resultado-plan">🫁 ${L('Oxígeno al terminar el sol', 'Oxygen when the sol ends')}: <b>${signo(p.oxigeno)}</b></p><p>${L('Menos potencia ahorra energía, pero puede reducir el oxígeno. El blindaje también consume energía mientras se construye.', 'Lower power saves energy, but may reduce oxygen. Building shielding also uses power.')}</p>`;
+  if (id === 'habitat') detalle = `<p class="resultado-plan">🫁 ${L('Oxígeno al terminar el sol', 'Oxygen when the sol ends')}: <b>${signo(p.oxigeno)}</b></p>${fichas([
+    { ic: '⚡', t: L('Más energía', 'More power'), s: L('más oxígeno', 'more oxygen') },
+    { ic: '🪫', t: L('Menos energía', 'Less power'), s: L('el oxígeno baja y hace frío', 'oxygen drops and it gets cold'), mal: true }])}`;
   if (id === 'invernadero') detalle = resumenComida(S, p);
-  if (id === 'lab') detalle = `<p class="resultado-plan">🔬 ${L('Ciencia al terminar el sol', 'Science when the sol ends')}: <b>+${p.ciencia}</b> · ⚡ ${S.niveles.lab * SISTEMAS.lab.costo} kWh</p><p>${L('Los experimentos usan energía que también necesita el soporte vital. Sin energía o con la tripulación en el refugio, no hay ciencia del laboratorio.', 'Experiments use power that life support also needs. The lab makes no science without power or while the crew is sheltering.')}</p>`;
+  if (id === 'lab') detalle = `<p class="resultado-plan">🔬 ${L('Ciencia al terminar el sol', 'Science when the sol ends')}: <b>+${p.ciencia}</b> · ⚡ ${S.niveles.lab * SISTEMAS.lab.costo} kWh</p>${fichas([
+    { ic: '⚡', t: L('Con energía', 'With power'), s: L('hace experimentos', 'it runs experiments') },
+    { ic: '🛡️', t: L('Día de refugio', 'Shelter day'), s: tieneInvento(S, 'labRefugio') ? L('hace la mitad', 'it does half') : L('no hay ciencia', 'no science'), mal: !tieneInvento(S, 'labRefugio') }])}${inventosHTML(S)}`;
   if (id === 'antena') detalle = comunicacionesHTML(S, p);
-  if (id === 'paneles') detalle = `<p class="resultado-plan">☀️ ${L('Producción', 'Generation')}: <b>${r1(balance(S).solar)} kWh</b> · ${L('Limpieza', 'Cleanliness')}: ${Math.round(S.eficiencia * 100)}%</p><p>${L('Retraerlos los protege del polvo, pero dejan de producir energía. Limpiarlos requiere salir y recibir radiación.', 'Retracting protects them from dust, but they stop generating power. Cleaning them requires going outside and receiving radiation.')}</p>`;
+  if (id === 'paneles') detalle = `<p class="resultado-plan">☀️ ${L('Producción', 'Generation')}: <b>${r1(balance(S).solar)} kWh</b> · ${L('Limpieza', 'Cleanliness')}: ${Math.round(S.eficiencia * 100)}%</p>${fichas([
+    { ic: '🔽', t: L('Retraer', 'Retract'), s: L('el polvo no los raya, pero no dan energía', 'dust can\'t scratch them, but they make no power') },
+    { ic: '🧹', t: L('Limpiar', 'Clean'), s: L('dan más energía, pero alguien sale y recibe radiación', 'more power, but someone goes out and gets radiation') }])}`;
   if (id === 'bateria' || id === 'reactor') detalle = resumenEnergia(S);
-  if (id === 'rover') detalle = `<p>${L('El traje consume oxígeno cada segundo. Regolito → blindaje; hielo → oxígeno; rocas → ciencia. Los recursos se entregan al volver: un rescate pierde lo recogido.', 'The suit uses oxygen every second. Regolith → shielding; ice → oxygen; rocks → science. Resources are delivered when you return; a rescue loses the collected items.')}</p>`;
+  if (id === 'rover') detalle = `${fichas([
+    { ic: '🟫', t: L('Regolito', 'Regolith'), s: L('para construir', 'for building') },
+    { ic: '🧊', t: L('Hielo', 'Ice'), s: L('se convierte en oxígeno', 'turns into oxygen') },
+    { ic: '🪨', t: L('Roca', 'Rock'), s: L('el laboratorio la estudia', 'the lab studies it') }])}
+    <p>${L('El traje tiene aire para poco tiempo. Si se acaba, te rescatan, pero pierdes lo que recogiste.', 'The suit only has air for a short time. If it runs out, you get rescued, but you lose what you collected.')}</p>`;
   const control = e.sistema ? controlSistema(S, e.sistema) : e.acciones.map(a => accionBtn(S, a)).join('');
   return control + detalle + (p.apagados.length && e.sistema && p.niv[e.sistema] < S.niveles[e.sistema] ? `<p class="aviso-sistema">${L('⚠️ Tu plan consume más energía de la disponible: este sistema trabajará a menor potencia.', '⚠️ Your plan needs more power than is available: this system will run at lower power.')}</p>` : '');
+}
+
+// Cuadros de ayuda: un ícono grande, una palabra y una explicación corta. "on" marca el que está activo.
+const fichas = items => `<div class="fichas">${items.map(c => `<div class="ficha ${c.on ? 'on' : ''} ${c.mal ? 'mal' : ''}">
+  <span class="ficha-ic">${c.ic}</span><b>${c.t}</b>${c.s ? `<small>${c.s}</small>` : ''}</div>`).join('')}</div>`;
+
+// Inventos que ya tiene la base y cuándo llega el próximo
+function inventosHTML(S) {
+  const tiene = (S.inventos || []).map(id => INVENTOS[id]).filter(Boolean);
+  return `<div class="inventos"><p><b>💡 ${L('Inventos', 'Inventions')}</b> · ${L(`el próximo, a los ${proximoInvento(S)} puntos de ciencia`, `next one at ${proximoInvento(S)} science points`)}</p>
+    ${tiene.length ? fichas(tiene.map(I => ({ ic: I.icono, t: tr(I.nombre), s: tr(I.detalle), on: true }))) : ''}</div>`;
 }
 
 function resumenComida(S, p) {
@@ -171,17 +202,21 @@ function resumenComida(S, p) {
   const duracion = deficit > 0 ? Math.ceil(S.comida / deficit) : null;
   return `<div class="resultado-plan"><b>🥔 ${L('Reservas', 'Reserves')}: ${S.comida}%</b>
     <p>${L('Cosechas', 'You harvest')} <b>${p.cosecha}</b> · ${L('consumes', 'you use')} <b>${MISION.consumoComida}</b> ${L('por sol', 'per sol')} → <b>${p.comida > 0 ? '+' : ''}${p.comida}</b></p>
-    <p>${duracion !== null ? L(`A este ritmo, las reservas duran unos ${duracion} sols.`, `At this rate, reserves last about ${duracion} sols.`) : L('A este ritmo produces al menos lo que consumes.', 'At this rate, you grow at least as much as you eat.')}</p></div>
-    <p>${L(`Con ${MISION.comidaBaja}% o menos, el hambre cuesta ${MISION.penalizacionHambre} de salud por sol; sin comida cuesta 10. Sube la cosecha para recuperar reservas, a cambio de más energía.`, `At ${MISION.comidaBaja}% or below, hunger costs ${MISION.penalizacionHambre} health per sol; with no food it costs 10. Grow more food to rebuild reserves, at the cost of more power.`)}</p>
-    <small>${L('Estimación del juego con el plan actual, antes de nuevas emergencias.', 'Game estimate with the current plan, before new emergencies.')}</small>`;
+    <p>${duracion !== null ? L(`⏳ Alcanza para unos <b>${duracion} sols</b>.`, `⏳ Enough for about <b>${duracion} sols</b>.`) : L('✅ Produces lo que comen.', '✅ You grow what the crew eats.')}</p></div>
+    ${fichas([
+      { ic: '😟', t: L(`Poca comida (${MISION.comidaBaja}% o menos)`, `Low food (${MISION.comidaBaja}% or less)`), s: L(`−${MISION.penalizacionHambre} de salud cada sol`, `−${MISION.penalizacionHambre} health every sol`), on: S.comida <= MISION.comidaBaja && S.comida > 0, mal: true },
+      { ic: '🍽️', t: L('Sin comida', 'No food'), s: L('−10 de salud cada sol', '−10 health every sol'), on: S.comida <= 0, mal: true }])}`;
 }
 
 function comunicacionesHTML(S, p) {
   const conj = enConjuncion(S), apagada = p.niv.radio === 0;
   const estado = conj ? L('🌞 Sin contacto: conjunción solar', '🌞 No contact: solar conjunction') : apagada ? L('📡 Antena sin energía', '📡 Antenna has no power') : L('📡 Recibiendo mensajes', '📡 Receiving messages');
   return `<div class="resultado-plan"><b>${estado}</b><p>${L('Mensajes pendientes', 'Pending replies')}: ${S.pendientes.length} · ${L('Retraso por trayecto', 'One-way delay')}: ${MISION.delayMin} min</p></div>
-    <p>${L('Nivel 0: ahorras energía, pero no recibes nuevas tareas ni avisos. Nivel 1: recibes avisos, tareas y respuestas. Nivel 2: añade videollamadas que recuperan hasta 2 de salud por sol si no está al máximo.', 'Level 0: saves power, but receives no new tasks or alerts. Level 1: receives alerts, tasks and replies. Level 2: adds video calls that restore up to 2 health per sol when health is below maximum.')}</p>
-    <p>${conj ? L('Durante la conjunción no hay contacto, aunque la antena esté encendida.', 'During conjunction there is no contact, even with the antenna on.') : apagada ? L('Los mensajes pendientes esperan a que vuelva la conexión. Enciende la antena para recibirlos al iniciar el próximo sol.', 'Pending replies wait for the connection to return. Turn on the antenna to receive them at the start of the next sol.') : L('Los mensajes nuevos llegan al empezar el sol. La ayuda no llega a tiempo para una emergencia de segundos.', 'New messages arrive at the start of a sol. Help cannot arrive in time for an emergency lasting seconds.')}</p>
+    ${fichas([
+      { ic: '📴', t: L('Apagada', 'Off'), s: L('no llegan mensajes', 'no messages arrive'), on: S.niveles.radio === 0 },
+      { ic: '📡', t: L('Encendida', 'On'), s: L('avisos y tareas', 'alerts and tasks'), on: S.niveles.radio === 1 },
+      { ic: '📹', t: L('Videollamada', 'Video call'), s: L('la tripulación se anima', 'cheers the crew up'), on: S.niveles.radio === 2 }])}
+    ${apagada && !conj ? `<p>${L('📩 Los mensajes esperan: enciende la antena.', '📩 Messages are waiting: turn the antenna on.')}</p>` : ''}
     ${S.niveles.radio >= 2 && S.salud >= 100 ? `<p>${L('❤️ Salud al máximo: la videollamada no añade más salud hoy.', '❤️ Health is already full: a video call adds no extra health today.')}</p>` : ''}
     <h3>${L('Bandeja de mensajes', 'Message inbox')}</h3>
     <ul class="mensajes-radio">${S.mensajes.slice(-3).reverse().map(m => `<li><b>Sol ${m.sol} · ${m.tipo === 'respuesta' ? L('Respuesta recibida', 'Reply received') : L('Aviso recibido', 'Alert received')}</b><p>${tr(m.texto)}</p></li>`).join('') || `<li>${L('Todavía no hay mensajes recibidos.', 'No messages have arrived yet.')}</li>`}</ul>`;
@@ -191,7 +226,7 @@ const accionBtn = (S, a) => {
   const A = ACCIONES[a];
   if (!A.visible(S)) return '';
   return `<button class="accion ${a === 'blindaje' && S.construir ? 'activa' : ''}" data-accion="${a}" ${A.activo(S) ? '' : 'disabled'}>
-    <span>${tr(A.texto(S))}</span><small>${tr(A.detalle(S))}</small></button>`;
+    <span>${tr(A.texto(S))}${a === 'eva' && A.activo(S) ? '<kbd class="tecla">E</kbd>' : ''}</span><small>${tr(A.detalle(S))}</small></button>`;
 };
 
 // Izquierda: lo que se trajo de afuera y la puerta para salir
@@ -203,7 +238,7 @@ function colRecoleccion(S, foco) {
     <ul class="con-inv">${filas}</ul>
     <div class="con-fila" title="${L('Construye secciones de blindaje con el modo construcción (tecla B)', 'Build shield sections with build mode (B key)')}">
       🧱 ${L('Blindaje', 'Shield')} <span class="cuadros">${Array.from({ length: total }, (_, i) => `<i class="${i < hechas ? 'on' : ''}"></i>`).join('')}</span>
-      <small>${hechas < total ? `${hechas}/${total} · 🟫 ${S.regolito} ${L('bolsas en la base', 'bags in the base')}` : L('¡completo!', 'complete!')}</small></div>
+      <small>${hechas < total ? `${hechas}/${total} · 🟫 ${S.regolito} ${L('de regolito en la base', 'regolith in the base')}` : L('¡completo!', 'complete!')}</small></div>
     <div class="con-fila">🧰 ${t('pan.repuestos')} <b>${S.repuestos}</b> · 💊 ${t('pan.botiquin')} <b>${S.botiquin}</b></div>
     <div class="con-puerta ${foco === 'puerta' ? 'foco' : ''}" data-foco="puerta">
       ${accionBtn(S, 'eva')}
@@ -258,7 +293,6 @@ function resumenEnergia(S) {
     <p>☀️ ${r1(b.solar)} + ⚛️ ${MISION.nuclear} = ${L('produces', 'you generate')} ${r1(b.gen)} kWh</p>
     <p>${L('Gastas', 'You use')} ${r1(b.cons)} kWh · 🔋 ${L('reservas', 'stored')} ${S.bateria}/${MISION.bateriaMax}</p></div>
     <div class="pronostico"><b>${L('Si terminas el sol ahora…', 'If you end the sol now…')}</b>
-      <p>${L('Con este plan, antes de nuevas emergencias:', 'With this plan, before new emergencies:')}</p>
       <p>🫁 ${signo(p.oxigeno)} · 🥔 ${signo(p.comida)} · 🔬 ${signo(p.ciencia)}</p>
       ${p.apagados.length ? `<p class="aviso-sistema">${L('⚠️ Se reducirá:', '⚠️ These will be turned down:')} ${p.apagados.map(n => tr(n === 'la construcción' ? 'Construcción' : n[0].toUpperCase() + n.slice(1))).join(', ')}.</p>` : ''}
     </div>`;

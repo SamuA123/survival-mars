@@ -48,8 +48,11 @@ They must keep their crew alive until the relief ship arrives, making the same k
 - **Different every game:** the dust storm, solar flares, dust devil and recycler failure fall on different sols each time; the storm is always announced two sols ahead and never overlaps the solar conjunction
 - **Science goal that requires risk:** the second and third stars need more power for the lab or spacewalks for rocks; playing it safe only earns one star
 - **Playable spacewalk** (keyboard or touch joystick): 4-item backpack, pick up and drop, deposit at the door
+- **Spacewalk minimap:** the base, the door and the astronaut, turned so "up" is the W direction. Cadet sees every item; in Commander a suit radar only shows items within 30 m, so players still have to explore
 - **Simple spacewalk display:** seconds of suit air left, a single colour radiation meter, backpack slots and the request from Earth; a red screen edge and Geiger-counter clicks warn without reading
-- **Build mode (B key):** habitat shielding by sections: north wall, south wall, east and west walls, roof
+- **Build mode (B key):** habitat shielding by sections (north wall, south wall, east and west walls, roof), plus growing beds, a tunnel to the greenhouse and a landing pad for a cargo ship
+- **Lab inventions:** every science milestone lets players choose one of two inventions, so science keeps paying off after the goal
+- **Opportunities on quiet sols:** a drone flight, a class for a school on Earth, extra exercise, a maintenance check or a birthday; each one has a cost
 - **Crew with dosimeters:** Lía, Kofi, Mei and Teo; players choose who goes outside and each one builds up their own dose
 - **Solar alert:** Sun indicator always visible and NASA DONKI checked every 10 minutes during the game
 - **NE Syrtis world:** layered mesas, olivine, an Ingenuity-style drone and dust devils; light graphics mode for slow computers
@@ -68,7 +71,9 @@ They must keep their crew alive until the relief ship arrives, making the same k
 | Drop an item from the backpack | R | Drop button |
 | Deposit and enter the base (at the door) | E | Deposit button |
 | Open build mode | B | build button in the habitat panel |
-| Close or cancel | Esc | close (X) button |
+| Choose an option in an emergency or opportunity | 1, 2, 3, 4 | tap the option |
+| Continue (next sol, close a result) | Enter | Continue button |
+| Close or cancel (never skips a decision) | Esc | close (X) button |
 
 ## NASA data
 DONKI solar flares (**recent query, cache or historical archive**, always labelled; plus a check every 10 minutes during the game) · Curiosity RAD · OSDR (13 studies: OSD-87, 146, 177, 268, 334, 342, 343, 360, 566, 615, 678, 766, 772) · RadLab ·
@@ -93,6 +98,7 @@ Nothing to install:
 python -m http.server 5500 --bind 127.0.0.1
 # open http://localhost:5500
 ```
+While developing, `python servir.py` does the same but tells the browser not to cache files, so every reload uses the latest code.
 Solar flares come from DONKI in this order: the NASA Open APIs flare list, then NASA Open APIs flare notifications (strong flares only, class M5 and above, and the game says so), then the NASA CCMC server, which needs no key. A personal key from https://api.nasa.gov raises the query limit. The cache lasts up to six hours and keeps the original query time. If every source fails, the historical archive is used and labelled as such. The game does not forecast space weather on Mars.
 
 ## Testing
@@ -100,7 +106,7 @@ Solar flares come from DONKI in this order: the NASA Open APIs flare list, then 
 No game dependencies to install (Node 22 or later):
 
 ```bash
-node --test tests/regresiones.mjs tests/mecanicas.mjs
+node --test tests/regresiones.mjs tests/mecanicas.mjs tests/guardado.mjs tests/progreso.mjs
 ```
 
 For the reproducible visual check with Chrome, see [docs/VALIDACION.md](docs/VALIDACION.md).

@@ -6,7 +6,7 @@
 //  Se engancha solo (capa propia, estilos inyectados), como src/ui/ubicacion.js.
 // =====================================================================
 import { MISION } from '../sim/config.js';
-import { construirSeccion, motivoNoConstruir, factorBlindaje, radiacionInterior, seccionesHechas } from '../sim/motor.js';
+import { construirSeccion, motivoNoConstruir, factorBlindaje, radiacionInterior, seccionesHechas, construirObra, motivoNoObra } from '../sim/motor.js';
 import { beep } from './sonido.js';
 import { esEN, onIdioma, setIdioma, t } from './i18n.js';
 
@@ -16,6 +16,7 @@ let ultimoMensaje = '';   // función o texto: se vuelve a generar al cambiar de
 export const botonIdioma = () => `<div class="modal-idioma"><button type="button" class="chip-btn" data-cambiar-idioma
   aria-label="${t('top.idioma.t')}">${esEN() ? '🌐 Español' : '🌐 English'}</button></div>`;
 const SEC = () => MISION.construccion.secciones;
+const OBRAS = () => MISION.construccion.obras || {};
 // Pista corta: por qué cada sección protege distinto (fondo diario vs. llamaradas)
 const pista = (id, s) => (s.proteccionLlamarada ?? 0) > s.proteccion
   ? L('Las partículas de las llamaradas llegan sobre todo desde arriba: el techo es el mejor escudo.',
@@ -23,6 +24,16 @@ const pista = (id, s) => (s.proteccionLlamarada ?? 0) > s.proteccion
   : L('Los rayos cósmicos llegan de lado todos los días: las paredes frenan más la radiación de fondo.',
       'Cosmic rays come in from the sides every day: walls block more of the background radiation.');
 const nombreSec = s => L(s.nombre, s.nombre_en);
+// Cuánto protege una sección, como una barrita de 5 cuadros y una palabra (el % exacto queda en el title)
+const nivelProteccion = p => Math.max(1, Math.min(5, Math.round(p / 0.08)));
+const palabraNivel = n => n >= 4 ? L('mucho', 'a lot') : n === 3 ? L('bastante', 'quite a lot') : n === 2 ? L('algo', 'some') : L('poco', 'a little');
+const medidor = (ic, nombre, p) => {
+  const n = nivelProteccion(p);
+  return `<div class="cons-prot" title="${L('Deja de entrar el', 'Blocks')} ${Math.round(p * 100)}%">
+    <span class="cons-prot-n">${ic} ${nombre}</span>
+    <span class="cons-medidor" aria-hidden="true">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</span>
+    <em>${palabraNivel(n)}</em></div>`;
+};
 const n2 = v => (Math.round(v * 100) / 100).toLocaleString(L('es', 'en'), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const juego = () => window.juego;
 const estado = () => juego()?.S;
@@ -50,6 +61,8 @@ export function abrirConstruccion() {
     if (e.target === capa || e.target.closest('.cons-cerrar')) return cerrarConstruccion();
     const b = e.target.closest('[data-construir]');
     if (b && !b.disabled) construir(b.dataset.construir);
+    const o = e.target.closest('[data-obra]');
+    if (o && !o.disabled) construirOtra(o.dataset.obra);
   });
   document.body.appendChild(capa);
   beep(660, 0.08);
@@ -75,10 +88,43 @@ function construir(id) {
   // La bitácora guarda los dos idiomas: renderLog muestra texto_en en inglés
   const entra = Math.round(factorBlindaje(S) * 100);
   S.log.unshift({ sol: S.sol, tipo: 'tierra',
-    texto: `🧱 Construiste: ${s.nombre} (−${s.costo} bolsas de regolito). Ahora entra el ${entra}% de la radiación.`,
-    texto_en: `🧱 You built: ${s.nombre_en} (−${s.costo} bags of regolith). Now ${entra}% of the radiation gets in.` });
+    texto: `🧱 Construiste: ${s.nombre} (−${s.costo} de regolito). Ahora entra el ${entra}% de la radiación.`,
+    texto_en: `🧱 You built: ${s.nombre_en} (−${s.costo} regolith). Now ${entra}% of the radiation gets in.` });
   juego()?.refrescar?.();
   pintar(msg);
+}
+
+// Más obras con regolito (camas de cultivo, túnel, plataforma): no protegen de la radiación, ayudan de otra forma
+function construirOtra(id) {
+  const S = estado();
+  const r = construirObra(S, id);
+  if (!r.ok) { beep(220, 0.2, 'sawtooth'); return pintar(); }
+  const o = OBRAS()[id];
+  beep(990, 0.12, 'triangle');
+  S.log.unshift({ sol: S.sol, tipo: 'tierra',
+    texto: `🧱 Construiste: ${o.nombre} (−${o.costo} de regolito). ${o.efecto}`,
+    texto_en: `🧱 You built: ${o.nombre_en} (−${o.costo} regolith). ${o.efecto_en}` });
+  juego()?.refrescar?.();
+  pintar(() => L(`✅ <b>${o.nombre}</b> construida (−${o.costo} 🟫). ${o.efecto}`, `✅ <b>${o.nombre_en}</b> built (−${o.costo} 🟫). ${o.efecto_en}`));
+}
+
+function tarjetasObras(S) {
+  return Object.entries(OBRAS()).map(([id, o]) => {
+    const motivo = motivoNoObra(S, id), faltan = o.costo - (S.regolito || 0);
+    const boton = motivo === 'construida'
+      ? `<span class="cons-hecha">✅ ${L('Construida', 'Built')}</span>`
+      : `<button class="cons-btn" data-obra="${id}" ${motivo ? 'disabled' : ''}>
+          ${motivo === 'faltaRegolito' ? L(`${faltan === 1 ? 'Te falta' : 'Te faltan'} ${faltan} de 🟫`, `You need ${faltan} more 🟫`) : L('🧱 Construir', '🧱 Build')}</button>`;
+    return `<div class="cons-sec ${motivo === 'construida' ? 'hecha' : ''}" data-obra-tarjeta="${id}">
+      <span class="cons-ic">${o.icono}</span>
+      <div class="cons-txt"><b>${L(o.nombre, o.nombre_en)}</b>
+        <small class="cons-costo">${L('Cuesta', 'Costs')} <b>🟫 ${o.costo} ${L('de regolito', 'regolith')}</b></small>
+        <small class="cons-efecto">${L(o.efecto, o.efecto_en)}</small>
+        <details class="mas"><summary>${L('¿Por qué?', 'Why?')}</summary>${L(o.pista, o.pista_en)}</details>
+      </div>
+      ${boton}
+    </div>`;
+  }).join('');
 }
 
 function pintar(mensajeArg = '') {
@@ -98,15 +144,15 @@ function pintar(mensajeArg = '') {
     const boton = motivo === 'construida'
       ? `<span class="cons-hecha">✅ ${L('Construida', 'Built')}</span>`
       : `<button class="cons-btn" data-construir="${id}" ${motivo ? 'disabled' : ''}>
-          ${motivo === 'faltaRegolito' ? L(`Faltan ${faltan} 🟫`, `${faltan} more 🟫 needed`) : L('🧱 Construir', '🧱 Build')}</button>`;
+          ${motivo === 'faltaRegolito' ? L(`${faltan === 1 ? 'Te falta' : 'Te faltan'} ${faltan} de 🟫`, `You need ${faltan} more 🟫`) : L('🧱 Construir', '🧱 Build')}</button>`;
     return `<div class="cons-sec ${motivo === 'construida' ? 'hecha' : ''}" data-sec="${id}">
       <span class="cons-ic">${s.icono}</span>
       <div class="cons-txt"><b>${nombreSec(s)}</b>
-        <small>${L('Coste', 'Cost')}: <b>${s.costo} ${L('bolsas', 'bags')} 🟫</b> · ${L(
-          `🛡️ Fondo diario <b>+${Math.round(s.proteccion * 100)} %</b> · ☀️ Llamaradas <b>+${Math.round((s.proteccionLlamarada ?? s.proteccion) * 100)} %</b>`,
-          `🛡️ Daily background <b>+${Math.round(s.proteccion * 100)}%</b> · ☀️ Flares <b>+${Math.round((s.proteccionLlamarada ?? s.proteccion) * 100)}%</b>`)}</small>
-        <small class="cons-pista">💡 ${pista(id, s)}</small>
-        ${motivo === 'construida' ? '' : `<small class="cons-prev">☢️ ${L('Cada sol', 'Each sol')}: ${n2(ahora.diaria)} → <b>${n2(despues.diaria)} mSv</b> · ${L(`llamarada ${LLAMARADA_EJEMPLO}`, `${LLAMARADA_EJEMPLO} flare`)}: ${ahora.llamarada} → <b>${despues.llamarada} mSv</b></small>`}
+        <small class="cons-costo">${L('Cuesta', 'Costs')} <b>🟫 ${s.costo} ${L('de regolito', 'regolith')}</b></small>
+        <div class="cons-protege"><small>${L('Protege de:', 'Protects from:')}</small>
+          ${medidor('🌌', L('Radiación de cada día', 'Everyday radiation'), s.proteccion)}
+          ${medidor('💥', L('Llamaradas solares', 'Solar flares'), s.proteccionLlamarada ?? s.proteccion)}</div>
+        <details class="mas"><summary>${L('¿Por qué?', 'Why?')}</summary>${pista(id, s)}</details>
       </div>
       ${boton}
     </div>`;
@@ -117,11 +163,9 @@ function pintar(mensajeArg = '') {
       <button class="cons-cerrar" aria-label="${L('Cerrar', 'Close')}">✕</button>
       ${botonIdioma()}
       <h2>🧱 ${L('Modo construcción', 'Build mode')}</h2>
-      <p class="cons-intro">${L(
-        'Cubre el hábitat con <b>regolito</b> (la tierra suelta de Marte). Cada sección frena parte de la radiación que entra. Elige cuál construir: cada una gasta bolsas que juntaste en las caminatas.',
-        'Cover the habitat with <b>regolith</b> (loose Martian soil). Each section blocks part of the radiation that gets in. Choose which one to build: each one uses bags you collected on spacewalks.')}</p>
+      <p class="cons-intro">${L('Con el regolito que traes de afuera cubres el hábitat. Cada parte que construyes deja entrar menos radiación.', 'Use the regolith you bring back to cover the habitat. Every part you build lets in less radiation.')}</p>
       <div class="cons-estado">
-        <div><span>🟫</span><b>${S.regolito || 0}</b><small>${L('bolsas en la base', 'bags in the base')}</small></div>
+        <div><span>🟫</span><b>${S.regolito || 0}</b><small>${L('regolito en la base', 'regolith in the base')}</small></div>
         <div><span>🧱</span><b>${hechas}/${total}</b><small>${L('secciones', 'sections')}</small></div>
         <div class="${pct > 70 ? 'alto' : pct > 50 ? 'medio' : 'bajo'}"><span>☢️</span><b>${pct}%</b><small>${L('de la radiación entra', 'of the radiation gets in')}</small></div>
         <div><span>📅</span><b>${n2(ahora.diaria)}</b><small>${L('mSv por sol adentro', 'mSv per sol inside')}</small></div>
@@ -129,11 +173,13 @@ function pintar(mensajeArg = '') {
       <div class="cons-barra" title="${L('Radiación que entra al hábitat', 'Radiation getting into the habitat')}"><div style="width:${pct}%"></div></div>
       ${mensaje ? `<div class="cons-msg">${mensaje}</div>` : ''}
       <div class="cons-lista">${tarjetas}</div>
+      ${Object.keys(OBRAS()).length ? `<h3 class="cons-sub">🏗️ ${L('Más obras con regolito', 'More things to build with regolith')}</h3>
+      <p class="cons-intro">${L('Usan el mismo regolito que el blindaje. ¿Qué construyes primero?', 'They use the same regolith as the shield. What do you build first?')}</p>
+      <div class="cons-lista">${tarjetasObras(S)}</div>` : ''}
       <p class="cons-pie">${hechas === total
         ? L('🏆 ¡Blindaje completo! Solo entra el 40% de la radiación.', '🏆 Shield complete! Only 40% of the radiation gets in.')
-        : L('🧑‍🚀 ¿Te falta regolito? Sal a explorar desde el Hábitat o el Rover: está cerca de la base (pero afuera gastas oxígeno y recibes radiación).',
-            '🧑‍🚀 Need more regolith? Go exploring from the Habitat or the Rover: it is near the base (but outside you use oxygen and get radiation).')}
-        <br><small>${L('Valores simplificados del juego: con todo el blindaje entra el 40% (regla educativa, no una medición).', 'Simplified game values: with the full shield 40% gets in (an educational rule, not a measurement).')}</small></p>
+        : L('¿Te falta regolito? Sal a caminar a buscarlo.', 'Need more regolith? Go on a spacewalk to collect it.')}
+        <br><small>${L('Números simplificados del juego.', 'Simplified game numbers.')}</small></p>
       <button class="btn-grande cons-cerrar">${L('Listo (Esc)', 'Done (Esc)')}</button>
     </div>`;
 }
@@ -163,7 +209,7 @@ function insertarBoton() {
     vital.appendChild(b);
   }
   const html = `<span>🧱 ${L('Modo construcción', 'Build mode')} <kbd>B</kbd></span>
-    <small>${L('Blindaje', 'Shield')} ${seccionesHechas(S)}/${Object.keys(SEC()).length} · 🟫 ${S.regolito || 0} ${L('bolsas', 'bags')} · ${L(
+    <small>${L('Blindaje', 'Shield')} ${seccionesHechas(S)}/${Object.keys(SEC()).length} · ${L('Obras', 'Buildings')} ${Object.keys(OBRAS()).filter(id => S.obras?.[id]).length}/${Object.keys(OBRAS()).length} · 🟫 ${S.regolito || 0} ${L('de regolito', 'regolith')} · ${L(
       `☢️ entra ${Math.round(factorBlindaje(S) * 100)}% · ☀️ ${Math.round(factorBlindaje(S, 'llamarada') * 100)}% en llamaradas`,
       `☢️ ${Math.round(factorBlindaje(S) * 100)}% gets in · ☀️ ${Math.round(factorBlindaje(S, 'llamarada') * 100)}% in flares`)}</small>`;
   if (b.innerHTML !== html) b.innerHTML = html;
@@ -206,6 +252,19 @@ css.textContent = `
   .cons-btn:disabled { background: #b9a59a; box-shadow: none; cursor: not-allowed; }
   .cons-hecha { font-weight: 900; color: #2e7d32; }
   .cons-pie { font-size: 13px; margin: 10px 0 0; }
+  .cons-sub { margin: 14px 0 4px; font-size: 17px; }
+  .cons-costo, .cons-efecto { display: block; font-size: 13px; margin-top: 2px; }
+  .cons-protege { margin-top: 4px; }
+  .cons-protege > small { font-size: 12px; opacity: .75; }
+  .cons-prot { display: grid; grid-template-columns: minmax(150px, auto) auto 1fr; align-items: center; gap: 8px; font-size: 13px; }
+  .cons-medidor { display: inline-flex; gap: 2px; }
+  .cons-medidor i { width: 12px; height: 10px; border-radius: 2px; background: rgba(160,82,45,.2); }
+  .cons-medidor i.on { background: #2e7d32; }
+  .cons-prot em { font-style: normal; font-weight: 700; font-size: 12px; }
+  .cons-formula { font-weight: 700; font-size: 15px; }
+  .cons-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+  .cons-chips > span { background: rgba(160,82,45,.14); border-radius: 999px; padding: 2px 8px; font-size: 13px; font-weight: 700; }
+  .cons-txt .mas { font-size: 12px; margin-top: 2px; }
   .btn-construccion kbd { font: inherit; font-size: 11px; border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; opacity: .8; }
   @media (max-width: 560px) {
     .cons-estado { grid-template-columns: 1fr 1fr; }
