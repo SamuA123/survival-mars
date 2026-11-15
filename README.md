@@ -13,6 +13,17 @@ Gratis, en el navegador, sin descargas ni cuentas. Funciona en computadoras, tab
 El modo demo se identifica en pantalla, usa un ejemplo histórico de DONKI, da 30 segundos por emergencia y no guarda insignias.
 La partida normal conserva los rangos Cadete (10 sols) y Comandante (15 sols). El idioma se puede cambiar sin reiniciar.
 
+![Base en la meseta NE Syrtis: tanques de recursos, ruta de la misión, indicador del Sol y edificios](docs/img/01-base.png)
+
+| | |
+|---|---|
+| ![Selector de tripulación con dosímetros](docs/img/02-tripulacion.png) | ![Caminata espacial con mochila y panel de radiación](docs/img/03-caminata-mochila.png) |
+| **¿Quién sale?** Cada astronauta tiene su dosímetro | **Caminata:** mochila de 4 objetos y panel de radiación |
+| ![Modo construcción: blindaje por secciones](docs/img/04-construccion.png) | ![Simulacro de alerta solar](docs/img/05-alerta-solar.png) |
+| **Modo construcción (B):** cada sección baja la radiación | **Alerta solar** (simulacro con `?alerta=1`) |
+| ![Pantalla final con estrellas e insignias](docs/img/06-final.png) | |
+| **Final:** estrellas, insignias e informe de misión | |
+
 ---
 
 ## ¿De qué se trata?
