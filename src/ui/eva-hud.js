@@ -258,7 +258,12 @@ if (!document.querySelector('style[data-eva-rad]')) {
     .eva-vineta.aire.llamarada { box-shadow: inset 0 0 120px 40px rgba(229,57,53,.6); }
     .eva-btn.eva-btn-sec { filter: saturate(.4); }
     .eva-btn.lleno { background: var(--rojo, #e53935); }
-    @media (max-width: 760px) { .eva-simple .eva-barra b { min-width: 70px; font-size: 13px; } .eva-huecos i { width: 24px; height: 24px; font-size: 14px; } .eva-rad { font-size: 13px; } }`;
+    @media (max-width: 760px) { .eva-simple .eva-barra b { min-width: 70px; font-size: 13px; } .eva-huecos i { width: 24px; height: 24px; font-size: 14px; } .eva-rad { font-size: 13px; } }
+    /* Celular horizontal: dejar libres los botones de arriba a la derecha */
+    @media (max-height: 500px) and (orientation: landscape) {
+      body.modo-eva .eva-top.eva-simple { width: min(340px, 40vw); gap: 4px; }
+      .eva-huecos i { width: 22px; height: 22px; font-size: 13px; }
+    }`;
   document.head.appendChild(css);
 }
 

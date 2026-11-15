@@ -66,6 +66,7 @@ export class ControlEVA {
   iniciar(cfg) {
     const m = this.m;
     this.cfg = cfg;
+    this.riesgoVisto = cfg.riesgo ?? 1;   // para avisar si el riesgo sube a mitad de la caminata
     this.t = 0; this.o2 = 100; this.rad = 0; this.salio = false; this.limpio = false; this.terminado = false;
     this.items = { regolito: 0, roca: 0, hielo: 0 };   // lo que va en la mochila (se deposita al entrar)
     this.cercano = null;                                // objeto que se puede recoger ahora
@@ -307,6 +308,13 @@ export class ControlEVA {
       m.efecto('llamarada');
       c.onAviso?.('☢️ ¡LLAMARADA SOLAR! La radiación aumentó mucho. ¡Vuelve a la base YA!');
     }
+    // Si llegó una alerta solar durante la caminata, avisar: desde ahora la dosis afuera es mayor
+    const riesgoAhora = c.riesgo ?? 1;
+    if (riesgoAhora > this.riesgoVisto + 0.25) {
+      c.onAviso?.(Lx('🚨 ¡Alerta solar de la NASA! Desde ahora la radiación afuera es más alta. Piensa en volver a la base.',
+        '🚨 NASA solar alert! From now on the radiation outside is higher. Think about going back to the base.'));
+    }
+    this.riesgoVisto = riesgoAhora;
     // La dosis afuera depende de la actividad solar real (DONKI) y de si hay una llamarada en curso
     this.rad += c.radPorSeg * factorRiesgo(c.riesgo) * (L.activa ? c.multLlamarada : 1) * dt;
     const limite = MISION.radLimite || 60;
