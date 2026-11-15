@@ -24,7 +24,7 @@ function puedeAbrir() {
   const S = estado();
   if (!S || S.enEVA) return false;
   if (!document.querySelector('#modal')?.classList.contains('oculto')) return false;
-  if (document.querySelector('.ubic-capa')) return false;
+  if (document.querySelector('.ubic-capa, .dos-capa')) return false;   // ubicación o selector de tripulación abiertos
   if (document.querySelector('#btnSol')?.disabled) return false;
   return true;
 }
