@@ -7,7 +7,7 @@ export const esDemo = typeof location !== 'undefined' && new URLSearchParams(loc
 export function aplicarDemo() {
   if (!esDemo) return;
   Object.assign(MISION, {
-    maxSol: 3, bateriaInicial: 14, metaCiencia: 8, conjuncion: [],
+    maxSol: 3, bateriaInicial: 14, metaCiencia: 8, conjuncion: [], guionFijo: true,
     guion: { 2: 'llamarada', 3: 'tormenta' },
     avisos: {
       1: ['Misión científica: exploren y hagan experimentos, pero sin arriesgar a la tripulación.'],

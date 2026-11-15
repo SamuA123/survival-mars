@@ -22,7 +22,10 @@ export const MISION = {
   conjuncion: [10, 11],       // el Sol entre Marte y la Tierra: sin contacto
   repuestos: 2,
   botiquin: 1,
-  metaCiencia: 40,            // puntos de ciencia para la 2ª estrella
+  // Puntos de ciencia para la 2ª estrella. Con 40, "laboratorio en 1 y refugiarse siempre" daba 3 estrellas
+  // el 90 % de las veces sin decidir nada. Con 60 hay que arriesgar algo: más energía al laboratorio
+  // (riesgo de apagón en la tormenta) o salir a buscar rocas (radiación y oxígeno).
+  metaCiencia: 60,
   // Plan del sol: objetivo OPCIONAL de recolección que envía Control de Misión.
   // Cumplirlo da un bono; no cumplirlo no castiga (solo se pierde el bono).
   // Si las comunicaciones están apagadas o hay conjunción solar, el plan no llega.
@@ -77,7 +80,12 @@ export const MISION = {
       techo: { nombre: 'Techo', nombre_en: 'Roof', icono: '🔼', costo: 4, proteccion: 0.15 },
     },
   },
+  // Guion de referencia (modo demo y valores por defecto). En una partida normal, motor.sortearGuion()
+  // cambia los días de cada emergencia para que ninguna partida sea igual.
   guion: { 2: 'llamarada', 4: 'reciclador', 6: 'tormenta', 9: 'remolino', 12: 'llamarada' },
+  // Avisos de la tormenta: se envían 2 sols y 1 sol antes de que llegue (el día lo decide el sorteo).
+  avisosTormenta: ['⚠️ El satélite MRO ve una gran tormenta de polvo. Llegará en 2 sols y durará 3. ¡Carguen las baterías!',
+                   'La tormenta llega mañana. Ahorren energía.'],
   avisos: {
     1: ['¡Bienvenida, tripulación! Cada mensaje tarda unos 12 minutos en llegar. En una emergencia, ustedes deciden.',
         'Misión científica: exploren con el rover y hagan experimentos, pero sin arriesgar a la tripulación.'],

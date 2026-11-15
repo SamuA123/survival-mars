@@ -172,3 +172,22 @@ test('Video calls restore health at an extra power cost and stop during conjunct
   assert.equal(video.salud - normal.salud, 2);
   assert.equal(conj.salud, normal.salud);
 });
+
+test('Emergencies change day every game, the storm is announced 2 sols ahead and never overlaps the conjunction', async () => {
+  const { sortearGuion } = await import('../src/sim/motor.js');
+  const { MISION } = await import('../src/sim/config.js');
+  const vistos = new Set();
+  for (let i = 0; i < 500; i++) {
+    const { guion, avisos, diasTormenta: [t] } = sortearGuion();
+    vistos.add(JSON.stringify(guion));
+    assert.equal(guion[t], 'tormenta');
+    assert.ok(t >= 4 && t + 2 < MISION.conjuncion[0], `tormenta ${t} choca con la conjunción`);
+    assert.ok(avisos[t - 2].includes(MISION.avisosTormenta[0]));
+    assert.ok(avisos[t - 1].includes(MISION.avisosTormenta[1]));
+    assert.equal(Object.values(avisos).flat().filter(a => a === MISION.avisosTormenta[0]).length, 1);
+    assert.ok(Object.values(guion).includes('llamarada'));
+  }
+  assert.ok(vistos.size > 20, 'debería haber muchas combinaciones distintas');
+  MISION.guionFijo = true;   // modo demo: siempre el mismo guion
+  try { assert.deepEqual(sortearGuion().guion, MISION.guion); } finally { delete MISION.guionFijo; }
+});

@@ -32,7 +32,44 @@ export function crearPartida(nombre = 'Comandante') {
     plan: null, planesCumplidos: 0, planesEnviados: 0,
     energiaOk: true, pendientes: [], mensajes: [], aprendidos: [], ultimoEvento: null,
     llamarada: null, evento: null, historial: [], log: [],
+    ...sortearGuion(),
   };
+}
+
+// ---------------------------------------------------------------------
+//  GUION SORTEADO: las emergencias grandes cambian de día en cada partida.
+//  - Tormenta de polvo de 3 sols, avisada 2 sols y 1 sol antes, siempre antes de la conjunción.
+//  - Remolino que limpia los paneles al terminar la tormenta.
+//  - Una llamarada al principio y (en misiones largas) otra después de la conjunción.
+//  - Falla del reciclador en un día libre.
+//  El modo demo (MISION.guionFijo) mantiene su guion para que el video sea siempre igual.
+// ---------------------------------------------------------------------
+const entre = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+
+export function sortearGuion() {
+  if (MISION.guionFijo) return { guion: { ...MISION.guion }, avisos: MISION.avisos, diasTormenta: [] };
+  const max = MISION.maxSol, conj = MISION.conjuncion;
+  const finLibre = conj.length ? conj[0] - 1 : max - 2;            // la tormenta termina antes de la conjunción
+  const t = entre(4, Math.max(4, finLibre - 2));                    // inicio: avisos en t-2 (>= sol 2) y t-1
+  const guion = { [t]: 'tormenta' };
+  if (t + 3 < max) guion[t + 3] = 'remolino';
+  const libres = (a, b) => { const d = []; for (let s = a; s <= b; s++) if (!guion[s] && s >= 2 && s < max) d.push(s); return d; };
+  const azar = lista => lista[Math.floor(Math.random() * lista.length)];
+  const l1 = azar(libres(2, Math.min(3, t - 1))); if (l1) guion[l1] = 'llamarada';
+  if (max >= 12) { const l2 = azar(libres((conj.at(-1) ?? t + 3) + 1, max - 1)); if (l2) guion[l2] = 'llamarada'; }
+  const rec = azar(libres(3, max - 1)); if (rec) guion[rec] = 'reciclador';
+
+  // Avisos: los fijos (bienvenida, conjunción, relevo) se quedan; los de la tormenta se mueven a su día.
+  const deTormenta = new Set(MISION.avisosTormenta || []);
+  const avisos = {};
+  for (const [sol, lista] of Object.entries(MISION.avisos)) {
+    const quedan = lista.filter(a => !deTormenta.has(a));
+    if (quedan.length) avisos[sol] = quedan;
+  }
+  const [aviso2, aviso1] = MISION.avisosTormenta || [];
+  if (aviso2) (avisos[t - 2] ||= []).push(aviso2);
+  if (aviso1) (avisos[t - 1] ||= []).push(aviso1);
+  return { guion, avisos, diasTormenta: [t, t + 1, t + 2] };
 }
 
 export const enTormenta = S => S.polvoSols > 0;
@@ -422,7 +459,7 @@ function esperarPlaga(S) {
 }
 
 export function elegirEvento(S) {
-  const g = MISION.guion[S.sol];
+  const g = (S.guion || MISION.guion)[S.sol];
   if (g) return g;
   if (S.sol < 2 || Math.random() > 0.38) return null;
   const pool = [
@@ -440,7 +477,7 @@ export function elegirEvento(S) {
 // ---------------------------------------------------------------------
 export function iniciarSol(S) {
   S.fase = 'planear';
-  const avisos = MISION.avisos[S.sol] || [];
+  const avisos = (S.avisos || MISION.avisos)[S.sol] || [];
   const llegan = S.pendientes.filter(p => p.sol <= S.sol);
   S.pendientes = S.pendientes.filter(p => p.sol > S.sol);
   if (enConjuncion(S)) {

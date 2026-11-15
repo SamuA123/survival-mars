@@ -58,12 +58,14 @@ export function renderRecursos(S) {
 
 // Ruta de la misión: un casillero por sol. Los sucesos aparecen cuando Control de Misión los avisa.
 function renderRuta(S) {
-  const avisadoTormenta = S.sol >= 4, avisadaConj = S.sol >= 9;
+  // La tormenta cambia de día en cada partida (motor.sortearGuion): se marca desde el sol del primer aviso
+  const tormenta = S.diasTormenta?.length ? S.diasTormenta : MISION.tormenta;
+  const avisadoTormenta = S.sol >= tormenta[0] - 2, avisadaConj = S.sol >= 9;
   const celdas = Array.from({ length: MISION.maxSol }, (_, i) => {
     const n = i + 1;
     let marca = '';
     if (n === MISION.maxSol) marca = '🚀';
-    else if (avisadoTormenta && MISION.tormenta.includes(n)) marca = '🌪️';
+    else if (avisadoTormenta && tormenta.includes(n)) marca = '🌪️';
     else if (avisadaConj && MISION.conjuncion.includes(n)) marca = '🌞';
     const clase = n < S.sol ? 'hecho' : n === S.sol ? 'hoy' : '';
     return `<i class="${clase}" title="Sol ${n}">${marca}</i>`;
