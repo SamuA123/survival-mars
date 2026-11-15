@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   crearPartida, construirSeccion, motivoNoConstruir, factorBlindaje, seccionesHechas,
-  radiacionInterior, simularSol, iniciarEVA, terminarEVA,
+  radiacionInterior, simularSol, iniciarEVA, terminarEVA, dosisLlamarada, EVENTOS,
 } from '../src/sim/motor.js';
 import { MISION } from '../src/sim/config.js';
 import { RADIACION } from '../src/data/radiacion.js';
@@ -163,4 +163,44 @@ test('Mochila: un rescate no deposita nada', () => {
   assert.equal(S.o2, antes.o2);
   assert.equal(S.repuestos, antes.repuestos);
   assert.equal(JSON.stringify(S.inventario), antes.inv);
+});
+
+// ---------------------------------------------------------------- 4) Cada sección tiene su razón
+test('Secciones: con las 4 entra el 40 % tanto en el fondo diario como en las llamaradas', () => {
+  const suma = campo => Object.values(SECC).reduce((a, s) => a + s[campo], 0);
+  assert.ok(cerca(1 - suma('proteccion'), RADIACION.atenuacionBlindaje), 'fondo');
+  assert.ok(cerca(1 - suma('proteccionLlamarada'), RADIACION.atenuacionBlindaje), 'llamaradas');
+  const S = crearPartida('Test');
+  S.regolito = 14; for (const id of Object.keys(COSTOS)) construirSeccion(S, id);
+  assert.ok(cerca(factorBlindaje(S, 'llamarada'), RADIACION.atenuacionBlindaje));
+});
+
+test('Secciones: techo vs. paredes (mismo costo) gana uno u otro según haya llamarada', () => {
+  assert.equal(SECC.techo.costo, SECC.lados.costo);
+  const conTecho = crearPartida('Techo'), conParedes = crearPartida('Paredes');
+  conTecho.regolito = 4; conParedes.regolito = 4;
+  assert.equal(construirSeccion(conTecho, 'techo').ok, true);
+  assert.equal(construirSeccion(conParedes, 'lados').ok, true);
+
+  // Sol tranquilo (sin llamarada): las paredes frenan más la radiación de fondo
+  simularSol(conTecho); simularSol(conParedes);
+  const fondoTecho = conTecho.tripulacion[0].dosis, fondoParedes = conParedes.tripulacion[0].dosis;
+  assert.ok(fondoParedes < fondoTecho, `fondo: paredes ${fondoParedes} < techo ${fondoTecho}`);
+
+  // Llamarada sin refugio: el techo frena mucho más (las partículas llegan desde arriba)
+  for (const S of [conTecho, conParedes]) { S.llamarada = { clase: 'X1.0' }; EVENTOS.llamarada.alAgotarse(S); }
+  const llamTecho = conTecho.tripulacion[0].dosis - fondoTecho, llamParedes = conParedes.tripulacion[0].dosis - fondoParedes;
+  assert.ok(llamTecho < llamParedes, `llamarada: techo ${llamTecho} < paredes ${llamParedes}`);
+  assert.equal(dosisLlamarada(conTecho, 'X1.0') < dosisLlamarada(conParedes, 'X1.0'), true);
+  assert.ok(radiacionInterior(conTecho).llamarada < radiacionInterior(conParedes).llamarada);
+  assert.ok(radiacionInterior(conParedes).diaria < radiacionInterior(conTecho).diaria);
+});
+
+test('Secciones: la pared barata ya no es siempre la mejor primera opción', () => {
+  const pared = crearPartida('P'), techo = crearPartida('T');
+  pared.regolito = 4; techo.regolito = 4;
+  construirSeccion(pared, 'norte'); construirSeccion(techo, 'techo');
+  // la pared de 3 bolsas protege más del fondo; el techo de 4, de las llamaradas
+  assert.ok(radiacionInterior(pared).diaria < radiacionInterior(techo).diaria);
+  assert.ok(radiacionInterior(techo).llamarada < radiacionInterior(pared).llamarada);
 });
