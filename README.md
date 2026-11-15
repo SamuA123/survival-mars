@@ -73,10 +73,10 @@ They must keep their crew alive until the relief ship arrives, making the same k
 ## NASA data
 DONKI solar flares (**recent query, cache or historical archive**, always labelled; plus a check every 10 minutes during the game) · Curiosity RAD · OSDR (13 studies: OSD-87, 146, 177, 268, 334, 342, 343, 360, 566, 615, 678, 766, 772) · RadLab ·
 NE Syrtis (Mars 2020 finalist site) / Mars Trek · MOXIE · Opportunity · MRO · Solar conjunction · Communication delay.
-Full details and simplifications (in Spanish): **[docs/DATOS_NASA.md](docs/DATOS_NASA.md)**.
+Full details and simplifications: **[docs/DATOS_NASA.md](docs/DATOS_NASA.md)**.
 
 ## Documentation
-The team documents are written in Spanish.
+The NASA data document is in English; the other team documents are written in Spanish.
 
 | Document | Audience |
 |---|---|

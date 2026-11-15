@@ -1,155 +1,168 @@
-# Datos de la NASA usados en Survival Mars
+# NASA data used in Survival Mars
 
-**Survival Mars** es un juego de navegador para niños de 7 a 12 años: dirigen una base en la **meseta NE Syrtis · Isidis Planitia (Marte)**
-durante 15 sols. Cada mecánica del juego está anclada en datos o hallazgos reales de la NASA, y el jugador puede verlos
-dentro del juego (botón **📡 Datos NASA**, tarjetas "¿Sabías que…?" y "Lo que dice la ciencia real", cada una con su fuente).
+**Survival Mars** is a browser game for kids aged 7 to 12: they run a base on the **NE Syrtis plateau, Isidis Planitia (Mars)**
+for 15 sols. Every game mechanic is anchored in real NASA data or findings, and players can see them inside the game
+(the **NASA** button opens "What is real in this game?", and the "Did you know?" and "Real science" cards each show their source).
 
-> Juego: https://survival-mars.pages.dev · Código: `src/data/` (cada valor indica su fuente)
+> Game: https://survival-mars.pages.dev · Code: `src/data/` (every value names its source)
 
-## 1. Resumen: qué dato alimenta qué mecánica
+## 1. Summary: which data drives which mechanic
 
-| Dataset / fuente NASA | Tipo | Mecánica del juego | Por qué |
+| NASA dataset / source | Type | Game mechanic | Why |
 |---|---|---|---|
-| **DONKI – Solar Flares (FLR)** | Consulta reciente / caché / archivo, identificado en pantalla; **más una consulta en vivo cada 10 min durante la partida** | Dificultad de los ejercicios, clase/fecha de las llamaradas utilizadas, indicador "☀️ Actividad solar" y alerta 🚨 | Observaciones reales inspiran escenarios educativos para elegir entre **refugiarse o seguir trabajando**. No es un pronóstico de partículas ni de dosis en Marte. |
-| **Curiosity RAD** (Hassler et al. 2014) | 📚 Guardado | Radiación de fondo por sol, límite de la misión, blindaje por secciones, dosímetros de la tripulación | 0,67 mSv/día medidos en la superficie de Marte. Cada sol la tripulación suma radiación; las caminatas y las llamaradas suman más. |
-| **OSDR – RadLab** (dosimetría de la ISS) | 📚 Guardado | Comparación ISS vs. Marte | En la ISS se reciben ~0,2–0,5 mSv/día; en Marte, más. Explica por qué Marte es más peligroso que la Estación. |
-| **OSDR – estudios de biología espacial** | 📚 Guardado | Tarjeta "Lo que dice la ciencia real" tras cada sol | Cuando pasa algo (llamarada, poca comida, poco oxígeno), el juego muestra el hallazgo de un estudio real con su ID OSD-xxx. |
-| **NE Syrtis — sitio finalista de Mars 2020** / Mars Trek | 📚 Guardado | Lugar de la base, relieve (mesas y borde de Isidis), duración del sol, luz solar | NE Syrtis (~18° N, 77° E) fue uno de los 3 finalistas de la NASA para Perseverance. Cuenca Isidis de ~3.960 millones de años; rocas con olivino alterado a carbonato por agua. Sol de 24 h 39 min, ~43 % de la luz solar. |
-| **MOXIE** (Perseverance) | 📚 Guardado | Hielo de agua → oxígeno; soporte vital | MOXIE fabricó 122 g de O₂ con el aire de Marte: producir oxígeno in situ es real. |
-| **Opportunity** (fin de misión 2018) | 📚 Guardado | Tormenta global de polvo (sols 6–8) | El polvo tapó sus paneles y se quedó sin energía. En el juego: retraer paneles o arriesgarlos. |
-| **MRO / HiRISE** (impactos nuevos) | 📚 Guardado | Evento de micrometeorito | Más de 200 cráteres nuevos por año: la atmósfera delgada no frena las rocas pequeñas. |
-| **Mars solar conjunction** | 📚 Guardado | Sols 10–11 sin comunicación | Cada ~2 años la NASA pausa los comandos ~2 semanas. |
-| **Retraso de comunicaciones** (NASA HRP) | 📚 Guardado | Botón "Pedir ayuda" que responde al día siguiente | 4–24 minutos por trayecto: la tripulación debe decidir sola. |
-| **Fission Surface Power** | 📚 Guardado | Mini reactor de la base (energía constante) | Energía de día, de noche y en tormentas. |
-| **Veggie / VEG-05** (ISS) | 📚 Guardado | Invernadero | Cultivar comida con luces LED es real. |
-| **Agua en la ISS (98 % reciclada)** | 📚 Guardado | Soporte vital / evento del reciclador | El agua se recicla casi por completo; una falla es una emergencia. |
+| **DONKI: solar flares** | Recent query, cache or historical archive, always labelled on screen; **plus a fresh query every 10 minutes during the game** | Difficulty of the exercises, class and date of the flares used, the "Solar activity" indicator and the solar alert | Real observations inspire training scenarios where players choose between **taking shelter or keeping working**. It is not a forecast of particles or doses on Mars. |
+| **Curiosity RAD** (Hassler et al. 2014) | Stored | Daily background radiation, mission limit, shielding by sections, crew dosimeters | 0.67 mSv/day measured on the surface of Mars. The crew adds radiation every sol; spacewalks and flares add more. |
+| **OSDR RadLab** (ISS dosimetry) | Stored (queried through the RadLab API) | Space Station vs. Mars comparison | About 0.3 mGy/day absorbed dose on the ISS (REM detector, Columbus module, April 2022). Explains how Mars compares with the Station. |
+| **OSDR space biology studies** | Stored | "Real science" card after each sol | When something happens (a flare, low food, low oxygen, days indoors), the game shows a finding from a real study with its OSD-xxx ID. |
+| **NE Syrtis, Mars 2020 finalist site** / Mars Trek | Stored | Base location, terrain (mesas and the Isidis rim), sol length, sunlight | NE Syrtis (~18° N, 77° E) was one of NASA's 3 finalist landing sites for Perseverance. Isidis basin about 3,960 million years old; olivine-rich rocks altered to carbonate by water. A sol lasts 24 h 39 min; Mars gets ~43% of Earth's sunlight. |
+| **MOXIE** (Perseverance) | Stored | Water ice turned into oxygen; life support | MOXIE made 122 g of O2 from the Martian air: making oxygen on site is real. |
+| **Opportunity** (end of mission, 2018) | Stored | Global dust storm (3 sols, on a different day each game) | Dust covered its panels and it ran out of power. In the game: retract the panels or risk them. |
+| **MRO / HiRISE** (new impacts) | Stored | Micrometeorite event | More than 200 new craters per year: the thin atmosphere does not stop small rocks. |
+| **Mars solar conjunction** | Stored | Sols 10 and 11 without communication | About every 2 years NASA pauses commands for about 2 weeks. |
+| **Communication delay** (NASA HRP) | Stored | "Ask for help" button that answers the next sol | 4 to 24 minutes each way: the crew has to decide on its own. |
+| **Fission Surface Power** | Stored | The base's mini reactor (constant power) | Power by day, by night and during storms. |
+| **Veggie / VEG-05** (ISS) | Stored | Greenhouse | Growing food under LED lights is real. |
+| **ISS water (98% recycled)** | Stored | Life support / recycler failure event | Water is almost fully recycled; a failure is an emergency. |
 
-**En vivo vs. guardado:** solo DONKI se consulta en vivo: al cargar (últimos 30 días, con caché de 6 h y un servidor de respaldo de CCMC que no necesita clave) y luego **cada 10 minutos durante la partida** (últimos 2 días, sin caché). Todo lo demás —dosis de Curiosity, RadLab, estudios OSDR, datos del sitio— está **guardado** en el código con su fuente. Si la API no responde (sin internet o límite de la clave),
-el juego usa llamaradas **históricas reales** (p. ej. X9.0 del 3/10/2024) y lo dice claramente: "📚 Datos históricos",
-nunca "en vivo", tal como pide el reto.
+**Live vs. stored:** only DONKI is queried live: on load (last 30 days, with a 6-hour cache and three sources, see 2.1) and then
+**every 10 minutes during the game** (last 2 days, no cache). Everything else (Curiosity doses, RadLab, OSDR studies, site data) is
+**stored** in the code with its source. If no DONKI source answers (no internet or an exhausted key), the game uses **real historical**
+flares (for example the X9.0 of October 3, 2024) and says so clearly ("historical archive"), never "live", as the challenge asks.
 
-## 2. Detalle por fuente
+## 2. Details by source
 
-### 2.1 DONKI – llamaradas solares y procedencia
-- Endpoint: `https://api.nasa.gov/DONKI/FLR?startDate=…&endDate=…&api_key=…` (últimos 30 días). Código: `src/data/donki.js`.
-- Segunda fuente si falla la primera: notificaciones de DONKI, `https://api.nasa.gov/DONKI/notifications?type=FLR&…`. Solo incluyen las llamaradas **fuertes** que la NASA anunció (clase M5 o más); el juego lo dice en pantalla ("llamaradas fuertes (M5 o más)"). Se toma la clase y la hora pico de cada llamarada (una por *Activity ID*). Se añadió porque el 15/11/2026 la ruta `DONKI/FLR` de api.nasa.gov respondía 404 aunque el resto de DONKI funcionaba.
-- Tercera fuente: `https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR` (sin clave). Algunas redes, como la de la universidad desde donde probamos, cortan la conexión con este servidor.
-- **Consulta reciente:** respuesta obtenida en esta carga. **Consulta guardada:** caché de hasta seis horas. Ambas muestran la hora original de consulta. **Archivo histórico:** respaldo si no se puede consultar NASA.
-- Si la consulta devuelve cero eventos, se conserva la lista vacía. Un ejercicio guionado puede usar un ejemplo histórico, identificado como tal; esos ejemplos no se mezclan con los resultados de la consulta.
-- Cálculo de riesgo: `riesgo = 0,6 + 0,08 × (llamaradas M) + 0,4 × (llamaradas X)`, limitado a [0,6 – 2,5].
-  Es una fórmula de **dificultad del juego**, no un modelo científico de riesgo para Marte. Afecta los eventos aleatorios y la caminata; los eventos guionados siguen su calendario de entrenamiento.
-- Cada evento de llamarada usa una **llamarada real** de la lista (clase y fecha) y lo muestra:
-  *"Basada en una llamarada real que la NASA detectó el …"*. La llegada de partículas y la dosis del escenario son simuladas: no se deducen científicamente de la clase de la llamarada.
-- **Vigilancia durante la partida** (`src/ui/alerta-solar.js`): un minuto después de empezar y luego cada 10 minutos consulta DONKI
-  de los últimos 2 días, **sin caché** (mismo orden de fuentes: lista FLR, notificaciones y servidor CCMC). Si aparece una llamarada
-  **M o X** que no estaba en la carga inicial, muestra la alerta 🚨 *"NASA DONKI detectó una llamarada clase …"*, sube el riesgo del juego
-  con la misma fórmula y pregunta si la tripulación sigue trabajando o vuelve al refugio. Si DONKI no responde, no pasa nada: el juego sigue.
-  No consulta en el modo demo (`?demo=1`).
-- **Indicador permanente:** *"☀️ Actividad solar normal · Riesgo BAJO/MEDIO/ALTO"*, o *"🚨 ALERTA SOLAR"* si los datos reales cargados
-  tienen una llamarada M o X de los últimos 3 días. Al tocarlo se abre el panel de datos.
-- **Simulacro** (`?alerta=1`): para presentaciones. Muestra una alerta con una llamarada M5.0 de ejemplo y la etiqueta **SIMULACRO** en el
-  indicador y en la alerta; nunca se presenta como dato en vivo.
-- **En la caminata**, la dosis por segundo afuera se multiplica por un factor de 0,85 a 1,4 según ese riesgo (`factorRiesgo` en
-  `src/world3d/eva.js`), y el panel muestra el nivel: BAJO, MODERADO, ALTO, o EXTREMO si hay una llamarada en curso. Es una regla de juego.
-- Fuente: https://kauai.ccmc.gsfc.nasa.gov/DONKI/ · API: https://api.nasa.gov
-- Respaldo curado: [X9.0 del 3 de octubre de 2024](https://svs.gsfc.nasa.gov/14701/) y [X8.7 del 14 de mayo de 2024](https://svs.gsfc.nasa.gov/14592/), con publicaciones de NASA SDO. Se retiraron las entradas sin verificación específica del archivo anterior.
+### 2.1 DONKI: solar flares and provenance
+- First source: `https://api.nasa.gov/DONKI/FLR?startDate=…&endDate=…&api_key=…` (last 30 days). Code: `src/data/donki.js`.
+- Second source if the first fails: DONKI notifications, `https://api.nasa.gov/DONKI/notifications?type=FLR&…`. They only include the
+  **strong** flares NASA announced (class M5 and above); the game says so on screen ("strong flares (M5 or above)"). The class and peak
+  time of each flare are taken (one per *Activity ID*). This source was added because on November 15, 2026 the `DONKI/FLR` route of
+  api.nasa.gov answered 404 while the rest of DONKI worked.
+- Third source: `https://kauai.ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR` (no key). Some networks, such as the university network we tested
+  from, cut the connection to this server.
+- **Recent query:** answer obtained on this load. **Stored query:** cache of up to six hours. Both show the original query time.
+  **Historical archive:** fallback when NASA cannot be reached.
+- If the query returns zero events, the empty list is kept. A scripted exercise may use a historical example, labelled as such; those
+  examples are never mixed with the query results.
+- Risk formula: `risk = 0.6 + 0.08 × (M flares) + 0.4 × (X flares)`, clamped to [0.6, 2.5].
+  It is a **game difficulty** formula, not a scientific risk model for Mars. It affects random events and the spacewalk; the scripted
+  events (storm, flares, dust devil, recycler failure) fall on days drawn at random for each game.
+- Every flare event uses a **real flare** from the list (class and date) and shows it:
+  *"Based on a real flare NASA detected on …"*. Particle arrival and the scenario's dose are simulated: they are not scientifically
+  derived from the flare class.
+- **Watching during the game** (`src/ui/alerta-solar.js`): one minute after starting and then every 10 minutes, the game queries DONKI
+  for the last 2 days, **without cache** (same source order: FLR list, notifications, CCMC server). If an **M or X** flare appears that
+  was not in the initial load, it shows the alert *"NASA DONKI detected a class … flare"*, raises the game risk with the same formula and
+  asks whether the crew keeps working or goes back to the shelter. If DONKI does not answer, nothing happens: the game goes on.
+  It does not query in demo mode (`?demo=1`).
+- **Permanent indicator:** shows the state of the Sun and the mission risk (low, medium or high), or "SOLAR ALERT" if the loaded real
+  data contain an M or X flare from the last 3 days. Tapping it opens the data panel.
+- **Drill** (`?alerta=1`): for presentations. Shows an alert with an example M5.0 flare and the **DRILL** label on the indicator and the
+  alert; it is never presented as live data.
+- **During the spacewalk**, the dose per second outside is multiplied by a factor of 0.85 to 1.4 depending on that risk (`factorRiesgo`
+  in `src/world3d/eva.js`), and the radiation meter shows the level: low, medium, high, or danger if a flare is under way. It is a game rule.
+- Source: https://kauai.ccmc.gsfc.nasa.gov/DONKI/ · API: https://api.nasa.gov
+- Curated fallback: [X9.0 of October 3, 2024](https://svs.gsfc.nasa.gov/14701/) and [X8.7 of May 14, 2024](https://svs.gsfc.nasa.gov/14592/),
+  both with NASA SDO publications. Entries without a specific verification were removed from the previous archive.
 
-### 2.2 Radiación (Curiosity RAD y RadLab)
-| Valor | Dato real | En el juego | Fuente |
+### 2.2 Radiation (Curiosity RAD, RadLab and reference values)
+| Value | Real data | In the game | Source |
 |---|---|---|---|
-| Superficie de Marte | 0,67 mSv/día (cráter Gale, ago 2012 – jun 2013) | 0,7 mSv por sol | Hassler et al. 2014, *Science* 343 — https://ntrs.nasa.gov/citations/20180007641 |
-| Viaje a Marte | ~1,8 mSv/día | Dato educativo | Curiosity RAD (crucero) |
-| Estación Espacial | ~0,3 mGy/día (detector REM, módulo Columbus, 1–7 abril 2022) · rango típico 0,2–0,5 mSv/día | Panel "¿Qué es real?" (comparación) | API de RadLab — https://visualization.osdr.nasa.gov/radlab/ (consulta de Jorge) |
-| Tierra | ~2,4 mSv/año (promedio mundial de radiación natural) | Comparación "100 días en la Tierra" | UNSCEAR 2008 — https://www.unscear.org/ |
-| Límite de carrera NASA | menos de 600 mSv | Dato educativo | NASA-STD-3001, resumido en el *Radiation Protection Technical Brief* de OCHMO — https://www.nasa.gov/wp-content/uploads/2023/03/radiation-protection-technical-brief-ochmo.pdf |
-| **Límite de la misión del juego** | — | **60 mSv** (simplificado) | Diseño de juego |
-| Dosis extra por llamarada sin refugio | Muy variable en la realidad | X: 50 · M: 25 · C: 8 mSv × atmósfera 0,5 × blindaje 0,4 | **Simplificado**: solo respeta el orden X > M > C |
+| Surface of Mars | 0.67 mSv/day (Gale crater, Aug 2012 to Jun 2013) | 0.7 mSv per sol | Hassler et al. 2014, *Science* 343: https://ntrs.nasa.gov/citations/20180007641 |
+| Trip to Mars | ~1.8 mSv/day | Educational fact | Curiosity RAD (cruise) |
+| Space Station | ~0.3 mGy/day absorbed dose (REM detector, Columbus module, April 1 to 7, 2022) | "What is real?" panel (comparison) | RadLab API: https://visualization.osdr.nasa.gov/radlab/ (query by the team) |
+| Earth | ~2.4 mSv/year (world average natural radiation) | "100 days on Earth" comparison | UNSCEAR 2008: https://www.unscear.org/ |
+| NASA career limit | less than 600 mSv | Educational fact | NASA-STD-3001, summarized in the OCHMO *Radiation Protection Technical Brief*: https://www.nasa.gov/wp-content/uploads/2023/03/radiation-protection-technical-brief-ochmo.pdf |
+| **Game mission limit** | n/a | **60 mSv** (simplified) | Game design |
+| Extra dose per flare without shelter | Highly variable in reality | X: 50 · M: 25 · C: 8 mSv × atmosphere 0.5 × shielding | **Simplified**: it only keeps the order X > M > C |
 
-### 2.2b Dosímetros de la tripulación y blindaje por secciones (reglas del juego sobre datos reales)
-- **Dosímetros:** la tripulación (Lía, Kofi, Mei y Teo) tiene una dosis por persona. La radiación de fondo de cada sol (0,7 mSv, de
-  Curiosity RAD, reducida por el blindaje) y las llamaradas sin refugio suman a **todos**; la dosis de una caminata suma **solo a quien
-  salió**, y limpiar paneles suma a quien tenga menos dosis. El límite de la misión (60 mSv, simplificado) se aplica por persona: el
-  valor que se muestra es la dosis más alta. Código: `dosisATodos`, `dosisA` y `menorDosis` en `src/sim/motor.js`.
-- **Por qué:** los astronautas reales llevan dosímetros personales, y la NASA tiene un límite de carrera por persona (600 mSv) y
-  aplica el principio **ALARA** (tan bajo como sea razonablemente posible). Elegir quién sale para repartir la dosis es la forma en que
-  el juego deja practicar esa idea; **no** describe un procedimiento oficial de asignación de caminatas.
-- **Blindaje por secciones** (tecla B, `src/ui/construccion.js` y `MISION.construccion` en `src/sim/config.js`): cada sección
-  protege distinto, para que elegir el orden sea una decisión real y no siempre convenga empezar por la más barata.
+### 2.3 Crew dosimeters and shielding by sections (game rules built on real data)
+- **Dosimeters:** the crew (Lía, Kofi, Mei and Teo) has a dose per person. Each sol's background radiation (0.7 mSv, from Curiosity RAD,
+  reduced by the shielding) and flares without shelter add to **everyone**; a spacewalk's dose adds **only to whoever went out**, and
+  cleaning the panels adds to whoever has the lowest dose. The mission limit (60 mSv, simplified) applies per person: the value shown is
+  the highest dose. Code: `dosisATodos`, `dosisA` and `menorDosis` in `src/sim/motor.js`.
+- **Why:** real astronauts wear personal dosimeters, NASA has a per-person career limit (600 mSv) and applies the **ALARA** principle
+  (as low as reasonably achievable). Choosing who goes out to share the dose is how the game lets players practise that idea; it does
+  **not** describe an official procedure for assigning spacewalks.
+- **Shielding by sections** (B key, `src/ui/construccion.js` and `MISION.construccion` in `src/sim/config.js`): each section protects
+  differently, so choosing the order is a real decision and starting with the cheapest one is not always best.
 
-  | Sección | Costo | Frena del fondo diario (rayos cósmicos) | Frena de una llamarada solar |
+  | Section | Cost | Blocks of the daily background (cosmic rays) | Blocks of a solar flare |
   |---|---|---|---|
-  | Pared norte | 3 bolsas | 15 % | 5 % |
-  | Pared sur | 3 bolsas | 15 % | 5 % |
-  | Paredes este y oeste | 4 bolsas | 20 % | 10 % |
-  | Techo | 4 bolsas | 10 % | 40 % |
-  | **Las 4 juntas** | 14 bolsas | **60 % → entra el 40 %** | **60 % → entra el 40 %** |
+  | North wall | 3 bags | 15% | 5% |
+  | South wall | 3 bags | 15% | 5% |
+  | East and west walls | 4 bags | 20% | 10% |
+  | Roof | 4 bags | 10% | 40% |
+  | **All 4 together** | 14 bags | **60%, so 40% gets in** | **60%, so 40% gets in** |
 
-  Con las 4 juntas entra el 40 % (= `RADIACION.atenuacionBlindaje`) en la dosis diaria y en las llamaradas, como antes. Dosis diaria
-  construyendo en orden norte, sur, lados y techo: 0,70 → 0,60 → 0,49 → 0,35 → 0,28 mSv por sol. Una llamarada X1.0 sin refugio
-  da 23 mSv sin blindaje; con solo el techo, 14; con solo las paredes este y oeste, 20. Código: `factorBlindaje(S, 'fondo' | 'llamarada')`,
-  `radiacionInterior` y `dosisLlamarada` en `src/sim/motor.js`; prueba en `tests/mecanicas.mjs` ("techo vs. paredes").
-- **Por qué (física real, simplificada):** la atmósfera de Marte es delgada justo hacia arriba y muy gruesa hacia el horizonte.
-  En Gale, la columna de aire vale unos **21 g/cm² mirando hacia arriba y unos 400 g/cm² cerca del horizonte**
+  With all 4 sections, 40% gets in (= `RADIACION.atenuacionBlindaje`) for both the daily dose and flares. Daily dose when building in the
+  order north, south, sides, roof: 0.70 → 0.60 → 0.49 → 0.35 → 0.28 mSv per sol. An X1.0 flare without shelter gives 23 mSv with no
+  shielding; 14 with only the roof; 20 with only the east and west walls. Code: `factorBlindaje(S, 'fondo' | 'llamarada')`,
+  `radiacionInterior` and `dosisLlamarada` in `src/sim/motor.js`; test in `tests/mecanicas.mjs` ("techo vs. paredes").
+- **Why (real physics, simplified):** the Martian atmosphere is thin straight up and very thick towards the horizon.
+  At Gale, the air column is about **21 g/cm² looking straight up and about 400 g/cm² near the horizon**
   ([Khaksarighiri et al. 2023, *JGR Planets*, "The Zenith-Angle Dependence of the Downward Radiation Dose Rate on the Martian
   Surface"](https://macau.uni-kiel.de/servlets/MCRFileNodeServlet/macau_derivate_00007955/JGR%20Planets%20-%202023%20-%20Khaksarighiri%20-%20The%20Zenith%E2%80%90Angle%20Dependence%20of%20the%20Downward%20Radiation%20Dose%20Rate%20on%20the%20Martian%20Surface.pdf)).
-  - Los **rayos cósmicos** (fondo diario) tienen mucha energía y llegan de muchas direcciones; según ese mismo estudio, los protones
-    que más aportan a la dosis llegan bastante inclinados (cerca de 74° del cenit). Por eso, en el juego, las **paredes** frenan más
-    el fondo diario.
-  - Las partículas de una **llamarada solar** tienen menos energía: el aire largo y oblicuo las frena mucho más que el camino corto
-    hacia arriba, así que llegan sobre todo **desde arriba**. Por eso, en el juego, el **techo** frena más las llamaradas. El suelo
-    de Marte ya protege por abajo.
-  - **Regla simplificada del juego:** los porcentajes de la tabla son inventados para que se entienda la idea; no son una medición.
-    Cubrir un hábitat con regolito sí es una idea estudiada por la NASA para protegerse de la radiación
-    (Simonsen et al., *Space radiation shielding for a Martian habitat* — https://ntrs.nasa.gov/citations/19900062325).
-- **Regolito:** se recoge en la caminata (mochila de 4 objetos) y se deposita al entrar a la base (1 objeto = 1 bolsa).
+  - **Cosmic rays** (daily background) are very energetic and come from many directions; according to the same study, the protons that
+    contribute most to the dose arrive quite inclined (close to 74° from the zenith). That is why, in the game, the **walls** block more of
+    the daily background.
+  - **Solar flare** particles have less energy: the long, slanted air path stops them much more than the short path straight up, so they
+    arrive mostly **from above**. That is why, in the game, the **roof** blocks more of a flare. The Martian ground already protects from
+    below.
+  - **Simplified game rule:** the percentages in the table are made up so the idea is easy to grasp; they are not a measurement.
+    Covering a habitat with regolith is an idea NASA has studied to protect against radiation
+    (Simonsen et al., *Space radiation shielding for a Martian habitat*: https://ntrs.nasa.gov/citations/19900062325).
+- **Regolith:** collected on the spacewalk (4-item backpack) and deposited when entering the base (1 item = 1 bag).
 
-### 2.3 Estudios de NASA OSDR mostrados en el juego
-Buscados con la API de OSDR (`https://osdr.nasa.gov/osdr/data/search`). Cada tarjeta enlaza a la página del estudio.
+### 2.4 NASA OSDR studies shown in the game
+Found with the OSDR search API (`https://osdr.nasa.gov/osdr/data/search`). Every card links to the study page.
 
-| Estudio | Qué encontró (resumen) | Cuándo aparece en el juego |
+| Study | What it found (summary) | When it appears in the game |
 |---|---|---|
-| [OSD-566](https://osdr.nasa.gov/bio/repo/data/studies/OSD-566) | Respuestas inmunes y hormonales de ratones a radiación ionizante | Después de una llamarada |
-| [OSD-343](https://osdr.nasa.gov/bio/repo/data/studies/OSD-343) | Estrés mitocondrial como efecto central del vuelo espacial (59 astronautas + Estudio de Gemelos) | Cuando el oxígeno baja de 50 |
-| [OSD-766](https://osdr.nasa.gov/bio/repo/data/studies/OSD-766) | VEG-05: tomates cultivados 101 días en la ISS con distintas luces LED | Cuando la comida baja de 30 |
-| [OSD-678](https://osdr.nasa.gov/bio/repo/data/studies/OSD-678) | CARA: la luz guía el crecimiento de Arabidopsis en el espacio | Hallazgo adicional de comida |
-| [OSD-342](https://osdr.nasa.gov/bio/repo/data/studies/OSD-342) | Rodent Research-19: pérdida de músculo y hueso en 33 días | Disponible (tema "ejercicio") |
-| [OSD-177](https://osdr.nasa.gov/bio/repo/data/studies/OSD-177) | Hongo *Fusarium* en las zinnias de Veggie | Disponible (tema "plaga") |
-| [OSD-87](https://osdr.nasa.gov/bio/repo/data/studies/OSD-87) | Cambios en la retina de ratones (STS-135) | Disponible (tema "ojos") |
-| [OSD-360](https://osdr.nasa.gov/bio/repo/data/studies/OSD-360) | Dosis bajas de radiación espacial cambian la química del bazo (ratones) | Radiación (aporte de Jorge) |
-| [OSD-334](https://osdr.nasa.gov/bio/repo/data/studies/OSD-334) | Partículas pesadas y daño al tejido del corazón | Radiación (aporte de Jorge) |
-| [OSD-146](https://osdr.nasa.gov/bio/repo/data/studies/OSD-146) | La radiación cambia las bacterias del intestino | Radiación (aporte de Jorge) |
-| [OSD-268](https://osdr.nasa.gov/bio/repo/data/studies/OSD-268) | Lechuga roja de Veggie: microbios y nutrientes | Comida (aporte de Jorge) |
-| [OSD-772](https://osdr.nasa.gov/bio/repo/data/studies/OSD-772) | PH-04: chiles cultivados en la Estación Espacial (2021) | Comida (aporte de Jorge) |
-| [OSD-615](https://osdr.nasa.gov/bio/repo/data/studies/OSD-615) | Sin gravedad cambian las paredes de las raíces | Comida (aporte de Jorge) |
+| [OSD-566](https://osdr.nasa.gov/bio/repo/data/studies/OSD-566) | Immune and hormonal responses of mice to ionizing radiation | After a flare |
+| [OSD-343](https://osdr.nasa.gov/bio/repo/data/studies/OSD-343) | Mitochondrial stress as a central effect of spaceflight (59 astronauts plus the Twins Study) | When oxygen drops below 50 |
+| [OSD-766](https://osdr.nasa.gov/bio/repo/data/studies/OSD-766) | VEG-05: tomatoes grown for 101 days on the ISS under different LED lights | When food drops below 30 |
+| [OSD-678](https://osdr.nasa.gov/bio/repo/data/studies/OSD-678) | CARA: light guides the growth of Arabidopsis in space | Additional food finding |
+| [OSD-342](https://osdr.nasa.gov/bio/repo/data/studies/OSD-342) | Rodent Research-19: muscle and bone loss in 33 days | When the crew stays indoors for several sols ("exercise" topic) |
+| [OSD-177](https://osdr.nasa.gov/bio/repo/data/studies/OSD-177) | *Fusarium* fungus on the Veggie zinnias | After a plant disease event ("pest" topic) |
+| [OSD-87](https://osdr.nasa.gov/bio/repo/data/studies/OSD-87) | Changes in the retina of mice (STS-135) | Available ("eyes" topic) |
+| [OSD-360](https://osdr.nasa.gov/bio/repo/data/studies/OSD-360) | Low doses of space radiation change the chemistry of the spleen (mice) | Radiation |
+| [OSD-334](https://osdr.nasa.gov/bio/repo/data/studies/OSD-334) | Heavy particles and damage to heart tissue | Radiation |
+| [OSD-146](https://osdr.nasa.gov/bio/repo/data/studies/OSD-146) | Radiation changes gut bacteria | Radiation |
+| [OSD-268](https://osdr.nasa.gov/bio/repo/data/studies/OSD-268) | Veggie red lettuce: microbes and nutrients | Food |
+| [OSD-772](https://osdr.nasa.gov/bio/repo/data/studies/OSD-772) | PH-04: chile peppers grown on the Space Station (2021) | Food |
+| [OSD-615](https://osdr.nasa.gov/bio/repo/data/studies/OSD-615) | Without gravity, root cell walls change | Food |
 
-Los 13 hallazgos se mezclan al empezar cada partida. La **consola de la base** también muestra un estudio según el mayor riesgo del tripulante.
+The 13 findings are shuffled at the start of every game.
 
-### 2.4 Otros datos verificados
-| Dato en el juego | Fuente |
+### 2.5 Other verified data
+| Fact in the game | Source |
 |---|---|
-| NE Syrtis: finalista de Mars 2020 (con Jezero y Columbia Hills) | https://astrobiology.nasa.gov/news/scientists-shortlist-three-landing-sites-for-mars-2020/ |
-| Fondo de Jezero ~2.600 m bajo el nivel de referencia (Isidis, zona baja) | https://www.esa.int/ESA_Multimedia/Images/2021/02/Topographic_map_of_Jezero_crater_and_surrounds |
-| Mapa interactivo de la base (botón 📍 Ubicación) | NASA Mars Trek, centrado en ~18,2° N, 77,3° E |
-| Cuenca Isidis (~3.960 Ma), lavas de Syrtis (~3.700 Ma), olivino → carbonato | https://www.brown.edu/news/2017-04-20/syrtis |
-| Sol = 24 h 39 min | Día solar marciano (24 h 39 min 35 s) |
-| MOXIE: 122 g de oxígeno | https://www.nasa.gov/missions/mars-2020-perseverance/perseverance-rover/nasas-oxygen-generating-experiment-moxie-completes-mars-mission/ |
-| ISS recicla el 98 % del agua | https://www.nasa.gov/missions/station/iss-research/nasa-achieves-water-recovery-milestone-on-international-space-station/ |
-| Opportunity y la tormenta de 2018 | https://science.nasa.gov/mission/mer-opportunity/ |
-| +200 cráteres nuevos por año en Marte | https://www.jpl.nasa.gov/news/nasa-probe-counts-space-rock-impacts-on-mars/ |
-| Conjunción solar (~2 semanas cada ~2 años) | https://www.nasa.gov/solar-system/whats-mars-solar-conjunction-and-why-does-it-matter/ |
-| Retraso de 4–24 min | https://www.nasa.gov/hrp/hazard-distance-from-earth/ |
-| Reactores Fission Surface Power | https://www.nasa.gov/exploration-systems-development-mission-directorate/fission-surface-power/ |
-| Veggie (lechugas, kale, zinnias) | https://www.nasa.gov/exploration-research-and-technology/growing-plants-in-space/ |
-| Comparador del informe final: 1 radiografía de pecho ≈ 0,1 mSv | FDA / RadiologyInfo.org (referencia médica, no NASA) |
+| NE Syrtis: Mars 2020 finalist (with Jezero and Columbia Hills) | https://astrobiology.nasa.gov/news/scientists-shortlist-three-landing-sites-for-mars-2020/ |
+| Jezero floor ~2,600 m below the reference level (Isidis, low area) | https://www.esa.int/ESA_Multimedia/Images/2021/02/Topographic_map_of_Jezero_crater_and_surrounds |
+| Interactive map of the base (Location button) | NASA Mars Trek, centred at ~18.2° N, 77.3° E |
+| Isidis basin (~3,960 Ma), Syrtis lavas (~3,700 Ma), olivine to carbonate | https://www.brown.edu/news/2017-04-20/syrtis |
+| Sol = 24 h 39 min | Martian solar day (24 h 39 min 35 s) |
+| MOXIE: 122 g of oxygen | https://www.nasa.gov/missions/mars-2020-perseverance/perseverance-rover/nasas-oxygen-generating-experiment-moxie-completes-mars-mission/ |
+| ISS recycles 98% of its water | https://www.nasa.gov/missions/station/iss-research/nasa-achieves-water-recovery-milestone-on-international-space-station/ |
+| Opportunity and the 2018 storm | https://science.nasa.gov/mission/mer-opportunity/ |
+| More than 200 new craters per year on Mars | https://www.jpl.nasa.gov/news/nasa-probe-counts-space-rock-impacts-on-mars/ |
+| Solar conjunction (~2 weeks every ~2 years) | https://www.nasa.gov/solar-system/whats-mars-solar-conjunction-and-why-does-it-matter/ |
+| 4 to 24 minute delay | https://www.nasa.gov/hrp/hazard-distance-from-earth/ |
+| Fission Surface Power reactors | https://www.nasa.gov/exploration-systems-development-mission-directorate/fission-surface-power/ |
+| Veggie (lettuce, kale, zinnias) | https://www.nasa.gov/exploration-research-and-technology/growing-plants-in-space/ |
+| Final report comparison: 1 chest X-ray ≈ 0.1 mSv | FDA / RadiologyInfo.org (medical reference, not NASA) |
 
-## 3. Simplificaciones (honestas)
-Para que un niño de 7 años entienda el trade-off, algunos números son simplificados. Los anotamos para que se puedan verificar:
-- **Energía** (kWh por sol de paneles, reactor y sistemas) y **oxígeno/comida** (en %): números de juego, no de ingeniería real.
-  Sí respetan las proporciones reales: los paneles en Marte rinden menos que en la Tierra (~43 % de luz) y una tormenta los deja casi en cero.
-- **Retraso fijo de 12 minutos** (el real varía de ~4 a ~24 según la posición de los planetas).
-- **Límite de la misión: 60 mSv** (el límite real de carrera de la NASA es 600 mSv). Se baja para que la radiación importe en 15 sols.
-- **Dosis por llamarada**: X > M > C es una regla de dificultad del juego. La clase de una llamarada no determina por sí sola una dosis en Marte. La llegada de partículas depende de otros factores. El refugio y el blindaje reducen la exposición en el modelo educativo.
-- **Dosímetros por persona y blindaje por secciones**: el reparto de dosis, el 15 % por sección y el factor de 0,85–1,4 de la caminata
-  son reglas de juego para que el trade-off se entienda; no son mediciones.
-- **Hielo en NE Syrtis**: en el Marte real, el hielo superficial abunda más lejos del ecuador; el juego lo coloca cerca de la base para jugar.
-  La tarjeta del hielo lo aclara ("sobre todo lejos del ecuador").
+## 3. Simplifications (stated openly)
+So that a 7-year-old can understand the trade-off, some numbers are simplified. We list them so they can be checked:
+- **Power** (kWh per sol from panels, reactor and systems) and **oxygen and food** (in %): game numbers, not real engineering values.
+  They do keep the real proportions: panels on Mars produce less than on Earth (~43% of the light) and a dust storm leaves them close to zero.
+- **Fixed 12-minute delay** (the real one varies from ~4 to ~24 minutes depending on where the planets are).
+- **Mission limit: 60 mSv** (NASA's real career limit is 600 mSv). It is lowered so that radiation matters within 15 sols.
+- **Science goal** (60 points for Commander, 35 for Cadet): a game rule chosen so that playing it safe earns one star and higher scores
+  require taking some risk (more power to the lab or spacewalks for rocks).
+- **Dose per flare**: X > M > C is a game difficulty rule. A flare's class alone does not determine a dose on Mars; particle arrival
+  depends on other factors. Shelter and shielding reduce exposure in the educational model.
+- **Per-person dosimeters and shielding by sections**: the dose sharing, the per-section percentages and the 0.85 to 1.4 spacewalk factor
+  are game rules so that the trade-off is understandable; they are not measurements.
+- **Ice at NE Syrtis**: on the real Mars, surface ice is more common far from the equator; the game places it near the base so it can be
+  played. The ice card says so ("especially far from the equator").
