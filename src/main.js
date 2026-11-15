@@ -14,6 +14,9 @@ import { iniciarTutorial } from './ui/tutorial.js';
 import { iniciarRegistro, registrarDecision, registrarSol, registrarEVA } from './sim/registro.js';
 import { enTormenta } from './sim/motor.js';
 import './ui/dificultad-ui.js';   // selector Cadete / Comandante en la pantalla de inicio
+import { aplicarDificultad, dificultadActual } from './sim/dificultad.js';
+import { guardarPartida, cargarPartida, borrarPartida } from './sim/guardado.js';   // 💾 la partida sobrevive a una recarga
+import { preguntarContinuar } from './ui/continuar.js';
 import './ui/voz.js';             // narrador por voz (botones 🔈 y 🗣️)
 import './ui/ubicacion.js';       // 📍 resumen del lugar de la base + mapas de NASA Mars Trek
 import './ui/alerta-solar.js';    // ☀️ estado del Sol y alerta solar en vivo (NASA DONKI)
@@ -105,11 +108,13 @@ async function terminarSol() {
   await mostrarResumen(S, antes, r, fin);
 
   if (fin) {
+    borrarPartida();   // la misión terminó: no se ofrece continuarla
     await pantallaFinal(S, fin);
     return nuevaPartida();
   }
   S.sol++;
   iniciarSol(S);
+  guardarPartida(S, dificultadActual);   // 💾 al empezar cada sol
   ocupado = false;
   refrescar();
 }
@@ -144,7 +149,8 @@ async function salirAExplorar() {
       refrescar();
       await mostrarResumenEVA(res, lineas);
       const fin = finDePartida(S);   // ¿la radiación o la salud llegaron al límite?
-      if (fin && !fin.gano) { await pantallaFinal(S, fin); return nuevaPartida(); }
+      if (fin && !fin.gano) { borrarPartida(); await pantallaFinal(S, fin); return nuevaPartida(); }
+      guardarPartida(S, dificultadActual);   // 💾 al volver de una caminata
       ocupado = false;
       refrescar();
     },
@@ -153,6 +159,8 @@ async function salirAExplorar() {
 
 async function nuevaPartida() {
   ocupado = true;
+  // Volver a la dificultad que marca la pantalla de inicio (una partida continuada pudo usar otra)
+  try { aplicarDificultad(localStorage.getItem('survivalMars.dificultad') || 'cadete'); } catch { aplicarDificultad('cadete'); }
   S = crearPartida();
   refrescar();
   const { nombre, guiar } = await pantallaInicio();
@@ -165,9 +173,24 @@ async function nuevaPartida() {
     texto: sinNombre ? '🚀 <b>Comandante</b> al mando de la base en la meseta NE Syrtis.' : `🚀 Comandante <b>${limpio}</b> al mando de la base en la meseta NE Syrtis.`,
     texto_en: sinNombre ? '🚀 <b>Commander</b> in charge of the base on the NE Syrtis plateau.' : `🚀 Commander <b>${limpio}</b> in charge of the base on the NE Syrtis plateau.` });
   iniciarSol(S);
+  guardarPartida(S, dificultadActual);   // 💾 misión nueva: reemplaza la guardada
   ocupado = false;
   refrescar();
   if (guiar) tutorial = iniciarTutorial(() => ({ S, sel }));
+}
+
+// Al abrir el juego: si hay una misión guardada, ofrecer continuarla
+async function arrancar() {
+  const g = esDemo ? null : cargarPartida();
+  if (g && await preguntarContinuar(g)) {
+    aplicarDificultad(g.dificultad);   // devuelve MISION y los tiempos a los de esa partida
+    S = g.S;
+    mundo.seleccionar(null);
+    ocupado = false;
+    refrescar();
+    return;
+  }
+  return nuevaPartida();
 }
 
 $('#btnSol').onclick = terminarSol;
@@ -227,4 +250,4 @@ if (esDemo) {
     resumen: 'Demostración con una llamarada histórica NASA del 2024-10-03.',
     resumen_en: 'Demo using a historical NASA flare from 2024-10-03.' });
 } else cargarClimaEspacial().then(c => { setClima(c); refrescar(); refrescarClimaInicio(); });
-nuevaPartida();
+arrancar();
